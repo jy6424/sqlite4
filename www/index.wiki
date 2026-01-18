@@ -1,0 +1,29 @@
+<title>SQLite4</title>
+
+<h1>This Is Probably Not The Project You Are Looking For</h1>
+
+<p>SQLite4 was an experimental rewrite of SQLite that was active from
+2012 through 2014.  <em>All development work on SQLite4 has ended.</em>
+Lessons learned from SQLite4 have been folded into the main
+[https://sqlite.org/|SQLite3] product.  SQLite4 was never released.
+There are no plans to revive it.  You should be using
+[https://sqlite.org/|SQLite3].
+
+<p>This repository preserves the history of the SQLite4 experiment as
+an historical artifact.  The code found here is non-functional and is
+not maintained.
+
+
+  *  [./design.wiki | The Design Of SQLite4]
+  *  [./prog-intro.wiki | Introduction to SQLite4 for Programmers]
+  *  [./env.wiki | The Run-time Environment Object]
+  *  [./varint.wiki | The Varint format]
+  *  [./data_encoding.wiki | The Data Encoding]
+  *  [./key_encoding.wiki | The Key Encoding]
+  *  [./decimal.wiki | Internal representation of numeric values]
+  *  [./porting.wiki | Porting an app from SQLite3 to SQLite4]
+  *  [./storage.wiki | How to create a new storage engine]
+  *  [./lsmusr.wiki  | LSM User Manual]
+  *  [./lsmperf.wiki | LSM Benchmarks]
+  *  [./lsmapi.wiki  | LSM API Reference]
+  *  [./bt.wiki      | BT Design]
