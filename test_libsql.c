@@ -24,9 +24,9 @@ int main(int argc, char **argv) {
 
     if (rc != SQLITE4_OK) {
         printf("sql error: %s\n", errMsg);
-        sqlite4_free(errMsg);
+        sqlite4_free(0, errMsg);
     }
 
-    sqlite4_close(db);
+    sqlite4_close(db, 0);
     return 0;
 }
