@@ -4,6 +4,7 @@
 int main(int argc, char **argv) {
     sqlite4 *db;
     int rc;
+    char *errMsg = 0;
 
     rc = sqlite4_open(0, "test.db", &db);
     if (rc != SQLITE4_OK) {
@@ -12,6 +13,19 @@ int main(int argc, char **argv) {
     }
 
     printf("sqlite4 opened\n");
+
+    /* index create */
+    rc = sqlite4_exec(
+        db,
+        "CREATE TABLE IF NOT EXISTS t (id INTEGER);"
+        "CREATE INDEX IF NOT EXISTS t_idx ON t(id);",
+        0, 0, &errMsg
+    );
+
+    if (rc != SQLITE4_OK) {
+        printf("sql error: %s\n", errMsg);
+        sqlite4_free(errMsg);
+    }
 
     sqlite4_close(db);
     return 0;
