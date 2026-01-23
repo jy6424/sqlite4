@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
         db,
         "CREATE TABLE IF NOT EXISTS t (id INTEGER);"
         "CREATE INDEX IF NOT EXISTS t_idx ON t(id);",
-        0, 0, &errMsg
+        0, 0
     );
 
     if (rc != SQLITE4_OK) {
