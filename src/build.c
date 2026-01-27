@@ -2651,7 +2651,8 @@ Index *sqlite4CreateIndex(
   int onError,       /* OE_Abort, OE_Ignore, OE_Replace, or OE_None */
   Token *pEnd,       /* The ")" that closes the CREATE INDEX statement */
   int sortOrder,     /* Sort order of primary key when pList==NULL */
-  int bPrimaryKey    /* True to create the tables primary key */
+  int bPrimaryKey,    /* True to create the tables primary key */
+  IdList *pUsing      //[koreauniv] for vector creation
 ){
   Index *pRet = 0;     /* Pointer to return */
   Table *pTab = 0;     /* Table to be indexed */
@@ -2669,6 +2670,9 @@ Index *sqlite4CreateIndex(
   int nCover = 0;
   Token *pStart = 0;
   SrcList *pTblName = 0;
+  
+  // [koreauniv] for vector creation
+  int vectorIdxRc = 0, skipRefill = 0;
 
   if( pCI ){
     pStart = &pCI->tCreate;
@@ -2812,6 +2816,22 @@ Index *sqlite4CreateIndex(
     pIndex->aSortOrder[i] = (u8)pListItem->sortOrder;
   }
   sqlite4DefaultRowEst(pIndex);
+
+
+  // [koreauniv] place to add vector index support 
+  #ifndef SQLITE_OMIT_VECTOR
+    // we want to have complete information about index columns before invocation of vectorIndexCreate method
+    vectorIdxRc = vectorIndexCreate(pParse, pIndex, db->aDb[iDb].zDbSName, pUsing);
+    if( vectorIdxRc < 0 ){
+      goto exit_create_index;
+    }
+    if( vectorIdxRc >= 1 ){
+      pIndex->idxIsVector = 1;
+    }
+    if( vectorIdxRc == 1 ){
+      skipRefill = 1;
+    }
+  #endif
 
   /* Scan the names of any covered columns. */
   for(i=0; i<nCover; i++){
