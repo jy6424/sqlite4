@@ -476,10 +476,7 @@ void sqlite4VdbeMemAboutToChange(Vdbe *pVdbe, Mem *pMem){
 }
 #endif /* SQLITE4_DEBUG */
 
-/*
-** Size of struct Mem not including the Mem.zMalloc member.
-*/
-#define MEMCELLSIZE (size_t)(&(((Mem *)0)->zMalloc))
+//[koreauniv] #define MEMCELLSIZE vdbeInt.h 로 이동
 
 /*
 ** Make an shallow copy of pFrom into pTo.  Prior contents of

@@ -187,13 +187,13 @@ sqlite4_value *sqlite4_value_dup(sqlite4_env *pEnv, const sqlite4_value *pOrig){
   if( pNew->flags&(MEM_Str|MEM_Blob) ){
     pNew->flags &= ~(MEM_Static|MEM_Dyn);
     pNew->flags |= MEM_Ephem;
-    if( sqlite4VdbeMemMakeWriteable(pNew)!=SQLITE_OK ){
+    if( sqlite4VdbeMemMakeWriteable(pNew)!=SQLITE4_OK ){
       sqlite4ValueFree(pNew);
       pNew = 0;
     }
   }else if( pNew->flags & MEM_Null ){
     /* Do not duplicate pointer values */
-    pNew->flags &= ~(MEM_Term|MEM_Subtype);
+    pNew->flags &= ~(MEM_Term); //[koreauniv] MEM_Subtype 제거
   }
   return pNew;
 }

@@ -150,6 +150,13 @@ struct Mem {
   char *zMalloc;      /* Dynamic buffer allocated by sqlite4_malloc() */
 };
 
+
+/*
+** Size of struct Mem not including the Mem.zMalloc member.
+*/
+#define MEMCELLSIZE (size_t)(&(((Mem *)0)->zMalloc))
+
+
 /* One or more of the following flags are set to indicate the validOK
 ** representations of the value stored in the Mem struct.
 **
