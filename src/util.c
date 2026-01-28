@@ -87,24 +87,10 @@ int sqlite4IsNaN(double x){
 ** the column name if and only if the COLFLAG_HASTYPE flag is set.
 */
 
-const char *sqlite4StdType[] = {
-  "ANY",
-  "BLOB",
-  "INT",
-  "INTEGER",
-  "REAL",
-  "TEXT"
-};
-
-char *sqlite4ColumnType(Column *pCol, char *zDflt){
-  if( pCol->colFlags & COLFLAG_HASTYPE ){
-    return pCol->zCnName + strlen(pCol->zCnName) + 1;
-  }else if( pCol->eCType ){
-    assert( pCol->eCType<=SQLITE_N_STDTYPE );
-    return (char*)sqlite4StdType[pCol->eCType-1];
-  }else{
-    return zDflt;
-  }
+const char *sqlite4ColumnType(const Column *pCol, const char *zDflt){
+  if( pCol==0 ) return zDflt;
+  if( pCol->zType && pCol->zType[0] ) return pCol->zType;
+  return zDflt;
 }
 
 /*
@@ -336,20 +322,20 @@ int sqlite4AtoF(const char *z, double *pResult, int length, u8 enc){
   int nDigit = 0;  /* Number of digits processed */
   int eType = 1;   /* 1: pure integer,  2+: fractional  -1 or less: bad UTF16 */
 
-  assert( enc==SQLITE_UTF8 || enc==SQLITE_UTF16LE || enc==SQLITE_UTF16BE );
+  assert( enc==SQLITE4_UTF8 || enc==SQLITE4_UTF16LE || enc==SQLITE4_UTF16BE );
   *pResult = 0.0;   /* Default return value, in case of an error */
   if( length==0 ) return 0;
 
-  if( enc==SQLITE_UTF8 ){
+  if( enc==SQLITE4_UTF8 ){
     incr = 1;
     zEnd = z + length;
   }else{
     int i;
     incr = 2;
     length &= ~1;
-    assert( SQLITE_UTF16LE==2 && SQLITE_UTF16BE==3 );
-    testcase( enc==SQLITE_UTF16LE );
-    testcase( enc==SQLITE_UTF16BE );
+    assert( SQLITE4_UTF16LE==2 && SQLITE4_UTF16BE==3 );
+    testcase( enc==SQLITE4_UTF16LE );
+    testcase( enc==SQLITE4_UTF16BE );
     for(i=3-enc; i<length && z[i]==0; i+=2){}
     if( i<length ) eType = -100;
     zEnd = &z[i^1];
@@ -448,27 +434,6 @@ do_atof_calc:
 
   if( e==0 ){
     *pResult = s;
-  }else if( sqlite3Config.bUseLongDouble ){ //[koreauniv] sqlite3Config -> sqlite4Config
-    LONGDOUBLE_TYPE r = (LONGDOUBLE_TYPE)s;
-    if( e>0 ){
-      while( e>=100  ){ e-=100; r *= 1.0e+100L; }
-      while( e>=10   ){ e-=10;  r *= 1.0e+10L;  }
-      while( e>=1    ){ e-=1;   r *= 1.0e+01L;  }
-    }else{
-      while( e<=-100 ){ e+=100; r *= 1.0e-100L; }
-      while( e<=-10  ){ e+=10;  r *= 1.0e-10L;  }
-      while( e<=-1   ){ e+=1;   r *= 1.0e-01L;  }
-    }
-    assert( r>=0.0 );
-    if( r>+1.7976931348623157081452742373e+308L ){
-#ifdef INFINITY
-      *pResult = +INFINITY;
-#else
-      *pResult = 1.0e308*10.0;
-#endif
-    }else{
-      *pResult = (double)r;
-    }
   }else{
     double rr[2];
     u64 s2;
