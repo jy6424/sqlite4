@@ -191,10 +191,10 @@ SRC = \
   $(TOP)/src/walker.c 
 
 # [koreauniv] source code for vector
-SRC += \
-  $(TOP)/src/vectorIndex.c \
-  $(TOP)/src/vectorIndexInt.h \
-  $(TOP)/src/vectorInt.h \
+# SRC += \
+#   $(TOP)/src/vectorIndex.c \
+#   $(TOP)/src/vectorIndexInt.h \
+#   $(TOP)/src/vectorInt.h
 
 # Source code for extensions
 #
@@ -304,9 +304,9 @@ HDR = \
    $(TOP)/src/vdbeInt.h
 
 # [koreauniv] header files for vector
-HDR += \
-   $(TOP)/src/vectorIndexInt.h \
-   $(TOP)/src/vectorInt.h
+# HDR += \
+#    $(TOP)/src/vectorIndexInt.h \
+#    $(TOP)/src/vectorInt.h
 
 EXTHDR = \
   $(TOP)/ext/fts3/fts3.h \
