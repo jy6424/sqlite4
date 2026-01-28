@@ -2651,8 +2651,7 @@ Index *sqlite4CreateIndex(
   int onError,       /* OE_Abort, OE_Ignore, OE_Replace, or OE_None */
   Token *pEnd,       /* The ")" that closes the CREATE INDEX statement */
   int sortOrder,     /* Sort order of primary key when pList==NULL */
-  int bPrimaryKey,    /* True to create the tables primary key */
-  // IdList *pUsing      [koreauniv] for vector creation
+  int bPrimaryKey    /* True to create the tables primary key */
 ){
   Index *pRet = 0;     /* Pointer to return */
   Table *pTab = 0;     /* Table to be indexed */
