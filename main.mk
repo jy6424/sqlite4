@@ -89,7 +89,8 @@ LIBOBJ+= vdbe.o parse.o \
 
 LIBOBJ += bt_unix.o bt_pager.o bt_main.o bt_varint.o kvbt.o bt_lock.o bt_log.o
 
-LIBOBJ += vectorIndex.o
+# [koreauniv] source code object for vector
+# LIBOBJ += vectorIndex.o
 
 # All of the source code files.
 #
