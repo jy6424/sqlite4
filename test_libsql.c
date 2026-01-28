@@ -7,13 +7,14 @@ int main(int argc, char **argv) {
     char *errMsg = 0;
 
     rc = sqlite4_open(0, "test.db", &db);
-    if (rc != SQLITE4_OK) {
+    if (rc) {
         printf("open failed: %d\n", rc);
         return 1;
     }
-
-    printf("sqlite4 opened\n");
-
+    else {
+        printf("Database opened successfully\n");
+    }
+    
     /* index create */
     rc = sqlite4_exec(
         db,
@@ -22,7 +23,7 @@ int main(int argc, char **argv) {
         0, 0
     );
 
-    if (rc != SQLITE4_OK) {
+    if (rc) {
         printf("sql error: %s\n", errMsg);
         sqlite4_free(0, errMsg);
     }
