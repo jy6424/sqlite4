@@ -26,7 +26,9 @@ int main(int argc, char **argv) {
         printf("sql error: %s\n", errMsg);
         sqlite4_free(0, errMsg);
     }
-
+    else {
+        printf("Index created successfully\n");
+    }
     sqlite4_close(db, 0);
     return 0;
 }
