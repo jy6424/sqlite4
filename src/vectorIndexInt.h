@@ -1,7 +1,7 @@
 #ifndef _VECTOR_INDEX_H
 #define _VECTOR_INDEX_H
 
-#include "sqlite3.h"
+#include "sqlite4.h"
 #include "vectorInt.h"
 
 #ifdef __cplusplus
@@ -11,11 +11,13 @@ extern "C" {
 typedef struct DiskAnnIndex DiskAnnIndex;
 typedef struct BlobSpot BlobSpot;
 
+//[koreauniv TODO] sqlite3_blob -> sqlite4_blob 확인
+
 /*
  * Main type which holds all necessary index information and will be passed as a first argument in all index-related operations
 */
 struct DiskAnnIndex {
-  sqlite3 *db;         /* Database connection */
+  sqlite4 *db;         /* Database connection */
   char *zDbSName;      /* Database name */
   char *zName;         /* Index name */
   char *zShadow;       /* Shadow table name */
@@ -36,13 +38,13 @@ struct DiskAnnIndex {
 };
 
 /*
- * Simple utility class which holds sqlite3_blob handle poiting to the nRowid (undefined if pBlob == NULL)
+ * Simple utility class which holds sqlite4_blob handle poiting to the nRowid (undefined if pBlob == NULL)
  * Caller can re-load BlobSpot with blobSpotReload(...) method which will reopen blob at new row position
- * sqlite3_blob_reopen API can be visibly faster than close/open pair since a lot of check can be omitted
+ * sqlite4_blob_reopen API can be visibly faster than close/open pair since a lot of check can be omitted
 */
 struct BlobSpot {
   u64 nRowid;           /* last rowid for which open/reopen was called; undefined if BlobSpot was never opened */
-  sqlite3_blob *pBlob;  /* BLOB handle */
+  sqlite4_blob *pBlob;  /* BLOB handle */
   u8 *pBuffer;          /* buffer for BLOB data */
   int nBufferSize;      /* buffer size */
   u8 isWritable;        /* blob open mode (readonly or read/write) */
@@ -179,7 +181,7 @@ struct VectorIdxKey {
 struct VectorInRow {
   Vector *pVector;
   int nKeys;
-  sqlite3_value *pKeyValues;
+  sqlite4_value *pKeyValues;
 };
 
 /*
@@ -194,7 +196,7 @@ struct VectorOutRows {
   int nRows;
   int nCols;
   i64 *aIntValues;
-  sqlite3_value **ppValues;
+  sqlite4_value **ppValues;
 };
 
 // limit to the sql part which we render in order to perform operations with shadow tables
@@ -213,22 +215,22 @@ int vectorIdxKeyRowidLike(const VectorIdxKey *);
 int vectorIdxKeyDefsRender(const VectorIdxKey *, const char *, char *, int);
 int vectorIdxKeyNamesRender(int, const char *, char *, int);
 
-int vectorInRowAlloc(sqlite3 *, const UnpackedRecord *, VectorInRow *, char **);
-sqlite3_value* vectorInRowKey(const VectorInRow *, int);
+int vectorInRowAlloc(sqlite4 *, const UnpackedRecord *, VectorInRow *, char **);
+sqlite4_value* vectorInRowKey(const VectorInRow *, int);
 int vectorInRowTryGetRowid(const VectorInRow *, u64 *);
 i64 vectorInRowLegacyId(const VectorInRow *);
 int vectorInRowPlaceholderRender(const VectorInRow *, char *, int);
-void vectorInRowFree(sqlite3 *, VectorInRow *);
+void vectorInRowFree(sqlite4 *, VectorInRow *);
 
-int vectorOutRowsAlloc(sqlite3 *, VectorOutRows *, int, int, int);
-int vectorOutRowsPut(VectorOutRows *, int, int, const u64 *, sqlite3_value *, sqlite3 *);
-void vectorOutRowsGet(sqlite3_context *, const VectorOutRows *, int, int);
-void vectorOutRowsFree(sqlite3 *, VectorOutRows *);
+int vectorOutRowsAlloc(sqlite4 *, VectorOutRows *, int, int, int);
+int vectorOutRowsPut(VectorOutRows *, int, int, const u64 *, sqlite4_value *, sqlite4 *);
+void vectorOutRowsGet(sqlite4_context *, const VectorOutRows *, int, int);
+void vectorOutRowsFree(sqlite4 *, VectorOutRows *);
 
-int diskAnnCreateIndex(sqlite3 *, const char *, const char *, const VectorIdxKey *, VectorIdxParams *, const char **);
-int diskAnnClearIndex(sqlite3 *, const char *, const char *);
-int diskAnnDropIndex(sqlite3 *, const char *, const char *);
-int diskAnnOpenIndex(sqlite3 *, const char *, const char *, const VectorIdxParams *, DiskAnnIndex **);
+int diskAnnCreateIndex(sqlite4 *, const char *, const char *, const VectorIdxKey *, VectorIdxParams *, const char **);
+int diskAnnClearIndex(sqlite4 *, const char *, const char *);
+int diskAnnDropIndex(sqlite4 *, const char *, const char *);
+int diskAnnOpenIndex(sqlite4 *, const char *, const char *, const VectorIdxParams *, DiskAnnIndex **);
 void diskAnnCloseIndex(DiskAnnIndex *);
 int diskAnnInsert(DiskAnnIndex *, const VectorInRow *, char **);
 int diskAnnDelete(DiskAnnIndex *, const VectorInRow *, char **);
@@ -243,11 +245,11 @@ typedef struct VectorIdxCursor VectorIdxCursor;
 int vectorIdxParseColumnType(const char *, int *, int *, const char **);
 
 int vectorIndexCreate(Parse*, const Index*, const char *, const IdList*);
-int vectorIndexClear(sqlite3 *, const char *, const char *);
-int vectorIndexDrop(sqlite3 *, const char *, const char *);
-int vectorIndexSearch(sqlite3 *, int, sqlite3_value **, VectorOutRows *, int *, int *, char **);
-int vectorIndexCursorInit(sqlite3 *, const char *, const char *, VectorIdxCursor **);
-void vectorIndexCursorClose(sqlite3 *, VectorIdxCursor *, int *, int *);
+int vectorIndexClear(sqlite4 *, const char *, const char *);
+int vectorIndexDrop(sqlite4 *, const char *, const char *);
+int vectorIndexSearch(sqlite4 *, int, sqlite4_value **, VectorOutRows *, int *, int *, char **);
+int vectorIndexCursorInit(sqlite4 *, const char *, const char *, VectorIdxCursor **);
+void vectorIndexCursorClose(sqlite4 *, VectorIdxCursor *, int *, int *);
 int vectorIndexInsert(VectorIdxCursor *, const UnpackedRecord *, char **);
 int vectorIndexDelete(VectorIdxCursor *, const UnpackedRecord *, char **);
 
