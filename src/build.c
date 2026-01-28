@@ -2817,7 +2817,7 @@ Index *sqlite4CreateIndex(
   }
   sqlite4DefaultRowEst(pIndex);
 
-
+  printf("Creating vector index entering\n");
   // [koreauniv] place to add vector index support 
   #ifndef SQLITE_OMIT_VECTOR
     // we want to have complete information about index columns before invocation of vectorIndexCreate method
