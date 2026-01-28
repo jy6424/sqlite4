@@ -2652,7 +2652,7 @@ Index *sqlite4CreateIndex(
   Token *pEnd,       /* The ")" that closes the CREATE INDEX statement */
   int sortOrder,     /* Sort order of primary key when pList==NULL */
   int bPrimaryKey,    /* True to create the tables primary key */
-  IdList *pUsing      //[koreauniv] for vector creation
+  // IdList *pUsing      [koreauniv] for vector creation
 ){
   Index *pRet = 0;     /* Pointer to return */
   Table *pTab = 0;     /* Table to be indexed */
@@ -2832,7 +2832,7 @@ Index *sqlite4CreateIndex(
   //   if( vectorIdxRc == 1 ){
   //     skipRefill = 1;
   //   }
-  // #endif
+  #endif
 
   /* Scan the names of any covered columns. */
   for(i=0; i<nCover; i++){
