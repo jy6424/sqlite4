@@ -77,6 +77,36 @@ int sqlite4IsNaN(double x){
   return rc;
 }
 
+
+//[koreauniv] sqlite4ColumnType added here
+/*
+** Return the declared type of a column.  Or return zDflt if the column
+** has no declared type.
+**
+** The column type is an extra string stored after the zero-terminator on
+** the column name if and only if the COLFLAG_HASTYPE flag is set.
+*/
+
+const char *sqlite4StdType[] = {
+  "ANY",
+  "BLOB",
+  "INT",
+  "INTEGER",
+  "REAL",
+  "TEXT"
+};
+
+char *sqlite4ColumnType(Column *pCol, char *zDflt){
+  if( pCol->colFlags & COLFLAG_HASTYPE ){
+    return pCol->zCnName + strlen(pCol->zCnName) + 1;
+  }else if( pCol->eCType ){
+    assert( pCol->eCType<=SQLITE_N_STDTYPE );
+    return (char*)sqlite4StdType[pCol->eCType-1];
+  }else{
+    return zDflt;
+  }
+}
+
 /*
 ** If r is not infinity, return 0.  If it is negative infinity return negative.
 ** Return positive if r is positive infinity.
@@ -248,6 +278,253 @@ static int compare2pow63(const char *zNum, int incr){
   }
   return c;
 }
+
+
+//[koreauniv] dekker mul added here
+
+/* Double-Double multiplication.  (x[0],x[1]) *= (y,yy)
+**
+** Reference:
+**   T. J. Dekker, "A Floating-Point Technique for Extending the
+**   Available Precision".  1971-07-26.
+*/
+static void dekkerMul2(volatile double *x, double y, double yy){
+  /*
+  ** The "volatile" keywords on parameter x[] and on local variables
+  ** below are needed force intermediate results to be truncated to
+  ** binary64 rather than be carried around in an extended-precision
+  ** format.  The truncation is necessary for the Dekker algorithm to
+  ** work.  Intel x86 floating point might omit the truncation without
+  ** the use of volatile. 
+  */
+  volatile double tx, ty, p, q, c, cc;
+  double hx, hy;
+  u64 m;
+  memcpy(&m, (void*)&x[0], 8);
+  m &= 0xfffffffffc000000LL;
+  memcpy(&hx, &m, 8);
+  tx = x[0] - hx;
+  memcpy(&m, &y, 8);
+  m &= 0xfffffffffc000000LL;
+  memcpy(&hy, &m, 8);
+  ty = y - hy;
+  p = hx*hy;
+  q = hx*ty + tx*hy;
+  c = p+q;
+  cc = p - c + q + tx*ty;
+  cc = x[0]*yy + x[1]*y + cc;
+  x[0] = c + cc;
+  x[1] = c - x[0];
+  x[1] += cc;
+}
+
+//[koreauniv] sqlite4AtoF added here 
+#if defined(_MSC_VER)
+#pragma warning(disable : 4756)
+#endif
+int sqlite4AtoF(const char *z, double *pResult, int length, u8 enc){
+#ifndef SQLITE_OMIT_FLOATING_POINT
+  int incr;
+  const char *zEnd;
+  /* sign * significand * (10 ^ (esign * exponent)) */
+  int sign = 1;    /* sign of significand */
+  u64 s = 0;       /* significand */
+  int d = 0;       /* adjust exponent for shifting decimal point */
+  int esign = 1;   /* sign of exponent */
+  int e = 0;       /* exponent */
+  int eValid = 1;  /* True exponent is either not used or is well-formed */
+  int nDigit = 0;  /* Number of digits processed */
+  int eType = 1;   /* 1: pure integer,  2+: fractional  -1 or less: bad UTF16 */
+
+  assert( enc==SQLITE_UTF8 || enc==SQLITE_UTF16LE || enc==SQLITE_UTF16BE );
+  *pResult = 0.0;   /* Default return value, in case of an error */
+  if( length==0 ) return 0;
+
+  if( enc==SQLITE_UTF8 ){
+    incr = 1;
+    zEnd = z + length;
+  }else{
+    int i;
+    incr = 2;
+    length &= ~1;
+    assert( SQLITE_UTF16LE==2 && SQLITE_UTF16BE==3 );
+    testcase( enc==SQLITE_UTF16LE );
+    testcase( enc==SQLITE_UTF16BE );
+    for(i=3-enc; i<length && z[i]==0; i+=2){}
+    if( i<length ) eType = -100;
+    zEnd = &z[i^1];
+    z += (enc&1);
+  }
+
+  /* skip leading spaces */
+  while( z<zEnd && sqlite4Isspace(*z) ) z+=incr;
+  if( z>=zEnd ) return 0;
+
+  /* get sign of significand */
+  if( *z=='-' ){
+    sign = -1;
+    z+=incr;
+  }else if( *z=='+' ){
+    z+=incr;
+  }
+
+  /* copy max significant digits to significand */
+  while( z<zEnd && sqlite4Isdigit(*z) ){
+    s = s*10 + (*z - '0');
+    z+=incr; nDigit++;
+    if( s>=((LARGEST_UINT64-9)/10) ){
+      /* skip non-significant significand digits
+      ** (increase exponent by d to shift decimal left) */
+      while( z<zEnd && sqlite4Isdigit(*z) ){ z+=incr; d++; }
+    }
+  }
+  if( z>=zEnd ) goto do_atof_calc;
+
+  /* if decimal point is present */
+  if( *z=='.' ){
+    z+=incr;
+    eType++;
+    /* copy digits from after decimal to significand
+    ** (decrease exponent by d to shift decimal right) */
+    while( z<zEnd && sqlite4Isdigit(*z) ){
+      if( s<((LARGEST_UINT64-9)/10) ){
+        s = s*10 + (*z - '0');
+        d--;
+        nDigit++;
+      }
+      z+=incr;
+    }
+  }
+  if( z>=zEnd ) goto do_atof_calc;
+
+  /* if exponent is present */
+  if( *z=='e' || *z=='E' ){
+    z+=incr;
+    eValid = 0;
+    eType++;
+
+    /* This branch is needed to avoid a (harmless) buffer overread.  The
+    ** special comment alerts the mutation tester that the correct answer
+    ** is obtained even if the branch is omitted */
+    if( z>=zEnd ) goto do_atof_calc;              /*PREVENTS-HARMLESS-OVERREAD*/
+
+    /* get sign of exponent */
+    if( *z=='-' ){
+      esign = -1;
+      z+=incr;
+    }else if( *z=='+' ){
+      z+=incr;
+    }
+    /* copy digits to exponent */
+    while( z<zEnd && sqlite4Isdigit(*z) ){
+      e = e<10000 ? (e*10 + (*z - '0')) : 10000;
+      z+=incr;
+      eValid = 1;
+    }
+  }
+
+  /* skip trailing spaces */
+  while( z<zEnd && sqlite4Isspace(*z) ) z+=incr;
+
+do_atof_calc:
+  /* Zero is a special case */
+  if( s==0 ){
+    *pResult = sign<0 ? -0.0 : +0.0;
+    goto atof_return;
+  }
+
+  /* adjust exponent by d, and update sign */
+  e = (e*esign) + d;
+
+  /* Try to adjust the exponent to make it smaller */
+  while( e>0 && s<(LARGEST_UINT64/10) ){
+    s *= 10;
+    e--;
+  }
+  while( e<0 && (s%10)==0 ){
+    s /= 10;
+    e++;
+  }
+
+  if( e==0 ){
+    *pResult = s;
+  }else if( sqlite3Config.bUseLongDouble ){ //[koreauniv] sqlite3Config -> sqlite4Config
+    LONGDOUBLE_TYPE r = (LONGDOUBLE_TYPE)s;
+    if( e>0 ){
+      while( e>=100  ){ e-=100; r *= 1.0e+100L; }
+      while( e>=10   ){ e-=10;  r *= 1.0e+10L;  }
+      while( e>=1    ){ e-=1;   r *= 1.0e+01L;  }
+    }else{
+      while( e<=-100 ){ e+=100; r *= 1.0e-100L; }
+      while( e<=-10  ){ e+=10;  r *= 1.0e-10L;  }
+      while( e<=-1   ){ e+=1;   r *= 1.0e-01L;  }
+    }
+    assert( r>=0.0 );
+    if( r>+1.7976931348623157081452742373e+308L ){
+#ifdef INFINITY
+      *pResult = +INFINITY;
+#else
+      *pResult = 1.0e308*10.0;
+#endif
+    }else{
+      *pResult = (double)r;
+    }
+  }else{
+    double rr[2];
+    u64 s2;
+    rr[0] = (double)s;
+    s2 = (u64)rr[0];
+    rr[1] = s>=s2 ? (double)(s - s2) : -(double)(s2 - s);
+    if( e>0 ){
+      while( e>=100  ){
+        e -= 100;
+        dekkerMul2(rr, 1.0e+100, -1.5902891109759918046e+83);
+      }
+      while( e>=10   ){
+        e -= 10;
+        dekkerMul2(rr, 1.0e+10, 0.0);
+      }
+      while( e>=1    ){
+        e -= 1;
+        dekkerMul2(rr, 1.0e+01, 0.0);
+      }
+    }else{
+      while( e<=-100 ){
+        e += 100;
+        dekkerMul2(rr, 1.0e-100, -1.99918998026028836196e-117);
+      }
+      while( e<=-10  ){
+        e += 10;
+        dekkerMul2(rr, 1.0e-10, -3.6432197315497741579e-27);
+      }
+      while( e<=-1   ){
+        e += 1;
+        dekkerMul2(rr, 1.0e-01, -5.5511151231257827021e-18);
+      }
+    }
+    *pResult = rr[0]+rr[1];
+    if( sqlite4IsNaN(*pResult) ) *pResult = 1e300*1e300;
+  }
+  if( sign<0 ) *pResult = -*pResult;
+  assert( !sqlite4IsNaN(*pResult) );
+
+atof_return:
+  /* return true if number and no extra non-whitespace characters after */
+  if( z==zEnd && nDigit>0 && eValid && eType>0 ){
+    return eType;
+  }else if( eType>=2 && (eType==3 || eValid) && nDigit>0 ){
+    return -1;
+  }else{
+    return 0;
+  }
+#else
+  return !sqlite4Atoi64(z, pResult, length, enc);
+#endif /* SQLITE_OMIT_FLOATING_POINT */
+}
+#if defined(_MSC_VER)
+#pragma warning(default : 4756)
+#endif
+
 
 
 /*

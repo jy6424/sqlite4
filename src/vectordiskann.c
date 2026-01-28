@@ -755,7 +755,7 @@ static int diskAnnGetShadowRowKeys(const DiskAnnIndex *pIndex, u64 nRowid, const
     goto out;
   }
   for(i = 0; i < pRows->nCols; i++){
-    rc = vectorOutRowsPut(pRows, iRow, i, NULL, sqlite3_column_value(pStmt, i));
+    rc = vectorOutRowsPut(pRows, iRow, i, NULL, sqlite3_column_value(pStmt, i), pIndex->db);
     if( rc != SQLITE_OK ){
       goto out;
     }
@@ -1514,7 +1514,7 @@ int diskAnnSearch(
   }
   for(i = 0; i < nOutRows; i++){
     if( pRows->aIntValues != NULL ){
-      rc = vectorOutRowsPut(pRows, i, 0, &ctx.aTopCandidates[i]->nRowid, NULL);
+      rc = vectorOutRowsPut(pRows, i, 0, &ctx.aTopCandidates[i]->nRowid, NULL, pIndex->db);
     }else{
       rc = diskAnnGetShadowRowKeys(pIndex, ctx.aTopCandidates[i]->nRowid, pKey, pRows, i);
     }

@@ -173,6 +173,38 @@ int sqlite4_value_type(sqlite4_value* pVal){
   return pVal->type;
 }
 
+/* Make a copy of an sqlite4_value object
+*/
+sqlite4_value *sqlite4_value_dup(sqlite4_env *pEnv, const sqlite4_value *pOrig){
+  sqlite4_value *pNew;
+  if( pOrig==0 ) return 0;
+  pNew = sqlite4_malloc(pEnv, sizeof(*pNew) );
+  if( pNew==0 ) return 0;
+  memset(pNew, 0, sizeof(*pNew));
+  memcpy(pNew, pOrig, MEMCELLSIZE);
+  pNew->flags &= ~MEM_Dyn;
+  pNew->db = 0;
+  if( pNew->flags&(MEM_Str|MEM_Blob) ){
+    pNew->flags &= ~(MEM_Static|MEM_Dyn);
+    pNew->flags |= MEM_Ephem;
+    if( sqlite4VdbeMemMakeWriteable(pNew)!=SQLITE_OK ){
+      sqlite4ValueFree(pNew);
+      pNew = 0;
+    }
+  }else if( pNew->flags & MEM_Null ){
+    /* Do not duplicate pointer values */
+    pNew->flags &= ~(MEM_Term|MEM_Subtype);
+  }
+  return pNew;
+}
+
+/* Destroy an sqlite4_value object previously obtained from
+** sqlite4_value_dup().
+*/
+void sqlite4_value_free(sqlite4_value *pOld){
+  sqlite4ValueFree(pOld);
+}
+
 /**************************** sqlite4_result_  *******************************
 ** The following routines are used by user-defined functions to specify
 ** the function result.

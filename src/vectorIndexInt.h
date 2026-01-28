@@ -221,7 +221,7 @@ int vectorInRowPlaceholderRender(const VectorInRow *, char *, int);
 void vectorInRowFree(sqlite3 *, VectorInRow *);
 
 int vectorOutRowsAlloc(sqlite3 *, VectorOutRows *, int, int, int);
-int vectorOutRowsPut(VectorOutRows *, int, int, const u64 *, sqlite3_value *);
+int vectorOutRowsPut(VectorOutRows *, int, int, const u64 *, sqlite3_value *, sqlite3 *);
 void vectorOutRowsGet(sqlite3_context *, const VectorOutRows *, int, int);
 void vectorOutRowsFree(sqlite3 *, VectorOutRows *);
 

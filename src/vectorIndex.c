@@ -23,10 +23,13 @@
 ******************************************************************************
 **
 ** libSQL vector search.
-** [koreauniv]
-** 1. sqlite3ErrorMsg -> sqlite4ErrorMsg
-** 2. sqlite3StrIcmp, sqlite3_strnicmp -> sqlite4_stricmp
-** 3. 
+** [koreauniv TODOs]
+** 1. qlite3_value_dup -> sqlite4_value_dup (sqlite4 전체 복사 코드) (임시완료)
+** 2. qlite3_value_free -> sqlite4_value_free (value_dup으로 만든 것 없애는 코드) (임시완료)
+** 3. qlite3AtoF -> sqlite4AtoF (임시완료)
+** 4. qlite3ColumnType -> sqlite4ColumnType (임시완료)
+** 5. qlite3BtreeEnter(Leave) -> sqlite4BtreeEnter(Leave) (임시완료) lsmMutexEnter, lsmMutexLeave
+** 6. 작동 시범 필요
 */
 #ifndef SQLITE_OMIT_VECTOR
 #include "sqlite4.h"
@@ -312,7 +315,7 @@ int vectorOutRowsAlloc(sqlite4 *db, VectorOutRows *pRows, int nRows, int nCols, 
   return SQLITE_OK;
 }
 
-int vectorOutRowsPut(VectorOutRows *pRows, int iRow, int iCol, const u64 *pInt, sqlite4_value *pValue) {
+int vectorOutRowsPut(VectorOutRows *pRows, int iRow, int iCol, const u64 *pInt, sqlite4_value *pValue, sqlite4 *db) {
   sqlite4_value *pCopy;
   assert( 0 <= iRow && iRow < pRows->nRows );
   assert( 0 <= iCol && iCol < pRows->nCols );
@@ -329,7 +332,7 @@ int vectorOutRowsPut(VectorOutRows *pRows, int iRow, int iCol, const u64 *pInt, 
     pRows->aIntValues[iRow] = sqlite4_value_int64(pValue);
   }else{
     // pValue can be unprotected and we must own sqlite3_value* - so we are making copy of it
-    pCopy = sqlite3_value_dup(pValue); //[koreauniv TODO] sqlite4_value_dup 만들기
+    pCopy = sqlite4_value_dup(db->pEnv, pValue); //[koreauniv TODO] sqlite4_value_dup 만들기
     if( pCopy == NULL ){
       return SQLITE_NOMEM_BKPT;
     }
@@ -361,7 +364,7 @@ void vectorOutRowsFree(sqlite4 *db, VectorOutRows *pRows) {
   }else if( pRows->ppValues != NULL ){
     for(i = 0; i < pRows->nRows * pRows->nCols; i++){
       if( pRows->ppValues[i] != NULL ){
-        sqlite3_value_free(pRows->ppValues[i]); //[koreauniv TODO] sqlite4_value_free 만들기
+        sqlite4_value_free(pRows->ppValues[i]); //[koreauniv TODO] sqlite4_value_free 만들기
       }
     }
     sqlite4DbFree(db, pRows->ppValues);
@@ -899,7 +902,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName, co
   }
   assert( iEmbeddingColumn >= 0 && iEmbeddingColumn < pTable->nCol );
 
-  zEmbeddingColumnTypeName = sqlite3ColumnType(&pTable->aCol[iEmbeddingColumn], ""); //[koreauniv TODO] sqlite3ColumnType 만들기
+  zEmbeddingColumnTypeName = sqlite4ColumnType(&pTable->aCol[iEmbeddingColumn], ""); //[koreauniv TODO] sqlite4ColumnType 만들기
   if( vectorIdxParseColumnType(zEmbeddingColumnTypeName, &type, &dims, &pzErrMsg) != 0 ){
     sqlite4ErrorMsg(pParse, "vector index: %s: %s", pzErrMsg, zEmbeddingColumnTypeName);
     return CREATE_FAIL;
@@ -1073,7 +1076,7 @@ int vectorIndexSearch(
     // this code is necessary, otherwise sqlite3SchemaMutexHeld assert will fail
     if( iDb !=1 ){
       // not "main" DB which we already hold mutex for
-      sqlite3BtreeEnter(db->aDb[iDb].pBt); //[koreauniv TODO] sqlite3BtreeEnter -> lsm tree 사용으로 바꾸기
+      lsmMutexEnter(db->aDb[iDb].pBt); //[koreauniv TODO] sqlite3BtreeEnter -> lsmMutexEnter 사용으로 바꾸기
     }
   }
 
@@ -1111,7 +1114,7 @@ out:
   sqlite4DbFree(db, zIdxNameAlloc);
   sqlite4DbFree(db, zIdxDbSNameAlloc);
   if( iDb >= 0 && iDb != 1 ){
-    sqlite3BtreeLeave(db->aDb[iDb].pBt); //[koreauniv TODO] sqlite3BtreeLeave -> lsm tree 사용으로 바꾸기
+    lsmMutexLeave(db->aDb[iDb].pBt); //[koreauniv TODO] sqlite3BtreeLeave -> lsmMutexLeave 사용으로 바꾸기
   }
   return rc;
 }
