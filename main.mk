@@ -89,6 +89,8 @@ LIBOBJ+= vdbe.o parse.o \
 
 LIBOBJ += bt_unix.o bt_pager.o bt_main.o bt_varint.o kvbt.o bt_lock.o bt_log.o
 
+LIBOBJ += vectorIndex.o
+
 # All of the source code files.
 #
 SRC = \
@@ -186,8 +188,13 @@ SRC = \
   $(TOP)/src/vdbemem.c \
   $(TOP)/src/vdbetrace.c \
   $(TOP)/src/vdbeInt.h \
-  $(TOP)/src/walker.c \
-  $(TOP)/src/where.c
+  $(TOP)/src/walker.c 
+
+# [koreauniv] source code for vector
+SRC += \
+  $(TOP)/src/vectorIndex.c \
+  $(TOP)/src/vectorIndexInt.h \
+  $(TOP)/src/vectorInt.h \
 
 # Source code for extensions
 #
@@ -295,6 +302,11 @@ HDR = \
    $(TOP)/src/sqliteLimit.h \
    $(TOP)/src/vdbe.h \
    $(TOP)/src/vdbeInt.h
+
+# [koreauniv] header files for vector
+HDR += \
+   $(TOP)/src/vectorIndexInt.h \
+   $(TOP)/src/vectorInt.h
 
 EXTHDR = \
   $(TOP)/ext/fts3/fts3.h \
