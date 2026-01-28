@@ -2821,17 +2821,18 @@ Index *sqlite4CreateIndex(
   // [koreauniv] place to add vector index support 
   #ifndef SQLITE_OMIT_VECTOR
     // we want to have complete information about index columns before invocation of vectorIndexCreate method
-    vectorIdxRc = vectorIndexCreate(pParse, pIndex, db->aDb[iDb].zDbSName, pUsing);
-    if( vectorIdxRc < 0 ){
-      goto exit_create_index;
-    }
-    if( vectorIdxRc >= 1 ){
-      pIndex->idxIsVector = 1;
-    }
-    if( vectorIdxRc == 1 ){
-      skipRefill = 1;
-    }
-  #endif
+    printf("Creating vector index\n");
+  //   vectorIdxRc = vectorIndexCreate(pParse, pIndex, db->aDb[iDb].zDbSName, pUsing);
+  //   if( vectorIdxRc < 0 ){
+  //     goto exit_create_index;
+  //   }
+  //   if( vectorIdxRc >= 1 ){
+  //     pIndex->idxIsVector = 1;
+  //   }
+  //   if( vectorIdxRc == 1 ){
+  //     skipRefill = 1;
+  //   }
+  // #endif
 
   /* Scan the names of any covered columns. */
   for(i=0; i<nCover; i++){

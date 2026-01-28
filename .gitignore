@@ -73,3 +73,5 @@ sqlite4.h
 parse.h.temp
 test.db
 
+# vector diskann temporary files
+vector*
