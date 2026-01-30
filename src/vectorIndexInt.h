@@ -2,6 +2,7 @@
 #define _VECTOR_INDEX_H
 
 #include "sqlite4.h"
+#include "vdbeInt.h"
 #include "vectorInt.h"
 
 #ifdef __cplusplus
