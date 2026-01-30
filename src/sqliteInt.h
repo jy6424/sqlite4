@@ -3258,8 +3258,8 @@ void sqlite4Fts5Close(Fts5Cursor *);
 
 // [koreauniv] include for vector
 
-int sqlite4AtoF(const char *z, double *pResult, int length, u8 enc)
-sqlite4_value *sqlite4_value_dup(sqlite4_env *pEnv, const sqlite4_value *pOrig)
+int sqlite4AtoF(const char *z, double *pResult, int length, u8 enc);
+sqlite4_value *sqlite4_value_dup(sqlite4_env *pEnv, const sqlite4_value *pOrig);
 int sqlite4_value_bytes(sqlite4_value *pVal);
 void sqlite4_value_free(sqlite4_value *pOld);
 
