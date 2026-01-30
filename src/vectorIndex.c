@@ -33,8 +33,8 @@
 */
 #ifndef SQLITE_OMIT_VECTOR
 #include "sqlite4.h"
-#include "vdbeInt.h"
 #include "sqliteInt.h"
+#include "vdbeInt.h"
 #include "vectorIndexInt.h"
 
 /*
