@@ -1110,6 +1110,16 @@ struct CollSeq {
 
 #define sqlite4IsNumericAffinity(X)  ((X)>=SQLITE4_AFF_NUMERIC)
 
+
+// [koreauniv] added for vector affinity
+#define SQLITE_AFF_NONE     0x40  /* '@' */
+#define SQLITE_AFF_BLOB     0x41  /* 'A' */
+#define SQLITE_AFF_TEXT     0x42  /* 'B' */
+#define SQLITE_AFF_NUMERIC  0x43  /* 'C' */
+#define SQLITE_AFF_INTEGER  0x44  /* 'D' */
+#define SQLITE_AFF_REAL     0x45  /* 'E' */
+#define SQLITE_AFF_FLEXNUM  0x46  /* 'F' */
+
 /*
 ** The SQLITE4_AFF_MASK values masks off the significant bits of an
 ** affinity value. 
@@ -3245,5 +3255,13 @@ int sqlite4Fts5RowCksum(sqlite4 *, Fts5Info *, Mem *, Mem *, i64 *);
 int sqlite4Fts5Open(sqlite4*, Fts5Info*, const char*, int, Fts5Cursor**,char**);
 int sqlite4Fts5Valid(Fts5Cursor *);
 void sqlite4Fts5Close(Fts5Cursor *);
+
+// [koreauniv] include for vector
+
+int sqlite4AtoF(const char *z, double *pResult, int length, u8 enc)
+sqlite4_value *sqlite4_value_dup(sqlite4_env *pEnv, const sqlite4_value *pOrig)
+int sqlite4_value_bytes(sqlite4_value *pVal);
+void sqlite4_value_free(sqlite4_value *pOld);
+
 
 #endif /* _SQLITEINT_H_ */
