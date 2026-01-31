@@ -245,7 +245,7 @@ typedef struct VectorIdxCursor VectorIdxCursor;
 
 int vectorIdxParseColumnType(const char *, int *, int *, const char **);
 
-int vectorIndexCreate(Parse*, const Index*, const char *, const IdList*);
+int vectorIndexCreate(Parse*, const Index*, const char *);
 int vectorIndexClear(sqlite4 *, const char *, const char *);
 int vectorIndexDrop(sqlite4 *, const char *, const char *);
 
