@@ -1386,6 +1386,11 @@ struct Index {
   tRowcnt avgEq;           /* Average nEq value for key values not in aSample */
   IndexSample *aSample;    /* Samples of the left-most key */
 #endif
+// [koreauniv] added for vector index
+#ifndef SQLITE4_OMIT_VECTOR
+  ExprList *aColExpr;   /* Expression list for index columns (if any) */
+#endif
+
   Fts5Index *pFts; /* Fts5 data (or NULL if this is not an fts index) */
 
   unsigned bUnordered:1;   /* Use this index for == or IN queries only */
@@ -3262,6 +3267,7 @@ int sqlite4AtoF(const char *z, double *pResult, int length, u8 enc);
 sqlite4_value *sqlite4_value_dup(sqlite4_env *pEnv, const sqlite4_value *pOrig);
 int sqlite4_value_bytes(sqlite4_value *pVal);
 void sqlite4_value_free(sqlite4_value *pOld);
+const char *sqlite4ColumnType(const Column *pCol, const char *zDflt)
 
 
 #endif /* _SQLITEINT_H_ */
