@@ -154,7 +154,7 @@ int vectorIdxKeyDefsRender(const VectorIdxKey *pKey, const char *prefix, char *p
   int i, size;
   for(i = 0; i < pKey->nKeyColumns && nBufSize > 0; i++){
     const char *collation = pKey->azKeyCollation[i];
-    if( sqlite4_stricmp(collation, "BINARY", 6) == 0 ){
+    if( sqlite4_strnicmp(collation, "BINARY", 6) == 0 ){
       collation = "";
     }
     if( i == 0 ){
@@ -438,7 +438,7 @@ static int parseVectorIdxParam(const char *zParam, VectorIdxParams *pParams, con
   zValue = zParam + iDelimiter + 1;
   nValueLen = sqlite4Strlen30(zValue);
   for(i = 0; i < ArraySize(VECTOR_PARAM_NAMES); i++){
-    if( iDelimiter != strlen(VECTOR_PARAM_NAMES[i].zName) || sqlite4_stricmp(VECTOR_PARAM_NAMES[i].zName, zParam, iDelimiter) != 0 ){
+    if( iDelimiter != strlen(VECTOR_PARAM_NAMES[i].zName) || sqlite4_strnicmp(VECTOR_PARAM_NAMES[i].zName, zParam, iDelimiter) != 0 ){
       continue;
     }
     if( VECTOR_PARAM_NAMES[i].type == 1 ){
@@ -469,7 +469,7 @@ static int parseVectorIdxParam(const char *zParam, VectorIdxParams *pParams, con
       }
       return 0;
     }else if( VECTOR_PARAM_NAMES[i].type == 0 ){
-      if( sqlite4_stricmp(VECTOR_PARAM_NAMES[i].zValueStr, zValue, nValueLen) == 0 ){
+      if( sqlite4_strnicmp(VECTOR_PARAM_NAMES[i].zValueStr, zValue, nValueLen) == 0 ){
         if( vectorIdxParamsPutU64(pParams, VECTOR_PARAM_NAMES[i].tag, VECTOR_PARAM_NAMES[i].value) != 0 ){
           *pErrMsg = "unable to serialize vector index parameter";
           return -1;
@@ -547,7 +547,7 @@ int vectorIdxParseColumnType(const char *zType, int *pType, int *pDims, const ch
   for(i = 0; i < ArraySize(VECTOR_COLUMN_TYPES); i++){
     const char* name = VECTOR_COLUMN_TYPES[i].zName;
     const char* zTypePtr = zType + strlen(name);
-    if( sqlite4_stricmp(zType, name, strlen(name)) != 0 ){
+    if( sqlite4_strnicmp(zType, name, strlen(name)) != 0 ){
       continue;
     }
     skipSpaces(&zTypePtr);
@@ -982,215 +982,218 @@ int getIndexNameParts(sqlite4 *db, const char *zIdxFullName, char **pzIdxDbSName
   return SQLITE4_OK;
 }
 
-int vectorIndexSearch(
-  sqlite4 *db,
-  int argc,
-  sqlite4_value **argv,
-  VectorOutRows *pRows,
-  int *nReads,
-  int *nWrites,
-  char **pzErrMsg
-) {
-  int type, dims, k, rc, iDb = -1;
-  double kDouble;
-  const char *zIdxFullName;
-  char *zIdxDbSNameAlloc = NULL;  // allocated managed schema name string - must be freed if not null 
-  char *zIdxNameAlloc = NULL;     // allocated managed index name string - must be freed if not null
-  const char *zIdxDbSName = NULL; // schema name of the index (can be static in cases where explicit schema is omitted - so must not be freed)
-  const char *zIdxName = NULL;    // index name (can be extracted with sqlite3_value_text and managed by SQLite - so must not be freed)
-  const char *zErrMsg;
-  Vector *pVector = NULL;
-  DiskAnnIndex *pDiskAnn = NULL;
-  Index *pIndex;
-  VectorIdxKey pKey;
-  VectorIdxParams idxParams;
-  vectorIdxParamsInit(&idxParams, NULL, 0);
+// [koreauniv TODO] TBD: vectorIndexSearch 구현하기
+// int vectorIndexSearch(
+//   sqlite4 *db,
+//   int argc,
+//   sqlite4_value **argv,
+//   VectorOutRows *pRows,
+//   int *nReads,
+//   int *nWrites,
+//   char **pzErrMsg
+// ) {
+//   int type, dims, k, rc, iDb = -1;
+//   double kDouble;
+//   const char *zIdxFullName;
+//   char *zIdxDbSNameAlloc = NULL;  // allocated managed schema name string - must be freed if not null 
+//   char *zIdxNameAlloc = NULL;     // allocated managed index name string - must be freed if not null
+//   const char *zIdxDbSName = NULL; // schema name of the index (can be static in cases where explicit schema is omitted - so must not be freed)
+//   const char *zIdxName = NULL;    // index name (can be extracted with sqlite3_value_text and managed by SQLite - so must not be freed)
+//   const char *zErrMsg;
+//   Vector *pVector = NULL;
+//   DiskAnnIndex *pDiskAnn = NULL;
+//   Index *pIndex;
+//   VectorIdxKey pKey;
+//   VectorIdxParams idxParams;
+//   vectorIdxParamsInit(&idxParams, NULL, 0);
 
-  if( argc != 3 ){
-    *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): got %d parameters, expected 3", argc);
-    rc = SQLITE4_ERROR;
-    goto out;
-  }
-  if( detectVectorParameters(argv[1], VECTOR_TYPE_FLOAT32, &type, &dims, pzErrMsg) != 0 ){
-    rc = SQLITE4_ERROR;
-    goto out;
-  }
+//   if( argc != 3 ){
+//     *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): got %d parameters, expected 3", argc);
+//     rc = SQLITE4_ERROR;
+//     goto out;
+//   }
+//   if( detectVectorParameters(argv[1], VECTOR_TYPE_FLOAT32, &type, &dims, pzErrMsg) != 0 ){
+//     rc = SQLITE4_ERROR;
+//     goto out;
+//   }
 
-  pVector = vectorAlloc(type, dims);
-  if( pVector == NULL ){
-    rc = SQLITE4_NOMEM;
-    goto out;
-  }
-  if( vectorParseWithType(argv[1], pVector, pzErrMsg) != 0 ){
-    rc = SQLITE4_ERROR;
-    goto out;
-  }
-  if( sqlite4_value_type(argv[2]) == SQLITE4_INTEGER ){
-    k = sqlite4_value_int(argv[2]);
-    if( k < 0 ){
-      *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): third parameter (k) must be a non-negative integer, but negative value were provided");
-      rc = SQLITE4_ERROR;
-      goto out;
-    }
-  }else if( sqlite4_value_type(argv[2]) == SQLITE4_FLOAT ) {
-    kDouble = sqlite4_value_double(argv[2]);
-    k = (int)kDouble;
-    if( (double)k != kDouble ){
-      *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): third parameter (k) must be an integer, but float value were provided");
-      rc = SQLITE4_ERROR;
-      goto out;
-    }
-    if( k < 0 ){
-      *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): third parameter (k) must be a non-negative integer, but negative value were provided");
-      rc = SQLITE4_ERROR;
-      goto out;
-    }
-  }else{
-    *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): third parameter (k) must be an integer, but unexpected type of value were provided");
-    rc = SQLITE4_ERROR;
-    goto out;
-  }
+//   pVector = vectorAlloc(type, dims);
+//   if( pVector == NULL ){
+//     rc = SQLITE4_NOMEM;
+//     goto out;
+//   }
+//   if( vectorParseWithType(argv[1], pVector, pzErrMsg) != 0 ){
+//     rc = SQLITE4_ERROR;
+//     goto out;
+//   }
+//   if( sqlite4_value_type(argv[2]) == SQLITE4_INTEGER ){
+//     k = sqlite4_value_int(argv[2]);
+//     if( k < 0 ){
+//       *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): third parameter (k) must be a non-negative integer, but negative value were provided");
+//       rc = SQLITE4_ERROR;
+//       goto out;
+//     }
+//   }else if( sqlite4_value_type(argv[2]) == SQLITE4_FLOAT ) {
+//     kDouble = sqlite4_value_double(argv[2]);
+//     k = (int)kDouble;
+//     if( (double)k != kDouble ){
+//       *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): third parameter (k) must be an integer, but float value were provided");
+//       rc = SQLITE4_ERROR;
+//       goto out;
+//     }
+//     if( k < 0 ){
+//       *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): third parameter (k) must be a non-negative integer, but negative value were provided");
+//       rc = SQLITE4_ERROR;
+//       goto out;
+//     }
+//   }else{
+//     *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): third parameter (k) must be an integer, but unexpected type of value were provided");
+//     rc = SQLITE4_ERROR;
+//     goto out;
+//   }
 
-  if( sqlite4_value_type(argv[0]) != SQLITE4_TEXT ){
-    *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): first parameter (index) must be a string");
-    rc = SQLITE4_ERROR;
-    goto out;
-  }
-  zIdxFullName = (const char*)sqlite4_value_text(argv[0]);
-  rc = getIndexNameParts(db, zIdxFullName, &zIdxDbSNameAlloc, &zIdxNameAlloc);
-  if( rc != SQLITE4_OK ){
-    *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): failed to parse index name");
-    goto out;
-  }
-  assert( (zIdxDbSNameAlloc == NULL && zIdxNameAlloc == NULL) || (zIdxDbSNameAlloc != NULL && zIdxNameAlloc != NULL) );
-  if( zIdxDbSNameAlloc == NULL && zIdxNameAlloc == NULL ){
-    zIdxDbSName = "main";
-    zIdxName = zIdxFullName;
-  } else{
-    zIdxDbSName = zIdxDbSNameAlloc;
-    zIdxName = zIdxNameAlloc;
-    iDb = sqlite4FindDbName(db, zIdxDbSName);
-    if( iDb < 0 ){
-      *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): unknown schema '%s'", zIdxDbSName);
-      rc = SQLITE4_ERROR;
-      goto out;
-    }
-    // we need to hold mutex to protect schema against unwanted changes
-    // this code is necessary, otherwise sqlite3SchemaMutexHeld assert will fail
-    if( iDb !=1 ){
-      // not "main" DB which we already hold mutex for
-      lsmMutexEnter(db->aDb[iDb].pBt); //[koreauniv TODO] sqlite3BtreeEnter -> lsmMutexEnter 사용으로 바꾸기
-    }
-  }
+//   if( sqlite4_value_type(argv[0]) != SQLITE4_TEXT ){
+//     *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): first parameter (index) must be a string");
+//     rc = SQLITE4_ERROR;
+//     goto out;
+//   }
+//   zIdxFullName = (const char*)sqlite4_value_text(argv[0]);
+//   rc = getIndexNameParts(db, zIdxFullName, &zIdxDbSNameAlloc, &zIdxNameAlloc);
+//   if( rc != SQLITE4_OK ){
+//     *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): failed to parse index name");
+//     goto out;
+//   }
+//   assert( (zIdxDbSNameAlloc == NULL && zIdxNameAlloc == NULL) || (zIdxDbSNameAlloc != NULL && zIdxNameAlloc != NULL) );
+//   if( zIdxDbSNameAlloc == NULL && zIdxNameAlloc == NULL ){
+//     zIdxDbSName = "main";
+//     zIdxName = zIdxFullName;
+//   } else{
+//     zIdxDbSName = zIdxDbSNameAlloc;
+//     zIdxName = zIdxNameAlloc;
+//     iDb = sqlite4FindDbName(db, zIdxDbSName);
+//     if( iDb < 0 ){
+//       *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): unknown schema '%s'", zIdxDbSName);
+//       rc = SQLITE4_ERROR;
+//       goto out;
+//     }
+//     // we need to hold mutex to protect schema against unwanted changes
+//     // this code is necessary, otherwise sqlite3SchemaMutexHeld assert will fail
+//     if( iDb !=1 ){
+//       // not "main" DB which we already hold mutex for
+//       lsmMutexEnter(db->aDb[iDb].pBt); //[koreauniv TODO] sqlite3BtreeEnter -> lsmMutexEnter 사용으로 바꾸기
+//     }
+//   }
 
-  if( vectorIndexGetParameters(db, zIdxDbSName, zIdxName, &idxParams) != 0 ){
-    *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): failed to parse vector index parameters");
-    rc = SQLITE4_ERROR;
-    goto out;
-  }
-  pIndex = sqlite4FindIndex(db, zIdxName, zIdxDbSName);
-  if( pIndex == NULL ){
-    *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): index not found");
-    rc = SQLITE4_ERROR;
-    goto out;
-  }
-  rc = diskAnnOpenIndex(db, zIdxDbSName, zIdxName, &idxParams, &pDiskAnn);
-  if( rc != SQLITE4_OK ){
-    *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): failed to open diskann index");
-    goto out;
-  }
-  if( vectorIdxKeyGet(pIndex, &pKey, &zErrMsg) != 0 ){
-    *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): failed to extract table key: %s", zErrMsg);
-    rc = SQLITE4_ERROR;
-    goto out;
-  }
-  rc = diskAnnSearch(pDiskAnn, pVector, k, &pKey, pRows, pzErrMsg);
-out:
-  if( pDiskAnn != NULL ){
-    *nReads += pDiskAnn->nReads;
-    *nWrites += pDiskAnn->nWrites;
-    diskAnnCloseIndex(pDiskAnn);
-  }
-  if( pVector != NULL ){
-    vectorFree(pVector);
-  }
-  sqlite4DbFree(db, zIdxNameAlloc);
-  sqlite4DbFree(db, zIdxDbSNameAlloc);
-  if( iDb >= 0 && iDb != 1 ){
-    lsmMutexLeave(db->aDb[iDb].pBt); //[koreauniv TODO] sqlite3BtreeLeave -> lsmMutexLeave 사용으로 바꾸기
-  }
-  return rc;
-}
+//   if( vectorIndexGetParameters(db, zIdxDbSName, zIdxName, &idxParams) != 0 ){
+//     *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): failed to parse vector index parameters");
+//     rc = SQLITE4_ERROR;
+//     goto out;
+//   }
+//   pIndex = sqlite4FindIndex(db, zIdxName, zIdxDbSName);
+//   if( pIndex == NULL ){
+//     *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): index not found");
+//     rc = SQLITE4_ERROR;
+//     goto out;
+//   }
+//   rc = diskAnnOpenIndex(db, zIdxDbSName, zIdxName, &idxParams, &pDiskAnn);
+//   if( rc != SQLITE4_OK ){
+//     *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): failed to open diskann index");
+//     goto out;
+//   }
+//   if( vectorIdxKeyGet(pIndex, &pKey, &zErrMsg) != 0 ){
+//     *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): failed to extract table key: %s", zErrMsg);
+//     rc = SQLITE4_ERROR;
+//     goto out;
+//   }
+//   rc = diskAnnSearch(pDiskAnn, pVector, k, &pKey, pRows, pzErrMsg);
+// out:
+//   if( pDiskAnn != NULL ){
+//     *nReads += pDiskAnn->nReads;
+//     *nWrites += pDiskAnn->nWrites;
+//     diskAnnCloseIndex(pDiskAnn);
+//   }
+//   if( pVector != NULL ){
+//     vectorFree(pVector);
+//   }
+//   sqlite4DbFree(db, zIdxNameAlloc);
+//   sqlite4DbFree(db, zIdxDbSNameAlloc);
+//   if( iDb >= 0 && iDb != 1 ){
+//     lsmMutexLeave(db->aDb[iDb].pBt); //[koreauniv TODO] sqlite3BtreeLeave -> lsmMutexLeave 사용으로 바꾸기
+//   }
+//   return rc;
+// }
 
-int vectorIndexInsert(
-  VectorIdxCursor *pCur,
-  const UnpackedRecord *pRecord,
-  char **pzErrMsg
-){
-  int rc;
-  VectorInRow vectorInRow;
+// [koreauniv TODO] TBD: vectorIndexSearch 구현하기
+// int vectorIndexInsert(
+//   VectorIdxCursor *pCur,
+//   const UnpackedRecord *pRecord,
+//   char **pzErrMsg
+// ){
+//   int rc;
+//   VectorInRow vectorInRow;
 
-  rc = vectorInRowAlloc(pCur->db, pRecord, &vectorInRow, pzErrMsg);
-  if( rc != SQLITE4_OK ){
-    return rc;
-  }
-  if( vectorInRow.pVector == NULL ){
-    return SQLITE4_OK;
-  }
-  rc = diskAnnInsert(pCur->pIndex, &vectorInRow, pzErrMsg);
-  vectorInRowFree(pCur->db, &vectorInRow);
-  return rc;
-}
+//   rc = vectorInRowAlloc(pCur->db, pRecord, &vectorInRow, pzErrMsg);
+//   if( rc != SQLITE4_OK ){
+//     return rc;
+//   }
+//   if( vectorInRow.pVector == NULL ){
+//     return SQLITE4_OK;
+//   }
+//   rc = diskAnnInsert(pCur->pIndex, &vectorInRow, pzErrMsg);
+//   vectorInRowFree(pCur->db, &vectorInRow);
+//   return rc;
+// }
 
-int vectorIndexDelete(
-  VectorIdxCursor *pCur,
-  const UnpackedRecord *r,
-  char **pzErrMsg
-){
-  VectorInRow payload;
+// [koreauniv TODO] TBD: vectorIndexDelete 구현하기
+// int vectorIndexDelete(
+//   VectorIdxCursor *pCur,
+//   const UnpackedRecord *r,
+//   char **pzErrMsg
+// ){
+//   VectorInRow payload;
 
-  payload.pVector = NULL;
-  payload.nKeys = r->nField - 1;
-  payload.pKeyValues = r->aMem + 1;
-  return diskAnnDelete(pCur->pIndex, &payload, pzErrMsg);
-}
+//   payload.pVector = NULL;
+//   payload.nKeys = r->nField - 1;
+//   payload.pKeyValues = r->aMem + 1;
+//   return diskAnnDelete(pCur->pIndex, &payload, pzErrMsg);
+// }
 
-int vectorIndexCursorInit(
-  sqlite4 *db,
-  const char *zDbSName,
-  const char *zIndexName,
-  VectorIdxCursor **ppCursor
-){
-  int rc;
-  VectorIdxCursor* pCursor;
-  VectorIdxParams params;
-  vectorIdxParamsInit(&params, NULL, 0);
+// int vectorIndexCursorInit(
+//   sqlite4 *db,
+//   const char *zDbSName,
+//   const char *zIndexName,
+//   VectorIdxCursor **ppCursor
+// ){
+//   int rc;
+//   VectorIdxCursor* pCursor;
+//   VectorIdxParams params;
+//   vectorIdxParamsInit(&params, NULL, 0);
 
-  assert( zDbSName != NULL );
+//   assert( zDbSName != NULL );
 
-  if( vectorIndexGetParameters(db, zDbSName, zIndexName, &params) != 0 ){
-    return SQLITE4_ERROR;
-  }
-  pCursor = sqlite4DbMallocZero(db, sizeof(VectorIdxCursor));
-  if( pCursor == 0 ){
-    return SQLITE4_NOMEM;
-  }
-  rc = diskAnnOpenIndex(db, zDbSName, zIndexName, &params, &pCursor->pIndex);
-  if( rc != SQLITE4_OK ){
-    sqlite4DbFree(db, pCursor);
-    return rc;
-  }
-  pCursor->db = db;
-  *ppCursor = pCursor;
-  return SQLITE4_OK;
-}
+//   if( vectorIndexGetParameters(db, zDbSName, zIndexName, &params) != 0 ){
+//     return SQLITE4_ERROR;
+//   }
+//   pCursor = sqlite4DbMallocZero(db, sizeof(VectorIdxCursor));
+//   if( pCursor == 0 ){
+//     return SQLITE4_NOMEM;
+//   }
+//   rc = diskAnnOpenIndex(db, zDbSName, zIndexName, &params, &pCursor->pIndex);
+//   if( rc != SQLITE4_OK ){
+//     sqlite4DbFree(db, pCursor);
+//     return rc;
+//   }
+//   pCursor->db = db;
+//   *ppCursor = pCursor;
+//   return SQLITE4_OK;
+// }
 
-void vectorIndexCursorClose(sqlite4 *db, VectorIdxCursor *pCursor, int *nReads, int *nWrites){
-  *nReads = pCursor->pIndex->nReads;
-  *nWrites = pCursor->pIndex->nWrites;
+// void vectorIndexCursorClose(sqlite4 *db, VectorIdxCursor *pCursor, int *nReads, int *nWrites){
+//   *nReads = pCursor->pIndex->nReads;
+//   *nWrites = pCursor->pIndex->nWrites;
 
-  diskAnnCloseIndex(pCursor->pIndex);
-  sqlite4DbFree(db, pCursor);
-}
+//   diskAnnCloseIndex(pCursor->pIndex);
+//   sqlite4DbFree(db, pCursor);
+// }
 
 #endif /* !defined(SQLITE_OMIT_VECTOR) */
