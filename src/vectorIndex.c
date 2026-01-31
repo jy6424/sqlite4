@@ -289,9 +289,9 @@ int vectorInRowPlaceholderRender(const VectorInRow *pVectorInRow, char *pBuf, in
 //   return rc;
 // }
 
-void vectorInRowFree(sqlite4 *db, VectorInRow *pVectorInRow) {
-  vectorFree(pVectorInRow->pVector);
-}
+// void vectorInRowFree(sqlite4 *db, VectorInRow *pVectorInRow) {
+//   vectorFree(pVectorInRow->pVector);
+// }
 
 /**************************************************************************
 ** VectorOutRows utilities
