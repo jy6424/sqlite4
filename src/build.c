@@ -2821,7 +2821,7 @@ Index *sqlite4CreateIndex(
   #ifndef SQLITE_OMIT_VECTOR
     // we want to have complete information about index columns before invocation of vectorIndexCreate method
     printf("Creating vector index\n");
-    vectorIdxRc = vectorIndexCreate(pParse, pIndex, db->aDb[iDb].zDbSName, pUsing);
+    vectorIdxRc = vectorIndexCreate(pParse, pIndex, db->aDb[iDb].zName);
     if( vectorIdxRc < 0 ){
       goto exit_create_index;
     }

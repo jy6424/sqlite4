@@ -835,7 +835,7 @@ int vectorIndexGetParameters(
  * 3. if vector index must be created but refill must be skipped  : 1 returned
  * 4. if vector index must be created and refilled from base table: 2 returned
 */
-int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName, const IdList *pUsing) {
+int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
   static const int CREATE_FAIL = -1;
   static const int CREATE_IGNORE = 0;
   static const int CREATE_OK_SKIP_REFILL = 1;
@@ -866,7 +866,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName, co
   // }
 
   // backward compatibility: preserve old indices with deprecated syntax but forbid creation of new indices with this syntax
-  if( pParse->db->init.busy == 0 && pUsing != NULL ){
+  if( pParse->db->init.busy == 0){
     if( pIdx->zName != NULL && pTable->zName != NULL && pIdx->nColumn >= 1 && pIdx->aiColumn != NULL && pIdx->aiColumn[0] < pTable->nCol ){
       sqlite4ErrorMsg(pParse, "vector index: USING syntax is deprecated, please use plain CREATE INDEX: CREATE INDEX %s ON %s ( " VECTOR_INDEX_MARKER_FUNCTION "(%s) )", pIdx->zName, pTable->zName, pTable->aCol[pIdx->aiColumn[0]].zName);
     } else {
@@ -874,7 +874,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName, co
     }
     return CREATE_FAIL;
   }
-  if( db->init.busy == 1 && pUsing != NULL ){
+  if( db->init.busy == 1){
     return CREATE_OK;
   }
 
