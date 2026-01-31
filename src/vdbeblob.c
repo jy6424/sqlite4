@@ -72,7 +72,7 @@ static int blobSeekToRow(Incrblob *p, sqlite4_int64 iRow, char **pzErr){
   }else{
     rc = sqlite4_step(p->pStmt);
   }
-  if( rc==SQLITE_ROW ){
+  if( rc==SQLITE4_ROW ){
     VdbeCursor *pC = v->apCsr[0];
     u32 type;
     assert( pC!=0 );
@@ -84,7 +84,7 @@ static int blobSeekToRow(Incrblob *p, sqlite4_int64 iRow, char **pzErr){
       zErr = sqlite4MPrintf(p->db, "cannot open value of type %s",
           type==0?"null": type==7?"real": "integer"
       );
-      rc = SQLITE_ERROR;
+      rc = SQLITE4_ERROR;
       sqlite4_finalize(p->pStmt);
       p->pStmt = 0;
     }else{
@@ -95,21 +95,21 @@ static int blobSeekToRow(Incrblob *p, sqlite4_int64 iRow, char **pzErr){
     }
   }
 
-  if( rc==SQLITE_ROW ){
-    rc = SQLITE_OK;
+  if( rc==SQLITE4_ROW ){
+    rc = SQLITE4_OK;
   }else if( p->pStmt ){
     rc = sqlite4_finalize(p->pStmt);
     p->pStmt = 0;
-    if( rc==SQLITE_OK ){
+    if( rc==SQLITE4_OK ){
       zErr = sqlite4MPrintf(p->db, "no such rowid: %lld", iRow);
-      rc = SQLITE_ERROR;
+      rc = SQLITE4_ERROR;
     }else{
       zErr = sqlite4MPrintf(p->db, "%s", sqlite4_errmsg(p->db));
     }
   }
 
-  assert( rc!=SQLITE_OK || zErr==0 );
-  assert( rc!=SQLITE_ROW && rc!=SQLITE_DONE );
+  assert( rc!=SQLITE4_OK || zErr==0 );
+  assert( rc!=SQLITE4_ROW && rc!=SQLITE4_DONE );
 
   *pzErr = zErr;
   return rc;
@@ -129,7 +129,7 @@ int sqlite4_blob_open(
 ){
   int nAttempt = 0;
   int iCol;               /* Index of zColumn in row-record */
-  int rc = SQLITE_OK;
+  int rc = SQLITE4_OK;
   char *zErr = 0;
   Table *pTab;
   Incrblob *pBlob = 0;
@@ -137,13 +137,13 @@ int sqlite4_blob_open(
 
 #ifdef SQLITE_ENABLE_API_ARMOR
   if( ppBlob==0 ){
-    return SQLITE_MISUSE_BKPT;
+    return SQLITE4_MISUSE_BKPT;
   }
 #endif
   *ppBlob = 0;
 #ifdef SQLITE_ENABLE_API_ARMOR
   if( !sqlite4SafetyCheckOk(db) || zTable==0 || zColumn==0 ){
-    return SQLITE_MISUSE_BKPT;
+    return SQLITE4_MISUSE_BKPT;
   }
 #endif
   wrFlag = !!wrFlag;                /* wrFlag = (wrFlag ? 1 : 0); */
@@ -179,23 +179,23 @@ int sqlite4_blob_open(
         zErr = sParse.zErrMsg;
         sParse.zErrMsg = 0;
       }
-      rc = SQLITE_ERROR;
+      rc = SQLITE4_ERROR;
       sqlite4BtreeLeaveAll(db); // [koreauniv] 수정필요
       goto blob_open_out;
     }
     pBlob->pTab = pTab;
-    pBlob->zDb = db->aDb[sqlite4SchemaToIndex(db, pTab->pSchema)].zDbSName;
+    pBlob->zDb = db->aDb[sqlite4SchemaToIndex(db, pTab->pSchema)].zName;
 
     /* Now search pTab for the exact column. */
     for(iCol=0; iCol<pTab->nCol; iCol++) {
-      if( sqlite4StrICmp(pTab->aCol[iCol].zCnName, zColumn)==0 ){
+      if( sqlite4_stricmp(pTab->aCol[iCol].zCnName, zColumn)==0 ){
         break;
       }
     }
     if( iCol==pTab->nCol ){
       sqlite4DbFree(db, zErr);
       zErr = sqlite4MPrintf(db, "no such column: \"%s\"", zColumn);
-      rc = SQLITE_ERROR;
+      rc = SQLITE4_ERROR;
       sqlite4BtreeLeaveAll(db); // [koreauniv] 수정필요
       goto blob_open_out;
     }
@@ -207,7 +207,7 @@ int sqlite4_blob_open(
       const char *zFault = 0;
       Index *pIdx;
 #ifndef SQLITE_OMIT_FOREIGN_KEY
-      if( db->flags&SQLITE_ForeignKeys ){
+      if( db->flags&SQLITE4_ForeignKeys ){
         /* Check that the column is not part of an FK child key definition. It
         ** is not necessary to check if it is part of a parent key, as parent
         ** key columns must be indexed. The check below will pick up this 
@@ -236,7 +236,7 @@ int sqlite4_blob_open(
       if( zFault ){
         sqlite4DbFree(db, zErr);
         zErr = sqlite4MPrintf(db, "cannot open %s column for writing", zFault);
-        rc = SQLITE_ERROR;
+        rc = SQLITE4_ERROR;
         sqlite4BtreeLeaveAll(db); // [koreauniv] 수정필요
         goto blob_open_out;
       }
@@ -330,12 +330,12 @@ int sqlite4_blob_open(
       goto blob_open_out;
     }
     rc = blobSeekToRow(pBlob, iRow, &zErr);
-    if( (++nAttempt)>=SQLITE_MAX_SCHEMA_RETRY || rc!=SQLITE_SCHEMA ) break;
+    if( (++nAttempt)>=SQLITE4_MAX_SCHEMA_RETRY || rc!=SQLITE4_SCHEMA ) break;
     sqlite4ParseObjectReset(&sParse); // [koreauniv] 수정필요
   }
 
 blob_open_out:
-  if( rc==SQLITE_OK && db->mallocFailed==0 ){
+  if( rc==SQLITE4_OK && db->mallocFailed==0 ){
     *ppBlob = (sqlite4_blob *)pBlob;
   }else{
     if( pBlob && pBlob->pStmt ) sqlite4VdbeFinalize((Vdbe *)pBlob->pStmt);
@@ -366,7 +366,7 @@ int sqlite4_blob_close(sqlite4_blob *pBlob){
     sqlite4_mutex_leave(db->mutex);
     rc = sqlite4_finalize(pStmt);
   }else{
-    rc = SQLITE_OK;
+    rc = SQLITE4_OK;
   }
   return rc;
 }
@@ -386,19 +386,19 @@ static int blobReadWrite(
   Vdbe *v;
   sqlite4 *db;
 
-  if( p==0 ) return SQLITE_MISUSE_BKPT;
+  if( p==0 ) return SQLITE4_MISUSE_BKPT;
   db = p->db;
   sqlite4_mutex_enter(db->mutex);
   v = (Vdbe*)p->pStmt;
 
   if( n<0 || iOffset<0 || ((sqlite4_int64)iOffset+n)>p->nByte ){
     /* Request is out of range. Return a transient error. */
-    rc = SQLITE_ERROR;
+    rc = SQLITE4_ERROR;
   }else if( v==0 ){
     /* If there is no statement handle, then the blob-handle has
     ** already been invalidated. Return SQLITE_ABORT in this case.
     */
-    rc = SQLITE_ABORT;
+    rc = SQLITE4_ABORT;
   }else{
     /* Call either BtreeData() or BtreePutData(). If SQLITE_ABORT is
     ** returned, clean-up the statement handle.
@@ -426,14 +426,14 @@ static int blobReadWrite(
       assert( v->apCsr[0]!=0 );
       assert( v->apCsr[0]->eCurType==CURTYPE_BTREE );
       sqlite3VdbePreUpdateHook(
-          v, v->apCsr[0], SQLITE_DELETE, p->zDb, p->pTab, iKey, -1, p->iCol
+          v, v->apCsr[0], SQLITE4_DELETE, p->zDb, p->pTab, iKey, -1, p->iCol
       );
     }
 #endif
 
     rc = xCall(p->pCsr, iOffset+p->iOffset, n, z);
     sqlite4BtreeLeaveCursor(p->pCsr); // [koreauniv] 수정필요
-    if( rc==SQLITE_ABORT ){
+    if( rc==SQLITE4_ABORT ){
       sqlite4VdbeFinalize(v);
       p->pStmt = 0;
     }else{
@@ -486,27 +486,27 @@ int sqlite4_blob_reopen(sqlite4_blob *pBlob, sqlite4_int64 iRow){
   Incrblob *p = (Incrblob *)pBlob;
   sqlite4 *db;
 
-  if( p==0 ) return SQLITE_MISUSE_BKPT;
+  if( p==0 ) return SQLITE4_MISUSE_BKPT;
   db = p->db;
   sqlite4_mutex_enter(db->mutex);
   if( p->pStmt==0 ){
     /* If there is no statement handle, then the blob-handle has
-    ** already been invalidated. Return SQLITE_ABORT in this case.
+    ** already been invalidated. Return SQLITE4_ABORT in this case.
     */
-    rc = SQLITE_ABORT;
+    rc = SQLITE4_ABORT;
   }else{
     char *zErr;
-    ((Vdbe*)p->pStmt)->rc = SQLITE_OK;
+    ((Vdbe*)p->pStmt)->rc = SQLITE4_OK;
     rc = blobSeekToRow(p, iRow, &zErr);
-    if( rc!=SQLITE_OK ){
+    if( rc!=SQLITE4_OK ){
       sqlite4ErrorWithMsg(db, rc, (zErr ? "%s" : (char*)0), zErr);
       sqlite4DbFree(db, zErr);
     }
-    assert( rc!=SQLITE_SCHEMA );
+    assert( rc!=SQLITE4_SCHEMA );
   }
 
   rc = sqlite4ApiExit(db, rc);
-  assert( rc==SQLITE_OK || p->pStmt==0 );
+  assert( rc==SQLITE4_OK || p->pStmt==0 );
   sqlite4_mutex_leave(db->mutex);
   return rc;
 }
