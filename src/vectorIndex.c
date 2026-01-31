@@ -620,7 +620,7 @@ int initVectorIndexMetaTable(sqlite4* db, const char *zDbSName) {
     return SQLITE4_NOMEM;
   }
   rc = sqlite4_exec(db, zSql, 0, 0);
-  sqlite4_free(zSql, db);
+  sqlite4_free(db->pEnv, zSql);
   return rc;
 }
 
@@ -734,7 +734,7 @@ out:
 int vectorIndexTryGetParametersFromBinFormat(sqlite4 *db, const char *zSql, const char *zIdxName, VectorIdxParams *pParams) {
   int rc = SQLITE4_OK;
   sqlite4_stmt *pStmt = NULL;
-  int nBinSize;
+  int nBinSize = 0;
 
   vectorIdxParamsInit(pParams, NULL, 0);
 
@@ -752,7 +752,6 @@ int vectorIndexTryGetParametersFromBinFormat(sqlite4 *db, const char *zSql, cons
   }
   assert( sqlite4_column_type(pStmt, 0) == SQLITE4_BLOB );
   // [koreauniv] sqlite3_column_bytes 삭제 (sqlite4_column_blob에 이미 해당 기능 포함돼있음)
-  int nBinSize = 0;
   const void *pBlob = sqlite4_column_blob(pStmt, 0, &nBinSize);
   if( pBlob==0 ){
     rc = SQLITE4_ERROR;
@@ -792,7 +791,7 @@ int vectorIndexGetParameters(
   // we should drop this eventually - but for now we postponed this decision
   static const char* zSelectSqlPekkaLegacy = "SELECT vector_type, block_size, dims, distance_ops FROM libsql_vector_index WHERE name = ?";
   rc = vectorIndexTryGetParametersFromBinFormat(db, zSelectSql, zIdxName, pParams);
-  sqlite4_free(zSelectSql, db);
+  sqlite4_free(db->pEnv, zSelectSql);
   if( rc == SQLITE4_OK ){
     return SQLITE4_OK;
   }
@@ -854,7 +853,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName, co
   struct ExprListItem *pListItem;
   ExprList *pArgsList;
   int iEmbeddingColumn;
-  char* zEmbeddingColumnTypeName;
+  const char* zEmbeddingColumnTypeName;
   VectorIdxKey idxKey;
   VectorIdxParams idxParams;
   vectorIdxParamsInit(&idxParams, NULL, 0);
