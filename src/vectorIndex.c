@@ -751,12 +751,18 @@ int vectorIndexTryGetParametersFromBinFormat(sqlite4 *db, const char *zSql, cons
     goto out;
   }
   assert( sqlite4_column_type(pStmt, 0) == SQLITE4_BLOB );
-  nBinSize = sqlite4_column_bytes(pStmt, 0); //[koreauniv TODO] sqlite4_column_bytes 확인
+  // [koreauniv] sqlite3_column_bytes 삭제 (sqlite4_column_blob에 이미 해당 기능 포함돼있음)
+  int nBinSize = 0;
+  const void *pBlob = sqlite4_column_blob(pStmt, 0, &nBinSize);
+  if( pBlob==0 ){
+    rc = SQLITE4_ERROR;
+    goto out;
+  }
   if( nBinSize > VECTOR_INDEX_PARAMS_BUF_SIZE ){
     rc = SQLITE4_ERROR;
     goto out;
   }
-  vectorIdxParamsInit(pParams, (u8*)sqlite4_column_blob(pStmt, 0), nBinSize);
+  vectorIdxParamsInit(pParams, (u8*)pBlob, nBinSize);
   assert( sqlite4_step(pStmt) == SQLITE4_DONE );
   rc = SQLITE4_OK;
 out:

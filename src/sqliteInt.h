@@ -620,6 +620,9 @@ typedef struct WherePlan WherePlan;
 typedef struct WhereInfo WhereInfo;
 typedef struct WhereLevel WhereLevel;
 
+// [koreauniv] added for vector index
+typedef struct UnpackedRecord UnpackedRecord;
+
 
 #include "vdbe.h"
 #include "kv.h"
@@ -1336,6 +1339,59 @@ struct KeyInfo {
   u16 nData;          /* Number of columns of data in KV entry value */
   u8 *aSortOrder;     /* Sort order for each column.  May be NULL */
   CollSeq *aColl[1];  /* Collating sequence for each term of the key */
+};
+
+
+// [koreauniv] added for vector index
+/*
+** This object holds a record which has been parsed out into individual
+** fields, for the purposes of doing a comparison.
+**
+** A record is an object that contains one or more fields of data.
+** Records are used to store the content of a table row and to store
+** the key of an index.  A blob encoding of a record is created by
+** the OP_MakeRecord opcode of the VDBE and is disassembled by the
+** OP_Column opcode.
+**
+** An instance of this object serves as a "key" for doing a search on
+** an index b+tree. The goal of the search is to find the entry that
+** is closed to the key described by this object.  This object might hold
+** just a prefix of the key.  The number of fields is given by
+** pKeyInfo->nField.
+**
+** The r1 and r2 fields are the values to return if this key is less than
+** or greater than a key in the btree, respectively.  These are normally
+** -1 and +1 respectively, but might be inverted to +1 and -1 if the b-tree
+** is in DESC order.
+**
+** The key comparison functions actually return default_rc when they find
+** an equals comparison.  default_rc can be -1, 0, or +1.  If there are
+** multiple entries in the b-tree with the same key (when only looking
+** at the first pKeyInfo->nFields,) then default_rc can be set to -1 to
+** cause the search to find the last match, or +1 to cause the search to
+** find the first match.
+**
+** The key comparison functions will set eqSeen to true if they ever
+** get and equal results when comparing this structure to a b-tree record.
+** When default_rc!=0, the search might end up on the record immediately
+** before the first match or immediately after the last match.  The
+** eqSeen field will indicate whether or not an exact match exists in the
+** b-tree.
+*/
+struct UnpackedRecord {
+  KeyInfo *pKeyInfo;  /* Collation and sort-order information */
+  Mem *aMem;          /* Values */
+  union {
+    char *z;            /* Cache of aMem[0].z for vdbeRecordCompareString() */
+    i64 i;              /* Cache of aMem[0].u.i for vdbeRecordCompareInt() */
+  } u;
+  int n;              /* Cache of aMem[0].n used by vdbeRecordCompareString() */
+  u16 nField;         /* Number of entries in apMem[] */
+  i8 default_rc;      /* Comparison result if keys are equal */
+  u8 errCode;         /* Error detected by xRecordCompare (CORRUPT or NOMEM) */
+  i8 r1;              /* Value to return if (lhs < rhs) */
+  i8 r2;              /* Value to return if (lhs > rhs) */
+  u8 eqSeen;          /* True if an equality comparison has been seen */
 };
 
 /*
