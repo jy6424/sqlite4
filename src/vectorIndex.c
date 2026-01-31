@@ -115,27 +115,30 @@ int vectorIdxKeyGet(const Index *pIndex, VectorIdxKey *pKey, const char **pzErrM
   Index *pPkIndex;
   int i, nKeyColumns;
 
-  assert( pIndex->nKeyCol == 1 );
-  assert( pIndex->nColumn > pIndex->nKeyCol );
-
   pTable = pIndex->pTable;
-  nKeyColumns = pIndex->nColumn - pIndex->nKeyCol;
-  if( nKeyColumns == 1 && pIndex->aiColumn[pIndex->nKeyCol] == XN_ROWID ){
+
+  // sqlite4에는 nKeyCol이 없으니, 테이블 PK에서 키 정의를 가져오기
+  pPkIndex = sqlite4FindPrimaryKey(pTable, 0);
+
+  // PK가 없으면 rowid를 키로 사용 (원하면 여기서 에러로 막아도 됨)
+  if( pPkIndex == 0 ){
     pKey->nKeyColumns = 1;
     pKey->aKeyAffinity[0] = SQLITE_AFF_INTEGER;
     pKey->azKeyCollation[0] = "BINARY";
     return 0;
   }
+
+  nKeyColumns = pPkIndex->nColumn;
+
   if( nKeyColumns > VECTOR_INDEX_MAX_KEY_COLUMNS ){
     *pzErrMsg = "exceeded limit for composite columns in primary key index";
     return -1;
   }
-  pPkIndex = sqlite4FindPrimaryKey(pIndex->pTable, 0);
-  assert( pPkIndex->nKeyCol == nKeyColumns );
 
   pKey->nKeyColumns = nKeyColumns;
-  for(i = 0; i < pPkIndex->nKeyCol; i++){
-    pKey->aKeyAffinity[i] = pTable->aCol[pPkIndex->aiColumn[i]].affinity;
+  for(i = 0; i < nKeyColumns; i++){
+    int iCol = pPkIndex->aiColumn[i];
+    pKey->aKeyAffinity[i] = pTable->aCol[iCol].affinity;
     pKey->azKeyCollation[i] = pPkIndex->azColl[i];
   }
   return 0;
