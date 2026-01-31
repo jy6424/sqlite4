@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
     }
     rc = sqlite4_exec(
         db,
-        "SELECT name FROM sqlite_master WHERE type='index';",
+        "SELECT name FROM sqlite_master WHERE type='index';"
         "SELECT name FROM sqlite_master WHERE type='table';",
         0, 0
     );
@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     else {
         printf("Index listed successfully\n");
     }
-    
+
     sqlite4_close(db, 0);
     return 0;
 }
