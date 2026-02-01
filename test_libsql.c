@@ -69,10 +69,10 @@ int main(int argc, char **argv) {
   }
   printf("Database opened successfully\n");
 
+  printf("\n-- creating table --\n");
   rc = sqlite4_exec(
     db,
-    "CREATE TABLE IF NOT EXISTS t (id INTEGER);"
-    "CREATE INDEX IF NOT EXISTS t_idx ON t(id);",
+    "CREATE TABLE x (title TEXT, year INT, embedding F32_BLOB(4));",
     0, 0
   );
   if (rc) {
@@ -80,16 +80,16 @@ int main(int argc, char **argv) {
     sqlite4_close(db, 0);
     return 1;
   }
-  printf("Index created successfully\n");
+  printf("Table created successfully\n");
 
-  printf("\n-- indexes --\n");
+  printf("\n-- creating index --\n");
   rc = sqlite4_exec(
     db,
-    "SELECT name FROM sqlite_master WHERE type='index' ORDER BY name;",
+    "CREATE INDEX x_idx ON x (libsql_vector_idx(embedding));",
     print_row, 0
   );
   if (rc) {
-    printf("sql error (select indexes): rc=%d\n", rc);
+    printf("sql error (create index): rc=%d\n", rc);
     sqlite4_close(db, 0);
     return 1;
   }
@@ -102,6 +102,18 @@ int main(int argc, char **argv) {
   );
   if (rc) {
     printf("sql error (select tables): rc=%d\n", rc);
+    sqlite4_close(db, 0);
+    return 1;
+  }
+
+    printf("\n-- indexes --\n");
+  rc = sqlite4_exec(
+    db,
+    "SELECT name FROM sqlite_master WHERE type='index' ORDER BY name;",
+    print_row, 0
+  );
+  if (rc) {
+    printf("sql error (select indexes): rc=%d\n", rc);
     sqlite4_close(db, 0);
     return 1;
   }
