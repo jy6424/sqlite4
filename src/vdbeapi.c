@@ -283,6 +283,44 @@ void sqlite4_result_text(
   assert( sqlite4_mutex_held(pCtx->s.db->mutex) );
   setResultStrOrError(pCtx, z, n, SQLITE4_UTF8, xDel, pDelArg);
 }
+
+// [koreauniv] 추가
+void sqlite4_result_zeroblob(sqlite3_context *pCtx, int n){
+  sqlite4_result_zeroblob64(pCtx, n>0 ? n : 0);
+}
+int sqlite4_result_zeroblob64(sqlite3_context *pCtx, u64 n){
+  Mem *pOut;
+
+#ifdef SQLITE_ENABLE_API_ARMOR
+  if( pCtx==0 ) return SQLITE_MISUSE_BKPT;
+#endif
+  pOut = pCtx->pOut;
+  assert( sqlite4_mutex_held(pOut->db->mutex) );
+  if( n>(u64)pOut->db->aLimit[SQLITE_LIMIT_LENGTH] ){
+    sqlite4_resu₩lt_error_toobig(pCtx);
+    return SQLITE4_TOOBIG;
+  }
+#ifndef SQLITE4_OMIT_INCRBLOB
+  sqlite4VdbeMemSetZeroBlob(pCtx->pOut, (int)n);
+  return SQLITE4_OK;
+#else,
+  return sqlite4VdbeMemSetZeroBlob(pCtx->pOut, (int)n);
+#endif
+}
+void sqlite4_result_error_code(sqlite4_context *pCtx, int errCode){
+#ifdef SQLITE_ENABLE_API_ARMOR
+  if( pCtx==0 ) return;
+#endif
+  pCtx->isError = errCode ? errCode : -1;
+#ifdef SQLITE_DEBUG
+  if( pCtx->pVdbe ) pCtx->pVdbe->rcApp = errCode;
+#endif
+  if( pCtx->pOut->flags & MEM_Null ){
+    setResultStrOrError(pCtx, sqlite4ErrStr(errCode), -1, SQLITE4_UTF8,
+                        SQLITE4_STATIC);
+  }
+}
+
 #ifndef SQLITE4_OMIT_UTF16
 void sqlite4_result_text16(
   sqlite4_context *pCtx, 

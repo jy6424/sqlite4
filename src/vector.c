@@ -348,7 +348,7 @@ int vectorParseSqliteBlobWithType(
 
   assert( sqlite4_value_type(arg) == SQLITE4_BLOB );
 
-  pBlob = sqlite4_value_blob(arg);
+  pBlob = sqlite4_value_blob(arg, 0);
   nBlobSize = sqlite4_value_bytes(arg);
   if( vectorParseMeta(pBlob, nBlobSize, &type, &dims, &nDataSize, pzErrMsg) != SQLITE4_OK ){
     return SQLITE4_ERROR;
@@ -584,7 +584,7 @@ void vectorSerializeWithMeta(
 
   vectorSerializeToBlob(pVector, pBlob, nDataSize);
   vectorSerializeMeta(pVector, nDataSize, pBlob, nBlobSize);
-  sqlite4_result_blob(context, (char*)pBlob, nBlobSize, sqlite4_free);
+  sqlite4_result_blob(context, (char*)pBlob, nBlobSize, sqlite4_free, 0);
 }
 
 void vectorSerializeToBlob(const Vector *pVector, unsigned char *pBlob, size_t nBlobSize){
