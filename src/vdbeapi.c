@@ -301,10 +301,28 @@ int sqlite4_result_zeroblob64(sqlite4_context *pCtx, u64 n){
   sqlite4VdbeMemSetZeroBlob(pOut, (int)n);
   return SQLITE4_OK;
 #else
-  return sqlite4VdbeMemSetZeroBlob(pCtx->s, (int)n);
+  return sqlite4VdbeMemSetZeroBlob(&pCtx->s, (int)n);
 #endif
 }
 
+void sqlite4_result_value(sqlite4_context *pCtx, sqlite4_value *pValue){
+  Mem *pOut;
+
+#ifdef SQLITE4_ENABLE_API_ARMOR
+  if( pCtx==0 ) return;
+  if( pValue==0 ){
+    sqlite4_result_null(pCtx);
+    return;
+  }
+#endif
+  pOut = &pCtx->s;
+  assert( sqlite4_mutex_held(pCtx->s.db->mutex) );
+  sqlite4VdbeMemCopy(pOut, pValue);
+  sqlite4VdbeChangeEncoding(pOut, pCtx->s.db->enc);
+  if( sqlite4VdbeMemTooBig(pOut) ){
+    sqlite4_result_error_toobig(pCtx);
+  }
+}
 
 void sqlite4_result_zeroblob(sqlite4_context *pCtx, int n){
   sqlite4_result_zeroblob64(pCtx, n>0 ? n : 0);
