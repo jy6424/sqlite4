@@ -53,7 +53,7 @@ void vectorF32Dump(const Vector *pVec){
 **************************************************************************/
 
 static inline unsigned formatF32(float value, char *pBuf, int nBufSize){
-  sqlite4_snprintf(nBufSize, pBuf, "%g", (double)value);
+  sqlite4_snprintf(pBuf, nBufSize, "%g", (double)value);
   return strlen(pBuf);
 }
 

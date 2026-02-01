@@ -53,7 +53,7 @@ void vectorF64Dump(const Vector *pVec){
 **************************************************************************/
 
 static inline unsigned formatF64(double value, char *pBuf, int nBufSize){
-  sqlite4_snprintf(nBufSize, pBuf, "%g", value);
+  sqlite4_snprintf(pBuf, nBufSize, "%g", value);
   return strlen(pBuf);
 }
 
