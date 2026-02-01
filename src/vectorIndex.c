@@ -953,8 +953,8 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
   }
 
   // [koreauniv TODO] diskAnnCreateIndex 수정하기
-  // rc = diskAnnCreateIndex(db, zDbSName, pIdx->zName, &idxKey, &idxParams, &pzErrMsg);
-  rc = 0; // 임시
+  rc = diskAnnCreateIndex(db, zDbSName, pIdx->zName, &idxKey, &idxParams, &pzErrMsg);
+  // rc = 0; // 임시
   if( rc != SQLITE4_OK ){
     if( pzErrMsg != NULL ){
       sqlite4ErrorMsg(pParse, "vector index: unable to initialize diskann: %s", pzErrMsg);
