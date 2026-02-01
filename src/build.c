@@ -23,6 +23,9 @@
 **     ROLLBACK
 */
 #include "sqliteInt.h"
+#ifndef SQLITE_OMIT_VECTOR
+#include "vectorIndexInt.h"
+#endif
 
 /*
 ** This routine is called when a new SQL statement is beginning to
