@@ -291,28 +291,28 @@ void sqlite4_result_zeroblob(sqlite4_context *pCtx, int n){
 int sqlite4_result_zeroblob64(sqlite4_context *pCtx, u64 n){
   Mem *pOut;
 
-#ifdef SQLITE_ENABLE_API_ARMOR
-  if( pCtx==0 ) return SQLITE_MISUSE_BKPT;
+#ifdef SQLITE4_ENABLE_API_ARMOR
+  if( pCtx==0 ) return SQLITE4_MISUSE_BKPT;
 #endif
-  pOut = pCtx->pOut;
+  pOut = pCtx->s;
   assert( sqlite4_mutex_held(pOut->db->mutex) );
-  if( n>(u64)pOut->db->aLimit[SQLITE_LIMIT_LENGTH] ){
-    sqlite4_resu₩lt_error_toobig(pCtx);
+  if( n>(u64)pOut->db->aLimit[SQLITE4_LIMIT_LENGTH] ){
+    sqlite4_result_error_toobig(pCtx);
     return SQLITE4_TOOBIG;
   }
 #ifndef SQLITE4_OMIT_INCRBLOB
-  sqlite4VdbeMemSetZeroBlob(pCtx->pOut, (int)n);
+  sqlite4VdbeMemSetZeroBlob(pCtx->s, (int)n);
   return SQLITE4_OK;
 #else
-  return sqlite4VdbeMemSetZeroBlob(pCtx->pOut, (int)n);
+  return sqlite4VdbeMemSetZeroBlob(pCtx->s, (int)n);
 #endif
 }
 void sqlite4_result_error_code(sqlite4_context *pCtx, int errCode){
-#ifdef SQLITE_ENABLE_API_ARMOR
+#ifdef SQLITE4_ENABLE_API_ARMOR
   if( pCtx==0 ) return;
 #endif
   pCtx->isError = errCode ? errCode : -1;
-#ifdef SQLITE_DEBUG
+#ifdef SQLITE4_DEBUG
   if( pCtx->pVdbe ) pCtx->pVdbe->rcApp = errCode;
 #endif
   if( pCtx->s.flags & MEM_Null ){
@@ -374,7 +374,7 @@ void sqlite4_result_error_nomem(sqlite4_context *pCtx){
 ** Execute the statement pStmt, either until a row of data is ready, the
 ** statement is completely executed or an error occurs.
 **
-** This routine implements the bulk of the logic behind the sqlite_step()
+** This routine implements the bulk of the logic behind the sqlite4_step()
 ** API.  The only thing omitted is the automatic recompile if a 
 ** schema change has occurred.  That detail is handled by the
 ** outer sqlite4_step() wrapper procedure.

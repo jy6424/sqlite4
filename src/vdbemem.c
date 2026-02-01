@@ -422,6 +422,33 @@ void sqlite4VdbeMemSetDouble(Mem *pMem, double val){
 }
 #endif
 
+#ifndef SQLITE4_OMIT_INCRBLOB
+void sqlite4VdbeMemSetZeroBlob(Mem *pMem, int n){
+  sqlite4VdbeMemRelease(pMem);
+  pMem->flags = MEM_Blob;
+  pMem->n = 0;
+  if( n<0 ) n = 0;
+  // pMem->u.nZero = n; (사용x)
+  pMem->enc = SQLITE4_UTF8;
+  pMem->z = 0;
+}
+#else
+int sqlite4VdbeMemSetZeroBlob(Mem *pMem, int n){
+  int nByte = n>0?n:1;
+  if( sqlite4VdbeMemGrow(pMem, nByte, 0) ){
+    return SQLITE4_NOMEM_BKPT;
+  }
+  assert( pMem->z!=0 );
+  assert( sqlite4DbMallocSize(pMem->db, pMem->z)>=nByte );
+  memset(pMem->z, 0, nByte);
+  pMem->n = n>0?n:0;
+  pMem->flags = MEM_Blob;
+  pMem->enc = SQLITE4_UTF8;
+  return SQLITE4_OK;
+}
+#endif
+
+
 /*
 ** Delete any previous value and set the value of pMem to be an
 ** empty RowSet object.
