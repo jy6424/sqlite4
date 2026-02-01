@@ -1,13 +1,27 @@
 #include "sqlite4.h"
 #include <stdio.h>
 
-static int print_row(void *unused, int argc, char **argv, char **colname){
+static const char *val_to_cstr(sqlite4_value *v){
+  /* sqlite4_value -> printable string */
+  int t = sqlite4_value_type(v);
+  switch(t){
+    case SQLITE4_NULL:    return "NULL";
+    case SQLITE4_INTEGER: return sqlite4_value_text(v);  /* usually ok */
+    case SQLITE4_FLOAT:   return sqlite4_value_text(v);
+    case SQLITE4_TEXT:    return sqlite4_value_text(v);
+    case SQLITE4_BLOB:    return "(BLOB)";
+    default:              return "(UNKNOWN)";
+  }
+}
+
+static int print_row(void *unused, int argc, sqlite4_value **argv, const char **colname){
   (void)unused;
   for(int i = 0; i < argc; i++){
-    const char *val = argv[i] ? argv[i] : "NULL";
-    printf("%s=%s%s", colname[i], val, (i == argc-1) ? "\n" : " | ");
+    const char *name = colname[i] ? colname[i] : "(col)";
+    const char *val  = argv[i] ? val_to_cstr(argv[i]) : "NULL";
+    printf("%s=%s%s", name, val, (i == argc-1) ? "\n" : " | ");
   }
-  return 0; // 0이면 계속 진행
+  return 0;
 }
 
 int main(int argc, char **argv) {
@@ -21,7 +35,6 @@ int main(int argc, char **argv) {
   }
   printf("Database opened successfully\n");
 
-  /* table + index create */
   rc = sqlite4_exec(
     db,
     "CREATE TABLE IF NOT EXISTS t (id INTEGER);"
@@ -35,7 +48,6 @@ int main(int argc, char **argv) {
   }
   printf("Index created successfully\n");
 
-  /* SELECT results: indexes */
   printf("\n-- indexes --\n");
   rc = sqlite4_exec(
     db,
@@ -48,7 +60,6 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  /* SELECT results: tables */
   printf("\n-- tables --\n");
   rc = sqlite4_exec(
     db,
