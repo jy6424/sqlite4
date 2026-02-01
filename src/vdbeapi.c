@@ -291,14 +291,14 @@ int sqlite4_result_zeroblob64(sqlite4_context *pCtx, u64 n){
 #ifdef SQLITE4_ENABLE_API_ARMOR
   if( pCtx==0 ) return SQLITE4_MISUSE_BKPT;
 #endif
-  pOut = pCtx->s;
+  pOut = &pCtx->s;
   assert( sqlite4_mutex_held(pOut->db->mutex) );
   if( n>(u64)pOut->db->aLimit[SQLITE4_LIMIT_LENGTH] ){
     sqlite4_result_error_toobig(pCtx);
     return SQLITE4_TOOBIG;
   }
 #ifndef SQLITE4_OMIT_INCRBLOB
-  sqlite4VdbeMemSetZeroBlob(pCtx->s, (int)n);
+  sqlite4VdbeMemSetZeroBlob(pOut, (int)n);
   return SQLITE4_OK;
 #else
   return sqlite4VdbeMemSetZeroBlob(pCtx->s, (int)n);
