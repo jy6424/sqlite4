@@ -3326,6 +3326,7 @@ int sqlite4_value_bytes(sqlite4_value *pVal);
 void sqlite4_value_free(sqlite4_value *pOld);
 const char *sqlite4ColumnType(const Column *pCol, const char *zDflt);
 void sqlite4RegisterVectorFunctions(sqlite4_env *pEnv);
-
+int sqlite4_result_zeroblob64(sqlite4_context *pCtx, u64 n);
+void sqlite4_result_zeroblob(sqlite4_context *pCtx, int n);
 
 #endif /* _SQLITEINT_H_ */
