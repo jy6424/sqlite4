@@ -24,6 +24,9 @@
 **
 ** libSQL basic vector functions
 */
+// [koreauniv] sqlite4_malloc 에서 pEnv 인자 수정 필요
+
+
 #ifndef SQLITE4_OMIT_VECTOR
 
 #include "sqliteInt.h"
@@ -66,7 +69,7 @@ void vectorInit(Vector *pVector, VectorType type, VectorDims dims, void *data){
  * Allocate a Vector object and its data buffer
 */
 Vector *vectorAlloc(VectorType type, VectorDims dims){
-  void *pVector = sqlite4_malloc(sizeof(Vector) + vectorDataSize(type, dims));
+  void *pVector = sqlite4_malloc(0, sizeof(Vector) + vectorDataSize(type, dims));
   if( pVector==NULL ){
     return NULL;
   }
@@ -91,7 +94,7 @@ void vectorInitStatic(Vector *pVector, VectorType type, VectorDims dims, void *p
  * Allocate a Vector object and its data buffer from the SQLite context. 
 */
 static Vector* vectorContextAlloc(sqlite4_context *context, int type, int dims){
-  void *pVector = sqlite4_malloc64(sizeof(Vector) + vectorDataSize(type, dims));
+  void *pVector = sqlite4_malloc(0, sizeof(Vector) + vectorDataSize(type, dims));
   if( pVector==NULL ){
     sqlite4_result_error_nomem(context);
     return NULL;
@@ -110,7 +113,7 @@ void vectorFree(Vector *pVector){
   if( pVector->flags & VECTOR_FLAGS_STATIC ){
     return;
   }
-  sqlite4_free(pVector);
+  sqlite4_free(0, pVector);
 }
 
 float vectorDistanceCos(const Vector *pVector1, const Vector *pVector2){
@@ -573,7 +576,7 @@ void vectorSerializeWithMeta(
     return;
   }
 
-  pBlob = sqlite4_malloc64(nBlobSize);
+  pBlob = sqlite4_malloc(0, nBlobSize);
   if( pBlob == NULL ){
     sqlite4_result_error_nomem(context);
     return;
@@ -1033,7 +1036,7 @@ static void vectorFuncHintedType(
   }
   if( detectVectorParameters(argv[0], typeHint, &type, &dims, &pzErrMsg) != 0 ){
     sqlite4_result_error(context, pzErrMsg, -1);
-    sqlite4_free(pzErrMsg);
+    sqlite4_free(0, pzErrMsg);
     goto out;
   }
   pVector = vectorContextAlloc(context, type, dims);
@@ -1042,7 +1045,7 @@ static void vectorFuncHintedType(
   }
   if( vectorParseWithType(argv[0], pVector, &pzErrMsg) != 0 ){
     sqlite4_result_error(context, pzErrMsg, -1);
-    sqlite4_free(pzErrMsg);
+    sqlite4_free(0, pzErrMsg);
     goto out;
   }
   if( type == targetType ){
@@ -1129,7 +1132,7 @@ static void vectorExtractFunc(
   }
   if( detectVectorParameters(argv[0], 0, &type, &dims, &pzErrMsg) != 0 ){
     sqlite4_result_error(context, pzErrMsg, -1);
-    sqlite4_free(pzErrMsg);
+    sqlite4_free(0, pzErrMsg);
     goto out;
   }
   pVector = vectorContextAlloc(context, type, dims);
@@ -1138,7 +1141,7 @@ static void vectorExtractFunc(
   }
   if( vectorParseWithType(argv[0], pVector, &pzErrMsg)<0 ){
     sqlite4_result_error(context, pzErrMsg, -1);
-    sqlite4_free(pzErrMsg);
+    sqlite4_free(0, pzErrMsg);
     goto out;
   }
   if( pVector->type == VECTOR_TYPE_FLOAT32 || pVector->type == VECTOR_TYPE_FLOAT64 ){
@@ -1175,30 +1178,30 @@ static void vectorDistanceFunc(
   }
   if( detectVectorParameters(argv[0], 0, &type1, &dims1, &pzErrMsg) != 0 ){
     sqlite4_result_error(context, pzErrMsg, -1);
-    sqlite4_free(pzErrMsg);
+    sqlite4_free(0, pzErrMsg);
     goto out_free;
   }
   if( detectVectorParameters(argv[1], 0, &type2, &dims2, &pzErrMsg) != 0 ){
     sqlite4_result_error(context, pzErrMsg, -1);
-    sqlite4_free(pzErrMsg);
+    sqlite4_free(0, pzErrMsg);
     goto out_free;
   }
   if( type1 != type2 ){
     pzErrMsg = sqlite4_mprintf("vector_distance: vectors must have the same type: %d != %d", type1, type2);
     sqlite4_result_error(context, pzErrMsg, -1);
-    sqlite4_free(pzErrMsg);
+    sqlite4_free(0, pzErrMsg);
     goto out_free;
   }
   if( dims1 != dims2 ){
     pzErrMsg = sqlite4_mprintf("vector_distance: vectors must have the same length: %d != %d", dims1, dims2);
     sqlite4_result_error(context, pzErrMsg, -1);
-    sqlite4_free(pzErrMsg);
+    sqlite4_free(0, pzErrMsg);
     goto out_free;
   }
   if( vectorDistance == vectorDistanceL2 && type1 == VECTOR_TYPE_FLOAT1BIT ){
     pzErrMsg = sqlite4_mprintf("vector_distance: l2 distance is not supported for float1bit vectors", dims1, dims2);
     sqlite4_result_error(context, pzErrMsg, -1);
-    sqlite4_free(pzErrMsg);
+    sqlite4_free(0, pzErrMsg);
     goto out_free;
   }
   pVector1 = vectorContextAlloc(context, type1, dims1);
@@ -1211,12 +1214,12 @@ static void vectorDistanceFunc(
   }
   if( vectorParseWithType(argv[0], pVector1, &pzErrMsg)<0 ){
     sqlite4_result_error(context, pzErrMsg, -1);
-    sqlite4_free(pzErrMsg);
+    sqlite4_free(0, pzErrMsg);
     goto out_free;
   }
   if( vectorParseWithType(argv[1], pVector2, &pzErrMsg)<0 ){
     sqlite4_result_error(context, pzErrMsg, -1);
-    sqlite4_free(pzErrMsg);
+    sqlite4_free(0, pzErrMsg);
     goto out_free;
   }
   sqlite4_result_double(context, vectorDistance(pVector1, pVector2));
