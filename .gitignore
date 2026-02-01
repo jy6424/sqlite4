@@ -76,11 +76,11 @@ test.db
 # vector diskann temporary files
 # vector.c
 # vectordiskann.c
-vectorfloat1bit.c
-vectorfloat8.c
-vectorfloat16.c
-vectorfloat32.c
-vectorfloat64.c
-vectorfloatb16.c
+# vectorfloat1bit.c
+# vectorfloat8.c
+# vectorfloat16.c
+# vectorfloat32.c
+# vectorfloat64.c
+# vectorfloatb16.c
 vectorvtab.c
 vdbeblob.c
