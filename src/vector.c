@@ -199,14 +199,14 @@ static int vectorParseSqliteText(
     elemsDouble = pVector->data;
   }
 
-  pzText = sqlite4_value_text(arg);
+  pzText = sqlite4_value_text(arg, 0);
   if ( pzText == NULL ) return 0;
 
   while( sqlite4Isspace(*pzText) )
     pzText++;
 
   if( *pzText != '[' ){
-    *pzErrMsg = sqlite4_mprintf("vector: must start with '['");
+    *pzErrMsg = sqlite4_mprintf(0, "vector: must start with '['");
     goto error;
   }
   pzText++;
@@ -221,7 +221,7 @@ static int vectorParseSqliteText(
     }
     if( this != ',' && this != ']' ){
       if( iBuf > MAX_FLOAT_CHAR_SZ ){
-        *pzErrMsg = sqlite4_mprintf("vector: float string length exceeded %d characters: '%s'", MAX_FLOAT_CHAR_SZ, valueBuf);
+        *pzErrMsg = sqlite4_mprintf(0, "vector: float string length exceeded %d characters: '%s'", MAX_FLOAT_CHAR_SZ, valueBuf);
         goto error;
       }
       valueBuf[iBuf++] = this;
@@ -232,11 +232,11 @@ static int vectorParseSqliteText(
       break;
     }
     if( sqlite4AtoF(valueBuf, &elem, iBuf, SQLITE4_UTF8) <= 0 ){
-      *pzErrMsg = sqlite4_mprintf("vector: invalid float at position %d: '%s'", iElem, valueBuf);
+      *pzErrMsg = sqlite4_mprintf(0, "vector: invalid float at position %d: '%s'", iElem, valueBuf);
       goto error;
     }
     if( iElem >= MAX_VECTOR_SZ ){
-      *pzErrMsg = sqlite4_mprintf("vector: max size exceeded %d", MAX_VECTOR_SZ);
+      *pzErrMsg = sqlite4_mprintf(0, "vector: max size exceeded %d", MAX_VECTOR_SZ);
       goto error;
     }
     // clear only first bufidx positions - all other are zero
@@ -255,7 +255,7 @@ static int vectorParseSqliteText(
     pzText++;
 
   if( *pzText != ']' ){
-    *pzErrMsg = sqlite4_mprintf("vector: must end with ']'");
+    *pzErrMsg = sqlite4_mprintf(0, "vector: must end with ']'");
     goto error;
   }
   pzText++;
@@ -264,7 +264,7 @@ static int vectorParseSqliteText(
     pzText++;
   
   if( *pzText != '\0' ){
-    *pzErrMsg = sqlite4_mprintf("vector: non-space symbols after closing ']' are forbidden");
+    *pzErrMsg = sqlite4_mprintf(0, "vector: non-space symbols after closing ']' are forbidden");
     goto error;
   }
   pVector->dims = iElem;
@@ -288,21 +288,21 @@ static int vectorParseMeta(const unsigned char *pBlob, size_t nBlobSize, int *pT
 
   if( *pType == VECTOR_TYPE_FLOAT32 ){
     if( nBlobSize % 4 != 0 ){
-      *pzErrMsg = sqlite4_mprintf("vector: float32 vector blob length must be divisible by 4 (excluding optional 'type'-byte): length=%d", nBlobSize);
+      *pzErrMsg = sqlite4_mprintf(0, "vector: float32 vector blob length must be divisible by 4 (excluding optional 'type'-byte): length=%d", nBlobSize);
       return SQLITE4_ERROR;
     }
     *pDims = nBlobSize / sizeof(float);
     *pDataSize = nBlobSize;
   }else if( *pType == VECTOR_TYPE_FLOAT64 ){
     if( nBlobSize % 8 != 0 ){
-      *pzErrMsg = sqlite4_mprintf("vector: float64 vector blob length must be divisible by 8 (excluding 'type'-byte): length=%d", nBlobSize);
+      *pzErrMsg = sqlite4_mprintf(0, "vector: float64 vector blob length must be divisible by 8 (excluding 'type'-byte): length=%d", nBlobSize);
       return SQLITE4_ERROR;
     }
     *pDims = nBlobSize / sizeof(double);
     *pDataSize = nBlobSize;
   }else if( *pType == VECTOR_TYPE_FLOAT1BIT ){
     if( nBlobSize == 0 || nBlobSize % 2 != 0 ){
-      *pzErrMsg = sqlite4_mprintf("vector: float1bit vector blob length must be divisible by 2 and not be empty (excluding 'type'-byte): length=%d", nBlobSize);
+      *pzErrMsg = sqlite4_mprintf(0, "vector: float1bit vector blob length must be divisible by 2 and not be empty (excluding 'type'-byte): length=%d", nBlobSize);
       return SQLITE4_ERROR;
     }
     nTrailingBits = pBlob[nBlobSize - 1];
@@ -310,7 +310,7 @@ static int vectorParseMeta(const unsigned char *pBlob, size_t nBlobSize, int *pT
     *pDataSize = (*pDims + 7) / 8;
   }else if( *pType == VECTOR_TYPE_FLOAT8 ){
     if( nBlobSize < 2 || nBlobSize % 2 != 0 ){
-      *pzErrMsg = sqlite4_mprintf("vector: float8 vector blob length must be divisible by 2 and has at least 2 bytes (excluding 'type'-byte): length=%d", nBlobSize);
+      *pzErrMsg = sqlite4_mprintf(0, "vector: float8 vector blob length must be divisible by 2 and has at least 2 bytes (excluding 'type'-byte): length=%d", nBlobSize);
       return SQLITE4_ERROR;
     }
     nTrailingBytes = pBlob[nBlobSize - 1];
@@ -318,20 +318,20 @@ static int vectorParseMeta(const unsigned char *pBlob, size_t nBlobSize, int *pT
     *pDataSize = nBlobSize - 2;
   }else if( *pType == VECTOR_TYPE_FLOAT16 ){
     if( nBlobSize % 2 != 0 ){
-      *pzErrMsg = sqlite4_mprintf("vector: float16 vector blob length must be divisible by 2 (excluding 'type'-byte): length=%d", nBlobSize);
+      *pzErrMsg = sqlite4_mprintf(0, "vector: float16 vector blob length must be divisible by 2 (excluding 'type'-byte): length=%d", nBlobSize);
       return SQLITE4_ERROR;
     }
     *pDims = nBlobSize / sizeof(u16);
     *pDataSize = nBlobSize;
   }else if( *pType == VECTOR_TYPE_FLOATB16 ){
     if( nBlobSize % 2 != 0 ){
-      *pzErrMsg = sqlite4_mprintf("vector: floatb16 vector blob length must be divisible by 2 (excluding 'type'-byte): length=%d", nBlobSize);
+      *pzErrMsg = sqlite4_mprintf(0, "vector: floatb16 vector blob length must be divisible by 2 (excluding 'type'-byte): length=%d", nBlobSize);
       return SQLITE4_ERROR;
     }
     *pDims = nBlobSize / sizeof(u16);
     *pDataSize = nBlobSize;
   }else{
-    *pzErrMsg = sqlite4_mprintf("vector: unexpected binary type: %d", *pType);
+    *pzErrMsg = sqlite4_mprintf(0, "vector: unexpected binary type: %d", *pType);
     return SQLITE4_ERROR;
   }
   return SQLITE4_OK;
@@ -356,7 +356,7 @@ int vectorParseSqliteBlobWithType(
 
   if( nDataSize != vectorDataSize(pVector->type, pVector->dims) ){
     *pzErrMsg = sqlite4_mprintf(
-      "vector: unexpected data part size: type=%d, dims=%d, %u != %u",
+      0, "vector: unexpected data part size: type=%d, dims=%d, %u != %u",
       pVector->type,
       pVector->dims,
       nDataSize,
@@ -403,7 +403,7 @@ int detectBlobVectorParameters(sqlite4_value *arg, int *pType, int *pDims, char 
     return SQLITE4_ERROR;
   }
   if( *pDims > MAX_VECTOR_SZ ){
-    *pzErrMsg = sqlite4_mprintf("vector: max size exceeded: %d > %d", *pDims, MAX_VECTOR_SZ);
+    *pzErrMsg = sqlite4_mprintf(0, "vector: max size exceeded: %d > %d", *pDims, MAX_VECTOR_SZ);
     return SQLITE4_ERROR;
   }
   return SQLITE4_OK;
@@ -416,7 +416,7 @@ int detectTextVectorParameters(sqlite4_value *arg, int typeHint, int *pType, int
   int textHasDigit = 0;
   
   assert( sqlite4_value_type(arg) == SQLITE4_TEXT );
-  text = sqlite4_value_text(arg);
+  text = sqlite4_value_text(arg, 0);
   textBytes = sqlite4_value_bytes(arg);
   if( typeHint == 0 ){ 
     *pType = VECTOR_TYPE_FLOAT32;
@@ -425,7 +425,7 @@ int detectTextVectorParameters(sqlite4_value *arg, int typeHint, int *pType, int
   }else if( typeHint == VECTOR_TYPE_FLOAT64 ){
     *pType = VECTOR_TYPE_FLOAT64;
   }else{
-    *pzErrMsg = sqlite4_mprintf("unexpected vector type");
+    *pzErrMsg = sqlite4_mprintf(0, "unexpected vector type");
     return -1;
   }
   *pDims = 0;
@@ -450,7 +450,7 @@ int detectVectorParameters(sqlite4_value *arg, int typeHint, int *pType, int *pD
     case SQLITE4_TEXT:
       return detectTextVectorParameters(arg, typeHint, pType, pDims, pzErrMsg);
     default:
-      *pzErrMsg = sqlite4_mprintf("vector: unexpected value type: got %s, expected TEXT or BLOB", sqlite4_type_repr(sqlite4_value_type(arg)));
+      *pzErrMsg = sqlite4_mprintf(0, "vector: unexpected value type: got %s, expected TEXT or BLOB", sqlite4_type_repr(sqlite4_value_type(arg)));
       return -1;
   }
 }
@@ -466,7 +466,7 @@ int vectorParseWithType(
     case SQLITE4_TEXT:
       return vectorParseSqliteText(arg, pVector, pzErrMsg);
     default:
-      *pzErrMsg = sqlite4_mprintf("vector: unexpected value type: got %s, expected TEXT or BLOB", sqlite4_type_repr(sqlite4_value_type(arg)));
+      *pzErrMsg = sqlite4_mprintf(0, "vector: unexpected value type: got %s, expected TEXT or BLOB", sqlite4_type_repr(sqlite4_value_type(arg)));
       return -1;
   }
 }
@@ -1187,19 +1187,19 @@ static void vectorDistanceFunc(
     goto out_free;
   }
   if( type1 != type2 ){
-    pzErrMsg = sqlite4_mprintf("vector_distance: vectors must have the same type: %d != %d", type1, type2);
+    pzErrMsg = sqlite4_mprintf(0, "vector_distance: vectors must have the same type: %d != %d", type1, type2);
     sqlite4_result_error(context, pzErrMsg, -1);
     sqlite4_free(0, pzErrMsg);
     goto out_free;
   }
   if( dims1 != dims2 ){
-    pzErrMsg = sqlite4_mprintf("vector_distance: vectors must have the same length: %d != %d", dims1, dims2);
+    pzErrMsg = sqlite4_mprintf(0, "vector_distance: vectors must have the same length: %d != %d", dims1, dims2);
     sqlite4_result_error(context, pzErrMsg, -1);
     sqlite4_free(0, pzErrMsg);
     goto out_free;
   }
   if( vectorDistance == vectorDistanceL2 && type1 == VECTOR_TYPE_FLOAT1BIT ){
-    pzErrMsg = sqlite4_mprintf("vector_distance: l2 distance is not supported for float1bit vectors", dims1, dims2);
+    pzErrMsg = sqlite4_mprintf(0, "vector_distance: l2 distance is not supported for float1bit vectors", dims1, dims2);
     sqlite4_result_error(context, pzErrMsg, -1);
     sqlite4_free(0, pzErrMsg);
     goto out_free;
