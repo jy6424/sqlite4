@@ -318,7 +318,7 @@ void sqlite4_result_value(sqlite4_context *pCtx, sqlite4_value *pValue){
   pOut = &pCtx->s;
   assert( sqlite4_mutex_held(pCtx->s.db->mutex) );
   sqlite4VdbeMemCopy(pOut, pValue);
-  sqlite4VdbeChangeEncoding(pOut, pCtx->s.db->enc);
+  sqlite4VdbeChangeEncoding(pOut, pCtx->s.enc);
   if( sqlite4VdbeMemTooBig(pOut) ){
     sqlite4_result_error_toobig(pCtx);
   }
