@@ -1504,4 +1504,7 @@ void sqlite4RegisterGlobalFunctions(sqlite4_env *pEnv){
 #ifndef SQLITE4_OMIT_ALTERTABLE
   sqlite4AlterFunctions(pEnv);
 #endif
+#ifndef SQLITE4_OMIT_VECTOR
+  sqlite4RegisterVectorFunctions(pEnv);
+#endif
 }

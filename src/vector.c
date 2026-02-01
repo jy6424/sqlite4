@@ -396,7 +396,7 @@ int detectBlobVectorParameters(sqlite4_value *arg, int *pType, int *pDims, char 
   
   assert( sqlite4_value_type(arg) == SQLITE4_BLOB );
 
-  pBlob = sqlite4_value_blob(arg);
+  pBlob = sqlite4_value_blob(arg, 0);
   nBlobSize = sqlite4_value_bytes(arg);
 
   if( vectorParseMeta(pBlob, nBlobSize, pType, pDims, &nDataSize, pzErrMsg) != SQLITE4_OK ){
@@ -559,6 +559,11 @@ static void vectorSerializeMeta(const Vector *pVector, size_t nDataSize, unsigne
   }
 }
 
+static void vectorBlobFree(void *p, void *pArg){
+  sqlite4_env *pEnv = (sqlite4_env*)pArg;
+  sqlite4_free(pEnv, p);
+}
+
 void vectorSerializeWithMeta(
   sqlite4_context *context,
   const Vector *pVector
@@ -584,7 +589,7 @@ void vectorSerializeWithMeta(
 
   vectorSerializeToBlob(pVector, pBlob, nDataSize);
   vectorSerializeMeta(pVector, nDataSize, pBlob, nBlobSize);
-  sqlite4_result_blob(context, (char*)pBlob, nBlobSize, sqlite4_free, 0);
+  sqlite4_result_blob(context, (char*)pBlob, nBlobSize, vectorBlobFree, context->pEnv);
 }
 
 void vectorSerializeToBlob(const Vector *pVector, unsigned char *pBlob, size_t nBlobSize){
@@ -1257,8 +1262,8 @@ static void libsqlVectorIdx(sqlite4_context *context, int argc, sqlite4_value **
 /*
 ** Register vector functions.
 */
-void sqlite4RegisterVectorFunctions(void){
- static FuncDef aVectorFuncs[] = {
+void sqlite4RegisterVectorFunctions(sqlite4_env *pEnv){
+  static FuncDef aVectorFuncs[] = {
     FUNCTION(vector,              1, 0, 0, vector32Func),
     FUNCTION(vector32,            1, 0, 0, vector32Func),
     FUNCTION(vector64,            1, 0, 0, vector64Func),
@@ -1269,10 +1274,17 @@ void sqlite4RegisterVectorFunctions(void){
     FUNCTION(vector_extract,      1, 0, 0, vectorExtractFunc),
     FUNCTION(vector_distance_cos, 2, 0, 0, vectorDistanceCosFunc),
     FUNCTION(vector_distance_l2,  2, 0, 0, vectorDistanceL2Func),
-
     FUNCTION(libsql_vector_idx,  -1, 0, 0, libsqlVectorIdx),
   };
-  sqlite4InsertBuiltinFuncs(aVectorFuncs, ArraySize(aVectorFuncs));
+
+  int i;
+  FuncDefTable *pFuncTab = &pEnv->aGlobalFuncs;
+  FuncDef *aFunc = (FuncDef*)aVectorFuncs;
+
+  for(i=0; i<ArraySize(aVectorFuncs); i++){
+    sqlite4FuncDefInsert(pFuncTab, &aFunc[i], 1);
+  }
 }
+
 
 #endif /* !defined(SQLITE4_OMIT_VECTOR) */

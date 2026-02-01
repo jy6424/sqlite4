@@ -441,4 +441,9 @@ int sqlite4VdbeMemTranslate(Mem*, u8);
 int sqlite4VdbeMemHandleBom(Mem *pMem);
 
 
+//[koreauniv]
+void sqlite4VdbeMemSetZeroBlob(Mem *pMem, int n);
+
+
+
 #endif /* !defined(_VDBEINT_H_) */

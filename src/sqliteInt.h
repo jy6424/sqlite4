@@ -3325,6 +3325,7 @@ sqlite4_value *sqlite4_value_dup(sqlite4_env *pEnv, const sqlite4_value *pOrig);
 int sqlite4_value_bytes(sqlite4_value *pVal);
 void sqlite4_value_free(sqlite4_value *pOld);
 const char *sqlite4ColumnType(const Column *pCol, const char *zDflt);
+void sqlite4RegisterVectorFunctions(sqlite4_env *pEnv);
 
 
 #endif /* _SQLITEINT_H_ */
