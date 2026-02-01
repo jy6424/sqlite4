@@ -285,10 +285,10 @@ void sqlite4_result_text(
 }
 
 // [koreauniv] 추가
-void sqlite4_result_zeroblob(sqlite3_context *pCtx, int n){
+void sqlite4_result_zeroblob(sqlite4_context *pCtx, int n){
   sqlite4_result_zeroblob64(pCtx, n>0 ? n : 0);
 }
-int sqlite4_result_zeroblob64(sqlite3_context *pCtx, u64 n){
+int sqlite4_result_zeroblob64(sqlite4_context *pCtx, u64 n){
   Mem *pOut;
 
 #ifdef SQLITE_ENABLE_API_ARMOR
@@ -303,7 +303,7 @@ int sqlite4_result_zeroblob64(sqlite3_context *pCtx, u64 n){
 #ifndef SQLITE4_OMIT_INCRBLOB
   sqlite4VdbeMemSetZeroBlob(pCtx->pOut, (int)n);
   return SQLITE4_OK;
-#else,
+#else
   return sqlite4VdbeMemSetZeroBlob(pCtx->pOut, (int)n);
 #endif
 }
@@ -315,9 +315,9 @@ void sqlite4_result_error_code(sqlite4_context *pCtx, int errCode){
 #ifdef SQLITE_DEBUG
   if( pCtx->pVdbe ) pCtx->pVdbe->rcApp = errCode;
 #endif
-  if( pCtx->pOut->flags & MEM_Null ){
+  if( pCtx->s.flags & MEM_Null ){
     setResultStrOrError(pCtx, sqlite4ErrStr(errCode), -1, SQLITE4_UTF8,
-                        SQLITE4_STATIC);
+                        SQLITE4_STATIC, 0);
   }
 }
 
@@ -353,17 +353,6 @@ void sqlite4_result_text16le(
   setResultStrOrError(pCtx, z, n, SQLITE4_UTF16LE, xDel, pDelArg);
 }
 #endif /* SQLITE4_OMIT_UTF16 */
-void sqlite4_result_value(sqlite4_context *pCtx, sqlite4_value *pValue){
-  assert( sqlite4_mutex_held(pCtx->s.db->mutex) );
-  sqlite4VdbeMemCopy(&pCtx->s, pValue);
-}
-void sqlite4_result_error_code(sqlite4_context *pCtx, int errCode){
-  pCtx->isError = errCode;
-  if( pCtx->s.flags & MEM_Null ){
-    sqlite4VdbeMemSetStr(&pCtx->s, sqlite4ErrStr(errCode), -1, 
-                         SQLITE4_UTF8, SQLITE4_STATIC, 0);
-  }
-}
 
 /* Force an SQLITE4_TOOBIG error. */
 void sqlite4_result_error_toobig(sqlite4_context *pCtx){
