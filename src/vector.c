@@ -589,7 +589,7 @@ void vectorSerializeWithMeta(
 
   vectorSerializeToBlob(pVector, pBlob, nDataSize);
   vectorSerializeMeta(pVector, nDataSize, pBlob, nBlobSize);
-  sqlite4_result_blob(context, (char*)pBlob, nBlobSize, vectorBlobFree, context->pEnv);
+  sqlite4_result_blob(context, (char*)pBlob, nBlobSize, vectorBlobFree, 0);
 }
 
 void vectorSerializeToBlob(const Vector *pVector, unsigned char *pBlob, size_t nBlobSize){
