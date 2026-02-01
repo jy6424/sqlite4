@@ -194,7 +194,7 @@ SRC = \
   $(TOP)/src/where.c
 
 # [koreauniv] source code for vector
-SRC += \  
+SRC += \
   $(TOP)/src/vector.c \
   $(TOP)/src/vectorIndex.c \
   $(TOP)/src/vectorIndexInt.h \
