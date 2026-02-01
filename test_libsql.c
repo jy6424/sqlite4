@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
   printf("\n-- creating table --\n");
   rc = sqlite4_exec(
     db,
-    "CREATE TABLE x (title TEXT, year INT, embedding F32_BLOB(4));",
+    "CREATE TABLE x (embedding F32_BLOB(4));",
     0, 0
   );
   if (rc) {
@@ -82,41 +82,41 @@ int main(int argc, char **argv) {
   }
   printf("Table created successfully\n");
 
-  printf("\n-- creating index --\n");
-  rc = sqlite4_exec(
-    db,
-    "CREATE INDEX x_idx ON x (libsql_vector_idx(embedding));",
-    print_row, 0
-  );
-  if (rc) {
-    printf("sql error (create index): rc=%d\n", rc);
-    sqlite4_close(db, 0);
-    return 1;
-  }
+  // printf("\n-- creating index --\n");
+  // rc = sqlite4_exec(
+  //   db,
+  //   "CREATE INDEX x_idx ON x (libsql_vector_idx(embedding));",
+  //   print_row, 0
+  // );
+  // if (rc) {
+  //   printf("sql error (create index): rc=%d\n", rc);
+  //   sqlite4_close(db, 0);
+  //   return 1;
+  // }
 
-  printf("\n-- tables --\n");
-  rc = sqlite4_exec(
-    db,
-    "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;",
-    print_row, 0
-  );
-  if (rc) {
-    printf("sql error (select tables): rc=%d\n", rc);
-    sqlite4_close(db, 0);
-    return 1;
-  }
+  // printf("\n-- tables --\n");
+  // rc = sqlite4_exec(
+  //   db,
+  //   "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;",
+  //   print_row, 0
+  // );
+  // if (rc) {
+  //   printf("sql error (select tables): rc=%d\n", rc);
+  //   sqlite4_close(db, 0);
+  //   return 1;
+  // }
 
-    printf("\n-- indexes --\n");
-  rc = sqlite4_exec(
-    db,
-    "SELECT name FROM sqlite_master WHERE type='index' ORDER BY name;",
-    print_row, 0
-  );
-  if (rc) {
-    printf("sql error (select indexes): rc=%d\n", rc);
-    sqlite4_close(db, 0);
-    return 1;
-  }
+  //   printf("\n-- indexes --\n");
+  // rc = sqlite4_exec(
+  //   db,
+  //   "SELECT name FROM sqlite_master WHERE type='index' ORDER BY name;",
+  //   print_row, 0
+  // );
+  // if (rc) {
+  //   printf("sql error (select indexes): rc=%d\n", rc);
+  //   sqlite4_close(db, 0);
+  //   return 1;
+  // }
 
   sqlite4_close(db, 0);
   return 0;
