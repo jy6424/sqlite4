@@ -285,9 +285,6 @@ void sqlite4_result_text(
 }
 
 // [koreauniv] 추가
-void sqlite4_result_zeroblob(sqlite4_context *pCtx, int n){
-  sqlite4_result_zeroblob64(pCtx, n>0 ? n : 0);
-}
 int sqlite4_result_zeroblob64(sqlite4_context *pCtx, u64 n){
   Mem *pOut;
 
@@ -307,6 +304,12 @@ int sqlite4_result_zeroblob64(sqlite4_context *pCtx, u64 n){
   return sqlite4VdbeMemSetZeroBlob(pCtx->s, (int)n);
 #endif
 }
+
+
+void sqlite4_result_zeroblob(sqlite4_context *pCtx, int n){
+  sqlite4_result_zeroblob64(pCtx, n>0 ? n : 0);
+}
+
 void sqlite4_result_error_code(sqlite4_context *pCtx, int errCode){
 #ifdef SQLITE4_ENABLE_API_ARMOR
   if( pCtx==0 ) return;
