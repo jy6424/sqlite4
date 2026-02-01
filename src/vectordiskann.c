@@ -1870,4 +1870,4 @@ int diskAnnCreateIndex(
 //   }
 //   sqlite4DbFree(pIndex->db, pIndex);
 // }
-// #endif /* !defined(SQLITE4_OMIT_VECTOR) */
+#endif /* !defined(SQLITE4_OMIT_VECTOR) */
