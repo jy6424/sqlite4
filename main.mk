@@ -91,7 +91,7 @@ LIBOBJ += bt_unix.o bt_pager.o bt_main.o bt_varint.o kvbt.o bt_lock.o bt_log.o
 
 # [koreauniv] source code object for vector
 # LIBOBJ += vdbeblob.o
-LIBOBJ += vectorIndex.o
+LIBOBJ += vector.o vectordiskann.o vectorIndex.o 
 
 # All of the source code files.
 #
@@ -194,10 +194,13 @@ SRC = \
   $(TOP)/src/where.c
 
 # [koreauniv] source code for vector
-SRC += \
+SRC += \  
+  $(TOP)/src/vector.c \
   $(TOP)/src/vectorIndex.c \
   $(TOP)/src/vectorIndexInt.h \
-  $(TOP)/src/vectorInt.h
+  $(TOP)/src/vectorInt.h \
+  $(TOP)/src/vectordiskann.c
+  
 
 # SRC += \
 #   $(TOP)/src/vdbeblob.c

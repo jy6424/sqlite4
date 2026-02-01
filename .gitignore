@@ -74,8 +74,8 @@ parse.h.temp
 test.db
 
 # vector diskann temporary files
-vector.c
-vectordiskann.c
+# vector.c
+# vectordiskann.c
 vectorfloat1bit.c
 vectorfloat8.c
 vectorfloat16.c
