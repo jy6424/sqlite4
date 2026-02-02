@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
   printf("\n-- creating table --\n");
   rc = sqlite4_exec(
     db,
-    "CREATE TABLE x (name TEXT);",
+    "CREATE TABLE x (embedding F32_BLOB(4));",
     0, 0
   );
   if (rc) {
