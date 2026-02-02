@@ -866,17 +866,19 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
   // }
 
   // backward compatibility: preserve old indices with deprecated syntax but forbid creation of new indices with this syntax
-  if( pParse->db->init.busy == 0){
-    if( pIdx->zName != NULL && pTable->zName != NULL && pIdx->nColumn >= 1 && pIdx->aiColumn != NULL && pIdx->aiColumn[0] < pTable->nCol ){
-      sqlite4ErrorMsg(pParse, "vector index: USING syntax is deprecated, please use plain CREATE INDEX: CREATE INDEX %s ON %s ( " VECTOR_INDEX_MARKER_FUNCTION "(%s) )", pIdx->zName, pTable->zName, pTable->aCol[pIdx->aiColumn[0]].zName);
-    } else {
-      sqlite4ErrorMsg(pParse, "vector index: USING syntax is deprecated, please use plain CREATE INDEX: CREATE INDEX xxx ON yyy ( " VECTOR_INDEX_MARKER_FUNCTION "(zzz) )");
-    }
-    return CREATE_FAIL;
-  }
-  if( db->init.busy == 1){
-    return CREATE_OK;
-  }
+  // if( pParse->db->init.busy == 0){
+  //   if( pIdx->zName != NULL && pTable->zName != NULL && pIdx->nColumn >= 1 && pIdx->aiColumn != NULL && pIdx->aiColumn[0] < pTable->nCol ){
+  //     sqlite4ErrorMsg(pParse, "vector index: USING syntax is deprecated, please use plain CREATE INDEX: CREATE INDEX %s ON %s ( " VECTOR_INDEX_MARKER_FUNCTION "(%s) )", pIdx->zName, pTable->zName, pTable->aCol[pIdx->aiColumn[0]].zName);
+  //   } else {
+  //     sqlite4ErrorMsg(pParse, "vector index: USING syntax is deprecated, please use plain CREATE INDEX: CREATE INDEX xxx ON yyy ( " VECTOR_INDEX_MARKER_FUNCTION "(zzz) )");
+  //   }
+  //   return CREATE_FAIL;
+  // }
+  // if( db->init.busy == 1){
+  //   return CREATE_OK;
+  // }
+
+  if (db->init.busy == 1) return CREATE_IGNORE;
 
   // vector index must have expressions over column
   if( pIdx->aColExpr == NULL ) {
