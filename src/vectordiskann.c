@@ -591,6 +591,7 @@ int diskAnnCreateIndex(
         );
     zRowidColumnName = "rowid";
   }
+  printf("diskAnnCreateIndex: creating shadow table with SQL: %s\n", zSql);
   rc = sqlite4_exec(db, zSql, 0, 0);
   sqlite4DbFree(db, zSql);
   if( rc != SQLITE4_OK ){
