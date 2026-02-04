@@ -2781,6 +2781,7 @@ Index *sqlite4CreateIndex(
     }
   }
 
+  // [koreauniv] allow libsql_vector_idx to create vector index
   /* BEFORE: for(i=0, pListItem=pList->a; ... findTableColumn ... ) */
 
   /* AFTER: */
@@ -2800,8 +2801,8 @@ Index *sqlite4CreateIndex(
       col = pCExpr->iColumn;
       if( col<0 ){
         /* sqlite4에서 rowid/PK 매핑이 필요하면 여기서 처리.
-          일단 실패로 두고, 네 테이블 모델에 맞게 보정해도 됨. */
-        sqlite4ErrorMsg(pParse, "invalid column in index");
+          일단 실패로 두고, 테이블 모델에 맞게 추후 보정. */
+        printf("invalid column in index");
         goto exit_create_index;
       }
       pIndex->aiColumn[i] = col;
@@ -2812,8 +2813,6 @@ Index *sqlite4CreateIndex(
         pList = 0;                  /* 아래 cleanup에서 free되지 않게 */
       }
       pIndex->aiColumn[i] = XN_EXPR;
-      pIndex->uniqNotNull = 0;      /* 필드가 있으면(없으면 생략) */
-      pIndex->bHasExpr = 1;         /* Index에 이런 필드가 있으면 세팅 */
     }
 
     /* collation 처리: sqlite4는 pExpr->pColl 기반이라 그대로 유지 가능 */
