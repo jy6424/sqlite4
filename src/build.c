@@ -2786,7 +2786,7 @@ Index *sqlite4CreateIndex(
 
   /* AFTER: */
   pListItem = pList->a;
-
+  int hasExpr = 0;
   for(i=0; i<pIndex->nColumn; i++, pListItem++){
     Expr *pExpr = pListItem->pExpr;
     Expr *pCExpr = pExpr;
@@ -2801,26 +2801,19 @@ Index *sqlite4CreateIndex(
     if( pCExpr && pCExpr->op==TK_COLUMN ){
       col = pCExpr->iColumn;
       if( col<0 ){
-        col = pTab->iPKey;   /* rowid / PK 대응 */
-      }else{
-        if( pTab->aCol[col].notNull==0 ){
-          pIndex->uniqNotNull = 0;
-        }
+        sqlite4ErrorMsg(pParse, "invalid column in index");
+        goto exit_create_index;
       }
       pIndex->aiColumn[i] = (i16)col;
     }else{
-      /* 표현식 인덱스 (libsql_vector_idx 포함) */
       if( pTab==pParse->pNewTable ){
         sqlite4ErrorMsg(pParse,
           "expressions prohibited in PRIMARY KEY and UNIQUE constraints");
         goto exit_create_index;
       }
       pIndex->aiColumn[i] = XN_EXPR;
-      pIndex->uniqNotNull = 0;
-      pIndex->bHasExpr = 1;
       hasExpr = 1;
     }
-
     /* collation 처리 */
     if( pExpr && pExpr->pColl ){
       int nColl;
