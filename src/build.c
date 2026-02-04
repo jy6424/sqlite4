@@ -2838,6 +2838,10 @@ Index *sqlite4CreateIndex(
     pIndex->azColl[i] = zColl;
     pIndex->aSortOrder[i] = (u8)pListItem->sortOrder;
   }
+  if( hasExpr ){
+  pIndex->aColExpr = pList;
+  pList = 0;
+}
 
   sqlite4DefaultRowEst(pIndex);
 
