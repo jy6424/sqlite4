@@ -1159,27 +1159,14 @@ uniqueflag(A) ::= .        {A = OE_None;}
 
 idxlist_opt(A) ::= .                         {A = 0;}
 idxlist_opt(A) ::= LP idxlist(X) RP.         {A = X;}
-idxlist(A) ::= idxlist(X) COMMA nm(Y) collate(C) sortorder(Z).  {
-  Expr *p = 0;
-  if( C.n>0 ){
-    p = sqlite4Expr(pParse->db, TK_COLUMN, 0);
-    sqlite4ExprSetCollByToken(pParse, p, &C);
-  }
-  A = sqlite4ExprListAppend(pParse,X, p);
-  sqlite4ExprListSetName(pParse,A,&Y,1);
-  sqlite4ExprListCheckLength(pParse, A, "index");
+idxlist(A) ::= idxlist(X) COMMA expr(Y) sortorder(Z). {
+  A = sqlite4ExprListAppend(pParse, X, Y.pExpr);
   if( A ) A->a[A->nExpr-1].sortOrder = (u8)Z;
 }
-idxlist(A) ::= nm(Y) collate(C) sortorder(Z). {
-  Expr *p = 0;
-  if( C.n>0 ){
-    p = sqlite4PExpr(pParse, TK_COLUMN, 0, 0, 0);
-    sqlite4ExprSetCollByToken(pParse, p, &C);
-  }
-  A = sqlite4ExprListAppend(pParse,0, p);
-  sqlite4ExprListSetName(pParse, A, &Y, 1);
-  sqlite4ExprListCheckLength(pParse, A, "index");
-  if( A ) A->a[A->nExpr-1].sortOrder = (u8)Z;
+
+idxlist(A) ::= expr(Y) sortorder(Z). {
+  A = sqlite4ExprListAppend(pParse, 0, Y.pExpr);
+  if( A ) A->a[0].sortOrder = (u8)Z;
 }
 
 %type collate {Token}
