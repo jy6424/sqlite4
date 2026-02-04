@@ -889,6 +889,11 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
     return CREATE_IGNORE;
   }
 
+  if( pIdx->aColExpr==0 ) return CREATE_IGNORE;
+  if( pIdx->aColExpr->nExpr!=1 ) return CREATE_IGNORE;
+  if( pIdx->aColExpr->a[0].pExpr==0 ) return CREATE_IGNORE;
+
+
   pListItem = pIdx->aColExpr->a;
   for(i=0; i<pIdx->aColExpr->nExpr; i++, pListItem++){
     Expr* pExpr = pListItem->pExpr;
