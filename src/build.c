@@ -3856,7 +3856,6 @@ KeyInfo *sqlite4IndexKeyinfo(Parse *pParse, Index *pIdx){
    || pIdx->eIndexType==SQLITE4_INDEX_TEMP
   ){
     pPk = 0;
-    printf("  (primary key or temp index: no additional primary key)\n");
   }else{
     pPk = sqlite4FindPrimaryKey(pIdx->pTable, 0);
   }

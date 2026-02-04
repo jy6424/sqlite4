@@ -878,6 +878,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
   //   return CREATE_OK;
   // }
   printf("vectorIndexCreate: entered\n");
+  printf("vectorIndexCreate: db->init.busy = %d\n", db->init.busy);
   if (db->init.busy == 1) {
     printf("vectorIndexCreate: first db->init.busy = %d\n", db->init.busy);
     return CREATE_IGNORE;
@@ -966,6 +967,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
   }
 
   // [koreauniv TODO] diskAnnCreateIndex 수정하기
+  printf("vectorIndexCreate: calling diskAnnCreateIndex\n");
   rc = diskAnnCreateIndex(db, zDbSName, pIdx->zName, &idxKey, &idxParams, &pzErrMsg);
   printf("diskAnnCreateIndex rc=%d\n", rc);
   // rc = 0; // 임시
