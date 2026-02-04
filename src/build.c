@@ -2797,7 +2797,7 @@ Index *sqlite4CreateIndex(
       pCExpr = pCExpr->pLeft;
     }
     if( pExpr == NULL ){
-      return CREATE_IGNORE;
+      return 0;
     }
 
     if( pCExpr && pCExpr->op == TK_COLUMN ){
