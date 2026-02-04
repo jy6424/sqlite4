@@ -2786,63 +2786,66 @@ Index *sqlite4CreateIndex(
 
   /* AFTER: */
   pListItem = pList->a;
-  for(i=0; i<pList->nExpr; i++, pListItem++){
+
+  for(i=0; i<pIndex->nColumn; i++, pListItem++){
     Expr *pExpr = pListItem->pExpr;
     Expr *pCExpr = pExpr;
     int col = -1;
+    char *zColl;
 
-    /* COLLATE wrapper 제거 (sqlite3는 SkipCollate) */
+    /* COLLATE 제거 (sqlite3의 ExprSkipCollate 대응) */
     while( pCExpr && pCExpr->op==TK_COLLATE ){
       pCExpr = pCExpr->pLeft;
     }
 
     if( pCExpr && pCExpr->op==TK_COLUMN ){
-      /* 정상 컬럼 인덱스 */
       col = pCExpr->iColumn;
       if( col<0 ){
-        /* sqlite4에서 rowid/PK 매핑이 필요하면 여기서 처리.
-          일단 실패로 두고, 테이블 모델에 맞게 추후 보정. */
-        printf("invalid column in index");
-        goto exit_create_index;
+        col = pTab->iPKey;   /* rowid / PK 대응 */
+      }else{
+        if( pTab->aCol[col].notNull==0 ){
+          pIndex->uniqNotNull = 0;
+        }
       }
-      pIndex->aiColumn[i] = col;
+      pIndex->aiColumn[i] = (i16)col;
     }else{
-      /* 표현식 인덱스: libsql_vector_idx(embedding) 같은 케이스 */
-      if( pIndex->aColExpr==0 ){
-        pIndex->aColExpr = pList;   /* ExprList를 Index가 소유 */
-        pList = 0;                  /* 아래 cleanup에서 free되지 않게 */
+      /* 표현식 인덱스 (libsql_vector_idx 포함) */
+      if( pTab==pParse->pNewTable ){
+        sqlite4ErrorMsg(pParse,
+          "expressions prohibited in PRIMARY KEY and UNIQUE constraints");
+        goto exit_create_index;
       }
       pIndex->aiColumn[i] = XN_EXPR;
+      pIndex->uniqNotNull = 0;
+      pIndex->bHasExpr = 1;
+      hasExpr = 1;
     }
 
-    /* collation 처리: sqlite4는 pExpr->pColl 기반이라 그대로 유지 가능 */
-    {
-      char *zColl;
-      if( pExpr && pExpr->pColl ){
-        int nColl;
-        zColl = pExpr->pColl->zName;
-        nColl = sqlite4Strlen30(zColl) + 1;
-        assert( nExtra>=nColl );
-        memcpy(zExtra, zColl, nColl);
-        zColl = zExtra;
-        zExtra += nColl;
-        nExtra -= nColl;
-      }else if( col>=0 ){
-        zColl = pTab->aCol[col].zColl;
-        if( !zColl ) zColl = db->pDfltColl->zName;
-      }else{
-        /* 표현식이고 collate가 없으면 BINARY/DEFAULT */
-        zColl = db->pDfltColl->zName;
-      }
-
-      if( !db->init.busy && !sqlite4LocateCollSeq(pParse, zColl) ){
-        goto exit_create_index;
-      }
-      pIndex->azColl[i] = zColl;
+    /* collation 처리 */
+    if( pExpr && pExpr->pColl ){
+      int nColl;
+      zColl = pExpr->pColl->zName;
+      nColl = sqlite4Strlen30(zColl) + 1;
+      assert( nExtra>=nColl );
+      memcpy(zExtra, zColl, nColl);
+      zColl = zExtra;
+      zExtra += nColl;
+      nExtra -= nColl;
+    }else if( col>=0 ){
+      zColl = pTab->aCol[col].zColl;
+      if( !zColl ) zColl = db->pDfltColl->zName;
+    }else{
+      zColl = db->pDfltColl->zName;
     }
 
+    if( !db->init.busy && !sqlite4LocateCollSeq(pParse, zColl) ){
+      goto exit_create_index;
+    }
+
+    pIndex->azColl[i] = zColl;
     pIndex->aSortOrder[i] = (u8)pListItem->sortOrder;
   }
+
   sqlite4DefaultRowEst(pIndex);
 
   printf("Creating vector index entering\n");
