@@ -3333,4 +3333,10 @@ void sqlite4_result_value(sqlite4_context *pCtx, sqlite4_value *pValue);
 /* Return true if index X is a vector index */
 #define IsVectorIndex(X)  ((X)->idxIsVector==1)
 
+/* The Index.aiColumn[] values are normally positive integer.  But
+** there are some negative values that have special meaning:
+*/
+#define XN_ROWID     (-1)     /* Indexed column is the rowid */
+#define XN_EXPR      (-2)     /* Indexed column is an expression */
+
 #endif /* _SQLITEINT_H_ */

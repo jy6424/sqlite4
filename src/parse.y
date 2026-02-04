@@ -1143,7 +1143,7 @@ createindex(C) ::= createkw(S) uniqueflag(U) INDEX ifnotexists(NE)
   C.pTblName = sqlite4SrcListAppend(pParse->db, 0, &Y, 0);
 }
 
-cmd ::= createindex(C) LP idxlist(Z) RP(E) covering_opt(F). {
+cmd ::= createindex(C) LP sortlist(Z) RP(E) covering_opt(F). {
   Token *pEnd = (F.pList ? &F.sEnd : &E);
   sqlite4CreateIndex(pParse, &C, Z, F.pList, C.bUnique, pEnd, SQLITE4_SO_ASC,0);
 }

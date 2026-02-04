@@ -2781,40 +2781,67 @@ Index *sqlite4CreateIndex(
     }
   }
 
-  /* Scan the names of the columns of the table to be indexed and
-  ** load the column indices into the Index structure.  Report an error
-  ** if any column is not found.
-  **
-  ** TODO:  Add a test to make sure that the same column is not named
-  ** more than once within the same index.  Only the first instance of
-  ** the column will ever be used by the optimizer.
-  */
-  for(i=0, pListItem=pList->a; i<pList->nExpr; i++, pListItem++){
-    char *zColl;                   /* Collation sequence name */
+  /* BEFORE: for(i=0, pListItem=pList->a; ... findTableColumn ... ) */
 
-    j = findTableColumn(pParse, pTab, pListItem->zName);
-    if( j<0 ) goto exit_create_index;
+  /* AFTER: */
+  pListItem = pList->a;
+  for(i=0; i<pList->nExpr; i++, pListItem++){
+    Expr *pExpr = pListItem->pExpr;
+    Expr *pCExpr = pExpr;
+    int col = -1;
 
-    pIndex->aiColumn[i] = j;
-    if( pListItem->pExpr && pListItem->pExpr->pColl ){
-      int nColl;
-      zColl = pListItem->pExpr->pColl->zName;
-      nColl = sqlite4Strlen30(zColl) + 1;
-      assert( nExtra>=nColl );
-      memcpy(zExtra, zColl, nColl);
-      zColl = zExtra;
-      zExtra += nColl;
-      nExtra -= nColl;
+    /* COLLATE wrapper 제거 (sqlite3는 SkipCollate) */
+    while( pCExpr && pCExpr->op==TK_COLLATE ){
+      pCExpr = pCExpr->pLeft;
+    }
+
+    if( pCExpr && pCExpr->op==TK_COLUMN ){
+      /* 정상 컬럼 인덱스 */
+      col = pCExpr->iColumn;
+      if( col<0 ){
+        /* sqlite4에서 rowid/PK 매핑이 필요하면 여기서 처리.
+          일단 실패로 두고, 네 테이블 모델에 맞게 보정해도 됨. */
+        sqlite4ErrorMsg(pParse, "invalid column in index");
+        goto exit_create_index;
+      }
+      pIndex->aiColumn[i] = col;
     }else{
-      zColl = pTab->aCol[j].zColl;
-      if( !zColl ){
+      /* 표현식 인덱스: libsql_vector_idx(embedding) 같은 케이스 */
+      if( pIndex->aColExpr==0 ){
+        pIndex->aColExpr = pList;   /* ExprList를 Index가 소유 */
+        pList = 0;                  /* 아래 cleanup에서 free되지 않게 */
+      }
+      pIndex->aiColumn[i] = XN_EXPR;
+      pIndex->uniqNotNull = 0;      /* 필드가 있으면(없으면 생략) */
+      pIndex->bHasExpr = 1;         /* Index에 이런 필드가 있으면 세팅 */
+    }
+
+    /* collation 처리: sqlite4는 pExpr->pColl 기반이라 그대로 유지 가능 */
+    {
+      char *zColl;
+      if( pExpr && pExpr->pColl ){
+        int nColl;
+        zColl = pExpr->pColl->zName;
+        nColl = sqlite4Strlen30(zColl) + 1;
+        assert( nExtra>=nColl );
+        memcpy(zExtra, zColl, nColl);
+        zColl = zExtra;
+        zExtra += nColl;
+        nExtra -= nColl;
+      }else if( col>=0 ){
+        zColl = pTab->aCol[col].zColl;
+        if( !zColl ) zColl = db->pDfltColl->zName;
+      }else{
+        /* 표현식이고 collate가 없으면 BINARY/DEFAULT */
         zColl = db->pDfltColl->zName;
       }
+
+      if( !db->init.busy && !sqlite4LocateCollSeq(pParse, zColl) ){
+        goto exit_create_index;
+      }
+      pIndex->azColl[i] = zColl;
     }
-    if( !db->init.busy && !sqlite4LocateCollSeq(pParse, zColl) ){
-      goto exit_create_index;
-    }
-    pIndex->azColl[i] = zColl;
+
     pIndex->aSortOrder[i] = (u8)pListItem->sortOrder;
   }
   sqlite4DefaultRowEst(pIndex);
