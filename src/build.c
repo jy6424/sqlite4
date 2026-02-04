@@ -2849,7 +2849,7 @@ Index *sqlite4CreateIndex(
   }
   if( hasExpr ){
     pIndex->aColExpr = pList;
-    pList = 0;
+    pList = sqlite4ExprListDup(db, pList, 0);
   }
   if( pIndex->aColExpr ){
     SrcList sSrc;
@@ -2878,7 +2878,6 @@ Index *sqlite4CreateIndex(
       }
     }
   }
-
 
   sqlite4DefaultRowEst(pIndex);
 
