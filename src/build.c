@@ -2792,7 +2792,7 @@ Index *sqlite4CreateIndex(
     Expr *pCExpr = pExpr;
     int col = -1;
     char *zColl;
-
+    printf("[idx] i=%d pExpr=%p\n", i, pListItem->pExpr);
     /* COLLATE 제거 (sqlite3의 ExprSkipCollate 대응) */
     while( pCExpr && pCExpr->op==TK_COLLATE ){
       pCExpr = pCExpr->pLeft;
@@ -2801,7 +2801,8 @@ Index *sqlite4CreateIndex(
     if( pCExpr && pCExpr->op==TK_COLUMN ){
       col = pCExpr->iColumn;
       if( col<0 ){
-        sqlite4ErrorMsg(pParse, "invalid column in index");
+        printf("[idx] iColumn=%d\n", pCExpr->iColumn);
+        printf("invalid column in index");
         goto exit_create_index;
       }
       pIndex->aiColumn[i] = (i16)col;
@@ -2830,7 +2831,7 @@ Index *sqlite4CreateIndex(
     }else{
       zColl = db->pDfltColl->zName;
     }
-
+    printf("[idx] zColl=%s\n", zColl);
     if( !db->init.busy && !sqlite4LocateCollSeq(pParse, zColl) ){
       goto exit_create_index;
     }
