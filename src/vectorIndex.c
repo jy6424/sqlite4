@@ -933,6 +933,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
   }
   // schema is locked while db is initializing and we need to just proceed here
   if( db->init.busy == 1 ){
+    printf("vectorIndexCreate: db->init.busy = %d\n", db->init.busy);
     return CREATE_OK;
   }
 
@@ -956,6 +957,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
 
   // [koreauniv TODO] diskAnnCreateIndex 수정하기
   rc = diskAnnCreateIndex(db, zDbSName, pIdx->zName, &idxKey, &idxParams, &pzErrMsg);
+  printf("diskAnnCreateIndex rc=%d\n", rc);
   // rc = 0; // 임시
   if( rc != SQLITE4_OK ){
     if( pzErrMsg != NULL ){
@@ -1147,7 +1149,7 @@ int getIndexNameParts(sqlite4 *db, const char *zIdxFullName, char **pzIdxDbSName
 //   return rc;
 // }
 
-// [koreauniv TODO] TBD: vectorIndexSearch 구현하기
+// // [koreauniv TODO] TBD: vectorIndexInsert 구현하기
 // int vectorIndexInsert(
 //   VectorIdxCursor *pCur,
 //   const UnpackedRecord *pRecord,

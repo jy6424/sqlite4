@@ -3330,4 +3330,7 @@ int sqlite4_result_zeroblob64(sqlite4_context *pCtx, u64 n);
 void sqlite4_result_zeroblob(sqlite4_context *pCtx, int n);
 void sqlite4_result_value(sqlite4_context *pCtx, sqlite4_value *pValue);
 
+/* Return true if index X is a vector index */
+#define IsVectorIndex(X)  ((X)->idxIsVector==1)
+
 #endif /* _SQLITEINT_H_ */
