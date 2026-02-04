@@ -2787,70 +2787,34 @@ Index *sqlite4CreateIndex(
   /* AFTER: */
   pListItem = pList->a;
   int hasExpr = 0;
-  for(i=0; i<pIndex->nColumn; i++, pListItem++){
+  pListItem = pList->a;
+  for(i = 0; i < pIndex->nColumn; i++, pListItem++){
     Expr *pExpr = pListItem->pExpr;
     Expr *pCExpr = pExpr;
-    int col = -1;
-    char *zColl;
 
-    if( pExpr==NULL ){
-      /* sqlite4 기본 컬럼 인덱스 */
-      col = findTableColumn(pParse, pTab, pListItem->zName);
-      if( col<0 ){
-        goto exit_create_index;
-      }
-      pIndex->aiColumn[i] = (i16)col;
+    /* COLLATE 제거 */
+    while( pCExpr && pCExpr->op == TK_COLLATE ){
+      pCExpr = pCExpr->pLeft;
+    }
+
+    if( pCExpr && pCExpr->op == TK_COLUMN ){
+      /* 단순 컬럼 */
+      pIndex->aiColumn[i] = (i16)pCExpr->iColumn;
     }else{
-      /* 표현식 / vector 인덱스 경로 */
-      while( pCExpr && pCExpr->op==TK_COLLATE ){
-        pCExpr = pCExpr->pLeft;
-      }
-
-      if( pCExpr && pCExpr->op==TK_COLUMN ){
-        col = pCExpr->iColumn;
-        if( col<0 ){
-          sqlite4ErrorMsg(pParse, "invalid column in index");
-          goto exit_create_index;
-        }
-        pIndex->aiColumn[i] = (i16)col;
-      }else{
-        if( pTab==pParse->pNewTable ){
-          sqlite4ErrorMsg(pParse,
-            "expressions prohibited in PRIMARY KEY and UNIQUE constraints");
-          goto exit_create_index;
-        }
-        pIndex->aiColumn[i] = XN_EXPR;
-        hasExpr = 1;
-      }
-    }
-    /* collation 처리 */
-    if( pExpr && pExpr->pColl ){
-      int nColl;
-      zColl = pExpr->pColl->zName;
-      nColl = sqlite4Strlen30(zColl) + 1;
-      assert( nExtra>=nColl );
-      memcpy(zExtra, zColl, nColl);
-      zColl = zExtra;
-      zExtra += nColl;
-      nExtra -= nColl;
-    }else if( col>=0 ){
-      zColl = pTab->aCol[col].zColl;
-      if( !zColl ) zColl = db->pDfltColl->zName;
-    }else{
-      zColl = db->pDfltColl->zName;
-    }
-    printf("[idx] zColl=%s\n", zColl);
-    if( !db->init.busy && !sqlite4LocateCollSeq(pParse, zColl) ){
-      goto exit_create_index;
+      /* 표현식 인덱스 (함수 포함) */
+      pIndex->aiColumn[i] = XN_EXPR;
+      hasExpr = 1;
     }
 
-    pIndex->azColl[i] = zColl;
     pIndex->aSortOrder[i] = (u8)pListItem->sortOrder;
   }
+
+  /* sqlite3와 동일한 핵심 동작 */
   if( hasExpr ){
     pIndex->aColExpr = pList;
-    pList = sqlite4ExprListDup(db, pList, 0);
+    pList = 0;   /* ownership 이동 */
   }
+
   if( pIndex->aColExpr ){
     SrcList sSrc;
     NameContext sNC;
