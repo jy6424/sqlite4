@@ -593,6 +593,7 @@ int diskAnnCreateIndex(
   }
   printf("diskAnnCreateIndex: creating shadow table with SQL: %s\n", zSql);
   rc = sqlite4_exec(db, zSql, 0, 0);
+  printf("diskAnnCreateIndex: shadow table creation rc=%d\n", rc);
   sqlite4DbFree(db, zSql);
   if( rc != SQLITE4_OK ){
     return rc;
