@@ -2854,6 +2854,7 @@ Index *sqlite4CreateIndex(
   if( pIndex->aColExpr ){
     SrcList sSrc;
     NameContext sNC;
+    int ii;
 
     memset(&sSrc, 0, sizeof(sSrc));
     memset(&sNC, 0, sizeof(sNC));
@@ -2865,11 +2866,16 @@ Index *sqlite4CreateIndex(
 
     sNC.pParse = pParse;
     sNC.pSrcList = &sSrc;
-    sNC.isCheck = 0;     /* CHECK 아님 */
-    sNC.nDepth = 1;     /* ← 중요: index expression */
+    sNC.isCheck = 0;
+    sNC.nDepth = 1;
 
-    if( sqlite4ResolveExprNames(&sNC, pIndex->aColExpr) ){
-      goto exit_create_index;
+    for(ii = 0; ii < pIndex->aColExpr->nExpr; ii++){
+      Expr *pE = pIndex->aColExpr->a[ii].pExpr;
+      if( pE ){
+        if( sqlite4ResolveExprNames(&sNC, pE) ){
+          goto exit_create_index;
+        }
+      }
     }
   }
 
