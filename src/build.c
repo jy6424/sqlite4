@@ -2848,11 +2848,34 @@ Index *sqlite4CreateIndex(
     pIndex->aSortOrder[i] = (u8)pListItem->sortOrder;
   }
   if( hasExpr ){
-  pIndex->aColExpr = pList;
-  pList = 0;
-}
+    pIndex->aColExpr = pList;
+    pList = 0;
+  }
+  if( pIndex->aColExpr ){
+    SrcList sSrc;
+    NameContext sNC;
+
+    memset(&sSrc, 0, sizeof(sSrc));
+    memset(&sNC, 0, sizeof(sNC));
+
+    sSrc.nSrc = 1;
+    sSrc.a[0].zName = pTab->zName;
+    sSrc.a[0].pTab = pTab;
+    sSrc.a[0].iCursor = -1;
+
+    sNC.pParse = pParse;
+    sNC.pSrcList = &sSrc;
+    sNC.isCheck = 0;     /* CHECK 아님 */
+    sNC.nDepth = 1;     /* ← 중요: index expression */
+
+    if( sqlite4ResolveExprNames(&sNC, pIndex->aColExpr) ){
+      goto exit_create_index;
+    }
+  }
+
 
   sqlite4DefaultRowEst(pIndex);
+
 
   printf("Creating vector index entering\n");
   // [koreauniv] place to add vector index support 
