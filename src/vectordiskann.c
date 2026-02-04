@@ -494,21 +494,28 @@ int diskAnnCreateIndex(
   const char *zRowidColumnName;
   char columnSqlDefs[VECTOR_INDEX_SQL_RENDER_LIMIT]; // definition of columns (e.g. index_key INTEGER BINARY, index_key1 TEXT, ...)
   char columnSqlNames[VECTOR_INDEX_SQL_RENDER_LIMIT]; // just column names (e.g. index_key, index_key1, index_key2, ...)
+  
+  printf("diskAnnCreateIndex: entered\n");
   if( vectorIdxKeyDefsRender(pKey, "index_key", columnSqlDefs, sizeof(columnSqlDefs)) != 0 ){
+    printf("diskAnnCreateIndex: vectorIdxKeyDefsRender failed\n");
     return SQLITE4_ERROR;
   }
   if( vectorIdxKeyNamesRender(pKey->nKeyColumns, "index_key", columnSqlNames, sizeof(columnSqlNames)) != 0 ){
+    printf("diskAnnCreateIndex: vectorIdxKeyNamesRender failed\n");
     return SQLITE4_ERROR;
   }
   if( vectorIdxParamsPutU64(pParams, VECTOR_INDEX_TYPE_PARAM_ID, VECTOR_INDEX_TYPE_DISKANN) != 0 ){
+    printf("diskAnnCreateIndex: vectorIdxParamsPutU64 failed\n");
     return SQLITE4_ERROR;
   }
   type = vectorIdxParamsGetU64(pParams, VECTOR_TYPE_PARAM_ID);
   if( type == 0 ){
+    printf("diskAnnCreateIndex: vector type is not specified\n");
     return SQLITE4_ERROR;
   }
   dims = vectorIdxParamsGetU64(pParams, VECTOR_DIM_PARAM_ID);
   if( dims == 0 ){
+    printf("diskAnnCreateIndex: vector dimensions is not specified\n");
     return SQLITE4_ERROR;
   }
   assert( 0 < dims && dims <= MAX_VECTOR_SZ );
@@ -517,6 +524,7 @@ int diskAnnCreateIndex(
   if( metric == 0 ){
     metric = VECTOR_METRIC_TYPE_COS;
     if( vectorIdxParamsPutU64(pParams, VECTOR_METRIC_TYPE_PARAM_ID, metric) != 0 ){
+      printf("diskAnnCreateIndex: vectorIdxParamsPutU64 failed\n");
       return SQLITE4_ERROR;
     }
   }
@@ -604,7 +612,9 @@ int diskAnnCreateIndex(
       zIdxName,
       zRowidColumnName
   );
+  printf("diskAnnCreateIndex: creating index with SQL: %s\n", zSql);
   rc = sqlite4_exec(db, zSql, 0, 0);
+  printf("diskAnnCreateIndex: index creation rc=%d\n", rc);
   sqlite4DbFree(db, zSql);
   printf("Created DiskANN index \"%s\".%s with parameters: type=%d, dims=%d, metric=%d, neighbours=%d, max_neighbors=%llu, block_size=%llu\n",
          zDbSName, zIdxName, type, dims, metric, neighbours, maxNeighborsParam, blockSizeBytes);
