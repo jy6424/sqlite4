@@ -2792,28 +2792,36 @@ Index *sqlite4CreateIndex(
     Expr *pCExpr = pExpr;
     int col = -1;
     char *zColl;
-    printf("[idx] i=%d pExpr=%p\n", i, pListItem->pExpr);
-    /* COLLATE 제거 (sqlite3의 ExprSkipCollate 대응) */
-    while( pCExpr && pCExpr->op==TK_COLLATE ){
-      pCExpr = pCExpr->pLeft;
-    }
 
-    if( pCExpr && pCExpr->op==TK_COLUMN ){
-      col = pCExpr->iColumn;
+    if( pExpr==NULL ){
+      /* sqlite4 기본 컬럼 인덱스 */
+      col = findTableColumn(pParse, pTab, pListItem->zName);
       if( col<0 ){
-        printf("[idx] iColumn=%d\n", pCExpr->iColumn);
-        printf("invalid column in index");
         goto exit_create_index;
       }
       pIndex->aiColumn[i] = (i16)col;
     }else{
-      if( pTab==pParse->pNewTable ){
-        sqlite4ErrorMsg(pParse,
-          "expressions prohibited in PRIMARY KEY and UNIQUE constraints");
-        goto exit_create_index;
+      /* 표현식 / vector 인덱스 경로 */
+      while( pCExpr && pCExpr->op==TK_COLLATE ){
+        pCExpr = pCExpr->pLeft;
       }
-      pIndex->aiColumn[i] = XN_EXPR;
-      hasExpr = 1;
+
+      if( pCExpr && pCExpr->op==TK_COLUMN ){
+        col = pCExpr->iColumn;
+        if( col<0 ){
+          sqlite4ErrorMsg(pParse, "invalid column in index");
+          goto exit_create_index;
+        }
+        pIndex->aiColumn[i] = (i16)col;
+      }else{
+        if( pTab==pParse->pNewTable ){
+          sqlite4ErrorMsg(pParse,
+            "expressions prohibited in PRIMARY KEY and UNIQUE constraints");
+          goto exit_create_index;
+        }
+        pIndex->aiColumn[i] = XN_EXPR;
+        hasExpr = 1;
+      }
     }
     /* collation 처리 */
     if( pExpr && pExpr->pColl ){
