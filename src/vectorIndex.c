@@ -953,6 +953,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
   }
   rc = parseVectorIdxParams(pParse, &idxParams, type, dims, pListItem + 1, pArgsList->nExpr - 1);
   if( rc != SQLITE4_OK ){
+    printf("vector index: failed to parse index parameters");
     return CREATE_FAIL;
   }
   if( vectorIdxKeyGet(pIdx, &idxKey, &pzErrMsg) != 0 ){
