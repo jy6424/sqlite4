@@ -909,11 +909,11 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
     return CREATE_IGNORE;
   }
   if( hasCollation ){
-    sqlite4ErrorMsg(pParse, "vector index: collation in expression is forbidden");
+    printf("vector index: collation in expression is forbidden");
     return CREATE_FAIL;
   }
   if( pIdx->aColExpr->nExpr != 1 ) {
-    sqlite4ErrorMsg(pParse, "vector index: must contain exactly one column wrapped into the " VECTOR_INDEX_MARKER_FUNCTION " function");
+    printf("vector index: must contain exactly one column wrapped into the " VECTOR_INDEX_MARKER_FUNCTION " function");
     return CREATE_FAIL;
   }
 
@@ -921,23 +921,23 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
   pListItem = pArgsList->a;
 
   if( pArgsList->nExpr < 1 ){
-    sqlite4ErrorMsg(pParse, "vector idnex: " VECTOR_INDEX_MARKER_FUNCTION " must contain at least one argument");
+    printf("vector idnex: " VECTOR_INDEX_MARKER_FUNCTION " must contain at least one argument");
     return CREATE_FAIL;
   }
   if( pListItem[0].pExpr->op != TK_COLUMN ) {
-    sqlite4ErrorMsg(pParse, "vector index: " VECTOR_INDEX_MARKER_FUNCTION " first argument must be a column token");
+    printf("vector index: " VECTOR_INDEX_MARKER_FUNCTION " first argument must be a column token");
     return CREATE_FAIL;
   }
   iEmbeddingColumn = pListItem[0].pExpr->iColumn;
   if( iEmbeddingColumn < 0 ) {
-    sqlite4ErrorMsg(pParse, "vector index: " VECTOR_INDEX_MARKER_FUNCTION " first argument must be column with vector type");
+    printf("vector index: " VECTOR_INDEX_MARKER_FUNCTION " first argument must be column with vector type");
     return CREATE_FAIL;
   }
   assert( iEmbeddingColumn >= 0 && iEmbeddingColumn < pTable->nCol );
 
   zEmbeddingColumnTypeName = sqlite4ColumnType(&pTable->aCol[iEmbeddingColumn], ""); //[koreauniv TODO] sqlite4ColumnType 만들기 (임시완료)
   if( vectorIdxParseColumnType(zEmbeddingColumnTypeName, &type, &dims, &pzErrMsg) != 0 ){
-    sqlite4ErrorMsg(pParse, "vector index: %s: %s", pzErrMsg, zEmbeddingColumnTypeName);
+    printf("vector index: %s: %s", pzErrMsg, zEmbeddingColumnTypeName);
     return CREATE_FAIL;
   }
   // schema is locked while db is initializing and we need to just proceed here
@@ -948,7 +948,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
 
   rc = initVectorIndexMetaTable(db, zDbSName);
   if( rc != SQLITE4_OK ){
-    sqlite4ErrorMsg(pParse, "vector index: failed to init meta table: %s", sqlite4_errmsg(db));
+    printf("vector index: failed to init meta table: %s", sqlite4_errmsg(db));
     return CREATE_FAIL;
   }
   rc = parseVectorIdxParams(pParse, &idxParams, type, dims, pListItem + 1, pArgsList->nExpr - 1);
@@ -956,11 +956,11 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
     return CREATE_FAIL;
   }
   if( vectorIdxKeyGet(pIdx, &idxKey, &pzErrMsg) != 0 ){
-    sqlite4ErrorMsg(pParse, "vector index: failed to detect underlying table key: %s", pzErrMsg);
+    printf("vector index: failed to detect underlying table key: %s", pzErrMsg);
     return CREATE_FAIL;
   }
   if( idxKey.nKeyColumns != 1 ){
-    sqlite4ErrorMsg(pParse, "vector index: unsupported for tables without ROWID and composite primary key");
+    printf("vector index: unsupported for tables without ROWID and composite primary key");
     return CREATE_FAIL;
   }
 
@@ -970,9 +970,9 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
   // rc = 0; // 임시
   if( rc != SQLITE4_OK ){
     if( pzErrMsg != NULL ){
-      sqlite4ErrorMsg(pParse, "vector index: unable to initialize diskann: %s", pzErrMsg);
+      printf("vector index: unable to initialize diskann: %s", pzErrMsg);
     }else{
-      sqlite4ErrorMsg(pParse, "vector index: unable to initialize diskann");
+      printf("vector index: unable to initialize diskann");
     }
     return CREATE_FAIL;
   }
@@ -987,7 +987,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
     return CREATE_OK_SKIP_REFILL;
   }
   if( rc != SQLITE4_OK ){
-    sqlite4ErrorMsg(pParse, "vector index: unable to update global metadata table");
+    printf("vector index: unable to update global metadata table");
     return CREATE_FAIL;
   }
   return CREATE_OK;
