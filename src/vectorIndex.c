@@ -991,6 +991,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
     printf("vector index: unable to update global metadata table");
     return CREATE_FAIL;
   }
+  printf("vector index: index %s created successfully\n", pIdx->zName);
   return CREATE_OK;
 }
 

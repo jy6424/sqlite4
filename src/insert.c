@@ -45,6 +45,9 @@ void sqlite4OpenIndex(
   assert( opcode==OP_OpenWrite || opcode==OP_OpenRead );
   assert( pIdx->tnum>0 );
 
+  printf("Opening index %s on table %s (tnum=%d) in database %d with opcode %d\n",
+         pIdx->zName, pIdx->pTable->zName, pIdx->tnum, iDb, opcode);
+
   v = sqlite4GetVdbe(p);
   pKey = sqlite4IndexKeyinfo(p, pIdx);
   testcase( pKey==0 );

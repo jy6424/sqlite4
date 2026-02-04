@@ -3852,11 +3852,12 @@ KeyInfo *sqlite4IndexKeyinfo(Parse *pParse, Index *pIdx){
   int nBytes;
   sqlite4 *db = pParse->db;
   KeyInfo *pKey;
-
+  printf("Creating KeyInfo for index %s on table %s\n", pIdx->zName, pIdx->pTable->zName);
   if( pIdx->eIndexType==SQLITE4_INDEX_PRIMARYKEY
    || pIdx->eIndexType==SQLITE4_INDEX_TEMP
   ){
     pPk = 0;
+    printf("  (primary key or temp index: no additional primary key)\n");
   }else{
     pPk = sqlite4FindPrimaryKey(pIdx->pTable, 0);
   }
