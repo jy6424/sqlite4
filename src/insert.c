@@ -45,11 +45,11 @@ void sqlite4OpenIndex(
   assert( opcode==OP_OpenWrite || opcode==OP_OpenRead );
   assert( pIdx->tnum>0 );
 
-  printf("Opening index %s on table %s (tnum=%d) in database %d with opcode %d\n",
-         pIdx->zName, pIdx->pTable->zName, pIdx->tnum, iDb, opcode);
-
   v = sqlite4GetVdbe(p);
   pKey = sqlite4IndexKeyinfo(p, pIdx);
+  if (pKey == 0) {
+    printf("Error: could not get KeyInfo for index %s\n", pIdx->zName);
+  }
   testcase( pKey==0 );
 
   sqlite4VdbeAddOp3(v, opcode, iCur, pIdx->tnum, iDb);
