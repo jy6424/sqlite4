@@ -878,10 +878,14 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
   //   return CREATE_OK;
   // }
 
-  if (db->init.busy == 1) return CREATE_IGNORE;
+  if (db->init.busy == 1) {
+    printf("vectorIndexCreate: first db->init.busy = %d\n", db->init.busy);
+    return CREATE_IGNORE;
+  }
 
   // vector index must have expressions over column
   if( pIdx->aColExpr == NULL ) {
+    printf("vectorIndexCreate: pIdx->aColExpr == NULL\n");
     return CREATE_IGNORE;
   }
 
