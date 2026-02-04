@@ -48,7 +48,7 @@ void sqlite4OpenIndex(
   v = sqlite4GetVdbe(p);
   pKey = sqlite4IndexKeyinfo(p, pIdx);
   if (pKey == 0) {
-    printf("Error: could not get KeyInfo for index %s\n", pIdx->zName);
+    printf("Error: could not get KeyInfo for index\n");
   }
   testcase( pKey==0 );
 
