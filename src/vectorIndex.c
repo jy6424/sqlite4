@@ -145,7 +145,9 @@ int vectorIdxKeyGet(const Index *pIndex, VectorIdxKey *pKey, const char **pzErrM
 }
 
 int vectorIdxKeyRowidLike(const VectorIdxKey *pKey){
-  return pKey->nKeyColumns == 1 && pKey->aKeyAffinity[0] == SQLITE_AFF_INTEGER && sqlite4_stricmp(pKey->azKeyCollation[0], "binary") == 0;
+  return pKey->nKeyColumns == 1
+    && (pKey->aKeyAffinity[0] == SQLITE_AFF_INTEGER || pKey->aKeyAffinity[0] == 0)
+    && (pKey->azKeyCollation[0] == 0 || sqlite4_stricmp(pKey->azKeyCollation[0], "binary") == 0);
 }
 
 int vectorIdxKeyDefsRender(const VectorIdxKey *pKey, const char *prefix, char *pBuf, int nBufSize) {
