@@ -2270,7 +2270,7 @@ void sqlite4EncodeIndexValue(
 */
 static void sqlite4RefillIndex(Parse *pParse, Index *pIdx, int bCreate){
   Table *pTab = pIdx->pTable;    /* The table that is indexed */
-  int iTab = pParse->nTab++;     /* Cursor used for PK of pTab */
+  int iTab = pParse->nTab++;     /* Cursor used for PK of pTab (or table) */
   int iIdx = pParse->nTab++;     /* Cursor used for pIdx */
   int addr1;                     /* Address of top of loop */
   Vdbe *v;                       /* Generate code into this virtual machine */
@@ -2290,21 +2290,17 @@ static void sqlite4RefillIndex(Parse *pParse, Index *pIdx, int bCreate){
   v = sqlite4GetVdbe(pParse);
   if( v==0 ) return;
 
-  /* A write-lock on the table is required to perform this operation. Easiest
-  ** way to do this is to open a write-cursor on the PK - even though this
-  ** operation only requires read access.  */
+  /* Write-lock: open write cursor on PK (or table if PK has no Index object) */
   sqlite4OpenPrimaryKey(pParse, iTab, iDb, pTab, OP_OpenWrite);
 
-  /* Delete the current contents (if any) of the index. Then open a write
-  ** cursor on it.  */
+  /* Clear old index content, then open index write cursor */
   if( bCreate==0 ){
     sqlite4VdbeAddOp2(v, OP_Clear, pIdx->tnum, iDb);
   }
   sqlite4OpenIndex(pParse, iIdx, iDb, pIdx, OP_OpenWrite);
   if( bCreate ) sqlite4VdbeChangeP5(v, 1);
 
-  /* Loop through the contents of the PK index. At each row, insert the
-  ** corresponding entry into the auxiliary index.  */
+  /* Loop through PK/table and populate the auxiliary index */
   addr1 = sqlite4VdbeAddOp2(v, OP_Rewind, iTab, 0);
 
   if( pIdx->eIndexType==SQLITE4_INDEX_FTS5 ){
@@ -2321,8 +2317,16 @@ static void sqlite4RefillIndex(Parse *pParse, Index *pIdx, int bCreate){
     sqlite4Fts5CodeUpdate(pParse, pIdx, pParse->iNewidxReg, regKey, regData, 0);
   }else{
     int regData = 0;
+    /* 2 registers: regKey holds encoded key; regKey+1 holds data (if covering) */
     regKey = sqlite4GetTempRange(pParse, 2);
-    sqlite4EncodeIndexKey(pParse, pPk, iTab, pIdx, iIdx, 0, regKey);
+
+    if( pPk ){
+      /* Normal case: PK exists as Index object */
+      sqlite4EncodeIndexKey(pParse, pPk, iTab, pIdx, iIdx, 0, regKey);
+    }else{
+      /* PK is not an Index object: use table key directly */
+      sqlite4VdbeAddOp2(v, OP_RowKey, iTab, regKey);
+    }
     if( pIdx->onError!=OE_None ){
       const char *zErr = "indexed columns are not unique";
       int addrTest;
@@ -2335,7 +2339,7 @@ static void sqlite4RefillIndex(Parse *pParse, Index *pIdx, int bCreate){
       regData = regKey+1;
       sqlite4EncodeIndexValue(pParse, iTab, pIdx, regData);
     }
-    sqlite4VdbeAddOp3(v, OP_Insert, iIdx, regData, regKey);  
+    sqlite4VdbeAddOp3(v, OP_Insert, iIdx, regData, regKey);
     sqlite4ReleaseTempRange(pParse, regKey, 2);
   }
 
@@ -2345,6 +2349,7 @@ static void sqlite4RefillIndex(Parse *pParse, Index *pIdx, int bCreate){
   sqlite4VdbeAddOp1(v, OP_Close, iTab);
   sqlite4VdbeAddOp1(v, OP_Close, iIdx);
 }
+
 
 /*
 ** The CreateIndex structure indicated by the first argument contains the
