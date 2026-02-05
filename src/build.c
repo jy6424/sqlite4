@@ -1465,15 +1465,15 @@ static void addImplicitPrimaryKey(
 ** the new table will match the result set of the SELECT.
 */
 void sqlite4EndTable(
-  Parse *pParse,
-  Token *pCons,
-  Token *pEnd,
-  Select *pSelect
+  Parse *pParse,          /* Parse context */
+  Token *pCons,           /* The ',' token after the last column defn. */
+  Token *pEnd,            /* The final ')' token in the CREATE TABLE */
+  Select *pSelect         /* Select from a "CREATE ... AS SELECT" */
 ){
   Table *p;
   sqlite4 *db = pParse->db;
   int iDb;
-  int iPkRoot = 0;
+  int iPkRoot = 0;                /* Root page of primary key index */
 
   if( (pEnd==0 && pSelect==0) || db->mallocFailed ){
     return;
@@ -1485,74 +1485,22 @@ void sqlite4EndTable(
   iDb = sqlite4SchemaToIndex(db, p->pSchema);
 
   if( !IsView(p) ){
-    Index *pPk = 0;
-
-    /* 1) PK가 전혀 없으면 implicit PK를 만든다 */
+    Index *pPk;                   /* PRIMARY KEY index of table p */
     if( 0==(p->tabFlags & TF_HasPrimaryKey) ){
+      /* If no explicit PRIMARY KEY has been created, add an implicit 
+      ** primary key here.  An implicit primary key works the way "rowid" 
+      ** did in SQLite 3.  */
       addImplicitPrimaryKey(pParse, p, iDb);
     }
-    /* 2) PK가 있다고 표시되어 있으면, 반드시 PK Index 객체가 존재해야 한다 */
     pPk = sqlite4FindPrimaryKey(p, 0);
-
-    if( pPk==0 && (p->tabFlags & TF_HasPrimaryKey) ){
-      ExprList *pList = 0;
-      int i, nPkCol = 0;
-      Table *pSavedNew = pParse->pNewTable;
-      int didSetNewTable = 0;
-
-      for(i=0; i<p->nCol; i++){
-        if( p->aCol[i].iPrimKey>0 ) nPkCol++;
-      }
-
-      if( nPkCol==0 ){
-        addImplicitPrimaryKey(pParse, p, iDb);
-      }else{
-        int k;
-
-        /* sqlite4AddPrimaryKey는 pParse->pNewTable을 사용 */
-        pParse->pNewTable = p;
-        didSetNewTable = 1;
-
-        for(k=1; k<=nPkCol; k++){
-          for(i=0; i<p->nCol; i++){
-            if( p->aCol[i].iPrimKey==k ){
-              Expr *pExpr = sqlite4PExpr(pParse, TK_ID, 0, 0, 0);
-              if( pExpr==0 ) goto pk_fix_done;
-
-              pExpr->u.zToken = sqlite4DbStrDup(db, p->aCol[i].zName);
-              if( pExpr->u.zToken==0 ) goto pk_fix_done;
-
-              /* sqlite4 Expr에는 span 멤버가 없으므로 제거 */
-
-              /* sqlite4ExprListAppend의 첫 인자는 Parse* */
-              pList = sqlite4ExprListAppend(pParse, pList, pExpr);
-              if( pList==0 ) goto pk_fix_done;
-              break;
-            }
-          }
-        }
-
-        sqlite4AddPrimaryKey(pParse, pList, OE_Abort, 0, SQLITE4_SO_ASC);
-        pList = 0;
-      }
-
-    pk_fix_done:
-      /* 우리가 sqlite4AddPrimaryKey를 호출하기 전에 실패했으면 여기서 정리 */
-      if( pList ){
-        sqlite4ExprListDelete(db, pList);
-        pList = 0;
-      }
-      if( didSetNewTable ){
-        pParse->pNewTable = pSavedNew;
-      }
-
-      pPk = sqlite4FindPrimaryKey(p, 0);
-    }
-    /* 이제는 PK Index 객체가 존재해야 한다 */
     assert( pPk || pParse->nErr || db->mallocFailed );
     if( pPk ){
       iPkRoot = pPk->tnum;
       if( pParse->pPKRoot ){
+        /* If pParse->pPKRoto is non-zero, it is a pointer to a location in
+        ** which to store the root page number of the table just created. 
+        ** This is used by the ANALYZE command when creating the sqlite_stat*
+        ** tables.  */
         *pParse->pPKRoot = iPkRoot;
       }
     }
