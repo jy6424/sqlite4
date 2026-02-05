@@ -123,7 +123,7 @@ int vectorIdxKeyGet(const Index *pIndex, VectorIdxKey *pKey, const char **pzErrM
   // PK가 없으면 rowid를 키로 사용 (원하면 여기서 에러로 막아도 됨)
   if( pPkIndex == 0 ){
     pKey->nKeyColumns = 1;
-    pKey->aKeyAffinity[0] = SQLITE_AFF_INTEGER;
+    pKey->aKeyAffinity[0] = SQLITE4_AFF_INTEGER;
     pKey->azKeyCollation[0] = "binary";
     return 0;
   }
@@ -146,41 +146,56 @@ int vectorIdxKeyGet(const Index *pIndex, VectorIdxKey *pKey, const char **pzErrM
 
 int vectorIdxKeyRowidLike(const VectorIdxKey *pKey){
   return pKey->nKeyColumns == 1
-    && (pKey->aKeyAffinity[0] == SQLITE_AFF_INTEGER || pKey->aKeyAffinity[0] == 0)
+    && (pKey->aKeyAffinity[0] == SQLITE4_AFF_INTEGER || pKey->aKeyAffinity[0] == 0)
     && (pKey->azKeyCollation[0] == 0 || sqlite4_stricmp(pKey->azKeyCollation[0], "binary") == 0);
 }
 
-int vectorIdxKeyDefsRender(const VectorIdxKey *pKey, const char *prefix, char *pBuf, int nBufSize) {
-  static const char * const azType[] = {
-    /* SQLITE_AFF_BLOB    */ " BLOB",
-    /* SQLITE_AFF_TEXT    */ " TEXT",
-    /* SQLITE_AFF_NUMERIC */ " NUMERIC",
-    /* SQLITE_AFF_INTEGER */ " INTEGER",
-    /* SQLITE_AFF_REAL    */ " REAL",
-    /* SQLITE_AFF_FLEXNUM */ " NUMERIC",
-  };
+static const char *vectorIdxSqlTypeFromSqlite4Aff(char aff){
+  switch( aff ){
+    case SQLITE4_AFF_TEXT:    return " TEXT";
+    case SQLITE4_AFF_NONE:    return " BLOB";    /* sqlite4의 NONE는 보통 타입 미정 → BLOB로 두는 게 안전 */
+    case SQLITE4_AFF_NUMERIC: return " NUMERIC";
+    case SQLITE4_AFF_INTEGER: return " INTEGER";
+    case SQLITE4_AFF_REAL:    return " REAL";
+    default:                  return " BLOB";    /* 방어: 이상값이면 BLOB */
+  }
+}
+
+int vectorIdxKeyDefsRender(
+    const VectorIdxKey *pKey,
+    const char *prefix,
+    char *pBuf,
+    int nBufSize
+){
   int i, size;
+
   for(i = 0; i < pKey->nKeyColumns && nBufSize > 0; i++){
     const char *collation = pKey->azKeyCollation[i];
-    if( sqlite4_strnicmp(collation, "binary", 6) == 0 ){
+    if( collation==0 ) collation = "";  /* NULL 방어 */
+
+    /* "binary"면 굳이 COLLATE를 출력하지 않음 */
+    if( collation[0] && sqlite4_strnicmp(collation, "binary", 6) == 0 ){
       collation = "";
     }
+
+    const char *zType = vectorIdxSqlTypeFromSqlite4Aff((char)pKey->aKeyAffinity[i]);
+
     if( i == 0 ){
-      size = snprintf(pBuf, nBufSize, "%s %s %s", prefix, azType[pKey->aKeyAffinity[i] - SQLITE_AFF_BLOB], collation);
-    }else {
-      size = snprintf(pBuf, nBufSize, ",%s%d %s %s", prefix, i, azType[pKey->aKeyAffinity[i] - SQLITE_AFF_BLOB], collation);
+      size = snprintf(pBuf, nBufSize, "%s%s %s", prefix, zType, collation);
+    }else{
+      size = snprintf(pBuf, nBufSize, ",%s%d%s %s", prefix, i, zType, collation);
     }
-    if( size < 0 ){
+
+    if( size < 0 || size >= nBufSize ){
       return -1;
     }
     pBuf += size;
     nBufSize -= size;
   }
-  if( nBufSize <= 0 ){
-    return -1;
-  }
-  return 0;
+
+  return (nBufSize > 0) ? 0 : -1;
 }
+
 
 int vectorIdxKeyNamesRender(int nKeyColumns, const char *prefix, char *pBuf, int nBufSize) {
   int i, size;
