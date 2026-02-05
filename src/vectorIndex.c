@@ -124,7 +124,7 @@ int vectorIdxKeyGet(const Index *pIndex, VectorIdxKey *pKey, const char **pzErrM
   if( pPkIndex == 0 ){
     pKey->nKeyColumns = 1;
     pKey->aKeyAffinity[0] = SQLITE_AFF_INTEGER;
-    pKey->azKeyCollation[0] = "BINARY";
+    pKey->azKeyCollation[0] = "binary";
     return 0;
   }
 
@@ -145,7 +145,7 @@ int vectorIdxKeyGet(const Index *pIndex, VectorIdxKey *pKey, const char **pzErrM
 }
 
 int vectorIdxKeyRowidLike(const VectorIdxKey *pKey){
-  return pKey->nKeyColumns == 1 && pKey->aKeyAffinity[0] == SQLITE_AFF_INTEGER && sqlite4_stricmp(pKey->azKeyCollation[0], "BINARY") == 0;
+  return pKey->nKeyColumns == 1 && pKey->aKeyAffinity[0] == SQLITE_AFF_INTEGER && sqlite4_stricmp(pKey->azKeyCollation[0], "binary") == 0;
 }
 
 int vectorIdxKeyDefsRender(const VectorIdxKey *pKey, const char *prefix, char *pBuf, int nBufSize) {
@@ -160,7 +160,7 @@ int vectorIdxKeyDefsRender(const VectorIdxKey *pKey, const char *prefix, char *p
   int i, size;
   for(i = 0; i < pKey->nKeyColumns && nBufSize > 0; i++){
     const char *collation = pKey->azKeyCollation[i];
-    if( sqlite4_strnicmp(collation, "BINARY", 6) == 0 ){
+    if( sqlite4_strnicmp(collation, "binary", 6) == 0 ){
       collation = "";
     }
     if( i == 0 ){
