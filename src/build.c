@@ -1522,10 +1522,10 @@ void sqlite4EndTable(
               pExpr->u.zToken = sqlite4DbStrDup(db, p->aCol[i].zName);
               if( pExpr->u.zToken==0 ) goto pk_fix_done;
 
-              pExpr->span.zStart = pExpr->u.zToken;
-              pExpr->span.zEnd = pExpr->u.zToken + sqlite4Strlen30(pExpr->u.zToken);
+              /* sqlite4 Expr에는 span 멤버가 없으므로 제거 */
 
-              pList = sqlite4ExprListAppend(db, pList, pExpr);
+              /* sqlite4ExprListAppend의 첫 인자는 Parse* */
+              pList = sqlite4ExprListAppend(pParse, pList, pExpr);
               if( pList==0 ) goto pk_fix_done;
               break;
             }
