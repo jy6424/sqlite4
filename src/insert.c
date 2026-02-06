@@ -1160,10 +1160,15 @@ Index *sqlite4FindPrimaryKey(
 ){
   Index *p;
   int iPk = 0;
+  int iPkroot = 0;
   for(p=pTab->pIndex; p && p->eIndexType!=SQLITE4_INDEX_PRIMARYKEY; p=p->pNext){
     iPk++;
   }
   if( piPk ) *piPk = iPk;
+  else {
+    iPkroot = pTab->tnum;
+    assert( iPkroot>0 );
+  }
   return p;
 }
 

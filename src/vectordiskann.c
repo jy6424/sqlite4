@@ -479,6 +479,41 @@ int nodeEdgesMetadataOffset(const DiskAnnIndex *pIndex){
 ** DiskANN shadow index operations (some of them exposed as DiskANN internal API)
 ********************************************************************************/
 
+static int diskAnnFillTableTnum(sqlite4 *db, const char *zDbSName, const char *zTabName){
+  Table *pTab;
+  sqlite4_stmt *pStmt = 0;
+  int rc = SQLITE4_OK;
+  char *zSql = 0;
+  int root = 0;
+
+  pTab = sqlite4FindTable(db, zTabName, zDbSName);
+  if( pTab==0 ) return SQLITE4_ERROR;
+  if( pTab->tnum>0 ) return SQLITE4_OK;
+
+  zSql = sqlite4MPrintf(db,
+    "SELECT rootpage FROM \"%w\".sqlite_master WHERE type='table' AND name=?1",
+    zDbSName
+  );
+  if( zSql==0 ) return SQLITE4_NOMEM;
+
+  rc = sqlite4_prepare(db, zSql, -1, &pStmt, 0);
+  sqlite4DbFree(db, zSql);
+  if( rc!=SQLITE4_OK ) return rc;
+
+  sqlite4_bind_text(pStmt, 1, zTabName, -1, SQLITE4_STATIC);
+  rc = sqlite4_step(pStmt);
+  if( rc==SQLITE4_ROW ){
+    root = sqlite4_column_int(pStmt, 0);
+    if( root>0 ) pTab->tnum = root;
+    rc = SQLITE4_OK;
+  }else{
+    rc = SQLITE4_ERROR;
+  }
+
+  sqlite4_finalize(pStmt);
+  return rc;
+}
+
 int diskAnnCreateIndex(
   sqlite4 *db,
   const char *zDbSName,
@@ -616,8 +651,17 @@ int diskAnnCreateIndex(
   );
   printf("diskAnnCreateIndex: creating index with SQL: %s\n", zSql);
   rc = sqlite4_exec(db, zSql, 0, 0);
-  printf("diskAnnCreateIndex: index creation rc=%d\n", rc);
-  sqlite4DbFree(db, zSql);
+  if ( rc != SQLITE4_OK ){
+    sqlite4DbFree(db, zSql);
+    return rc;
+  }
+  printf("diskAnnCreateIndex: index creation executed with rc=%d\n", rc);
+  
+  char *zShadowName = sqlite4MPrintf(db, "%s_shadow", zIdxName);
+  if( zShadowName==0 ) return SQLITE4_NOMEM;
+  rc = diskAnnFillTableTnum(db, zDbSName, zShadowName);
+  sqlite4DbFree(db, zShadowName);
+  if( rc!=SQLITE4_OK ) return rc;
   printf("Created DiskANN index \"%s\".%s with parameters: type=%d, dims=%d, metric=%d, neighbours=%d, max_neighbors=%llu, block_size=%llu\n",
          zDbSName, zIdxName, type, dims, metric, neighbours, maxNeighborsParam, blockSizeBytes);
   return rc;
