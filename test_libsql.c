@@ -2,6 +2,30 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+static int print_callback(
+  void *NotUsed,
+  int argc,
+  sqlite4_value **argv,
+  const char **colName
+){
+  int i;
+  for (i = 0; i < argc; i++) {
+    const char *val;
+
+    if (argv[i] == 0) {
+      val = "NULL";
+    } else {
+      val = sqlite4_value_text(argv[i]);
+      if (!val) val = "(non-text)";
+    }
+
+    printf("%s=%s\t", colName[i], val);
+  }
+  printf("\n");
+  return 0;
+}
+
+
 int main(int argc, char **argv) {
   (void)argc; (void)argv;
 
@@ -44,7 +68,8 @@ int main(int argc, char **argv) {
   rc = sqlite4_exec(
     db,
     "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;",
-    0, 0
+    print_callback,
+    0
   );
   if (rc) {
     printf("sql error (select tables): rc=%d\n", rc);
@@ -56,10 +81,23 @@ int main(int argc, char **argv) {
   rc = sqlite4_exec(
     db,
     "SELECT name FROM sqlite_master WHERE type='index' ORDER BY name;",
-    0, 0
+    print_callback,
+    0
   );
   if (rc) {
     printf("sql error (select indexes): rc=%d\n", rc);
+    sqlite4_close(db, 0);
+    return 1;
+  }
+
+  rc = sqlite4_exec(
+    db,
+    "SELECT type, name, tbl_name, sql FROM sqlite_master ORDER BY type, name;",
+    print_callback,
+    0
+  );
+  if (rc) {
+    printf("sql error (print tables and indexes): rc=%d\n", rc);
     sqlite4_close(db, 0);
     return 1;
   }
