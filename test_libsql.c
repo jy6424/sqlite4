@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  printf("\n-- tables --\n");
+  printf("\n-- created tables --\n");
   rc = sqlite4_exec(
     db,
     "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;",
@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-    printf("\n-- indexes --\n");
+  printf("\n-- created indexes --\n");
   rc = sqlite4_exec(
     db,
     "SELECT name FROM sqlite_master WHERE type='index' ORDER BY name;",
@@ -90,6 +90,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  printf("\n-- tables and indexes SQL--\n");
   rc = sqlite4_exec(
     db,
     "SELECT type, name, tbl_name, sql FROM sqlite_master ORDER BY type, name;",
