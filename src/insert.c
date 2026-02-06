@@ -57,6 +57,60 @@ void sqlite4OpenIndex(
   VdbeComment((v, "%s", pIdx->zName));
 }
 
+
+//[koreauniv] Primary Key용 KeyInfo 생성
+
+static KeyInfo *sqlite4TablePrimaryKeyinfo(Parse *pParse, Table *pTab){
+  sqlite4 *db = pParse->db;
+  int i, j;
+  int nPk = 0;
+
+  /* count PK columns */
+  for(i=0; i<pTab->nCol; i++){
+    if( pTab->aCol[i].iPrimKey ) nPk++;
+  }
+  if( nPk==0 ){
+    /* TODO: implicit rowid PK를 지원하려면 여기서 1-field KeyInfo 만들기 */
+    return 0;
+  }
+
+  int nByte = sizeof(KeyInfo) + (nPk-1)*(int)sizeof(CollSeq*) + nPk*(int)sizeof(u8);
+  KeyInfo *pKey = (KeyInfo*)sqlite4DbMallocZero(db, nByte);
+  if( pKey==0 ) return 0;
+
+  pKey->nField = (u16)nPk;
+  pKey->nPK    = (u16)nPk;
+  pKey->nData  = (u16)pTab->nCol;
+
+  pKey->aSortOrder = (u8*)&pKey->aColl[nPk];
+  memset(pKey->aSortOrder, 0, nPk);   /* ASC */
+
+  /* fill collations in PK order: iPrimKey = 1..nPk */
+  for(j=1; j<=nPk; j++){
+    CollSeq *pColl = 0;
+    for(i=0; i<pTab->nCol; i++){
+      if( pTab->aCol[i].iPrimKey==j ){
+        const char *zColl = pTab->aCol[i].zColl;
+        if( zColl && zColl[0] ){
+          pColl = sqlite4LocateCollSeq(pParse, zColl, 0);
+        }
+        if( pColl==0 ){
+          pColl = sqlite4LocateCollSeq(pParse, "BINARY", 0);
+        }
+        break;
+      }
+    }
+    if( pColl==0 ){
+      sqlite4DbFree(db, pKey);
+      return 0;
+    }
+    pKey->aColl[j-1] = pColl;
+  }
+
+  return pKey;
+}
+
+
 /*
 ** Generate code that will open the primary key of a table for either 
 ** reading (if opcode==OP_OpenRead) or writing (if opcode==OP_OpenWrite).
@@ -82,9 +136,14 @@ void sqlite4OpenPrimaryKey(
       int tnum;
       if( v==0 ){
         printf("Error: could not get Vdbe\n");
+        return;
       }
       tnum = pTab->tnum;
-      pKey = sqlite4TableKeyinfo(p, pTab);
+      pKey = sqlite4TablePrimaryKeyinfo(p, pTab);
+      if (pKey == 0) {
+        printf("Error: could not get KeyInfo for table primary key\n");
+        return;
+      }
       sqlite4VdbeAddOp3(v, opcode, iCur, tnum, iDb);
       sqlite4VdbeChangeP4(v, -1, (const char *)pKey, P4_KEYINFO_HANDOFF);
       VdbeComment((v, "%s", pTab->zName));
