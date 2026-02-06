@@ -92,10 +92,10 @@ static KeyInfo *sqlite4TablePrimaryKeyinfo(Parse *pParse, Table *pTab){
       if( pTab->aCol[i].iPrimKey==j ){
         const char *zColl = pTab->aCol[i].zColl;
         if( zColl && zColl[0] ){
-          pColl = sqlite4LocateCollSeq(pParse, zColl, 0);
+          pColl = sqlite4LocateCollSeq(pParse, zColl);
         }
         if( pColl==0 ){
-          pColl = sqlite4LocateCollSeq(pParse, "BINARY", 0);
+          pColl = sqlite4LocateCollSeq(pParse, "binary");
         }
         break;
       }
