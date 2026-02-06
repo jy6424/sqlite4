@@ -500,7 +500,7 @@ static int diskAnnFillTableTnum(sqlite4 *db, const char *zDbSName, const char *z
   sqlite4DbFree(db, zSql);
   if( rc!=SQLITE4_OK ) return rc;
 
-  sqlite4_bind_text(pStmt, 1, zTabName, -1, SQLITE4_STATIC);
+  sqlite4_bind_text(pStmt, 1, zTabName, -1, SQLITE4_STATIC, 0);
   rc = sqlite4_step(pStmt);
   if( rc==SQLITE4_ROW ){
     root = sqlite4_column_int(pStmt, 0);
