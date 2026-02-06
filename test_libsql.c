@@ -15,7 +15,7 @@ static int print_callback(
     if (argv[i] == 0) {
       val = "NULL";
     } else {
-      val = sqlite4_value_text(argv[i]);
+      val = sqlite4_value_text(argv[i], NULL);
       if (!val) val = "(non-text)";
     }
 
