@@ -87,6 +87,12 @@ static int initCallback(
         }
       }
     }
+    else {
+      Table *pTab = sqlite4FindTable(db, zObj, db->aDb[iDb].zName);
+      if (pTab && iRoot>0 && pTab->tnum==0) {
+        pTab->tnum = iRoot;
+      }
+    }
     sqlite4_finalize(pStmt);
   }else if( zObj==0 ){
     corruptSchema(pData, 0, 0);

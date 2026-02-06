@@ -69,16 +69,26 @@ void sqlite4OpenPrimaryKey(
   int opcode                      /* OP_OpenRead or OP_OpenWrite */
 ){
   assert( opcode==OP_OpenWrite || opcode==OP_OpenRead );
-  if( IsVirtual(pTab) ) return;
+  if( IsVirtual(pTab)==0 ){
+    Index *pIdx;                  /* PRIMARY KEY index for table pTab */
 
-  /* PRIMARY KEY index for table pTab (may be NULL in SQLite4 design) */
-  Index *pIdx = sqlite4FindPrimaryKey(pTab, 0);
-  if( pIdx ){
-    sqlite4OpenIndex(p, iCur, iDb, pIdx, opcode);
-    assert( pIdx->eIndexType==SQLITE4_INDEX_PRIMARYKEY );
-  }else{
-    /* PK may be implemented as table keyspace (no Index object). */
-    sqlite4OpenTable(p, iCur, iDb, pTab, opcode);
+    pIdx = sqlite4FindPrimaryKey(pTab, 0);
+    if( pIdx ){
+      sqlite4OpenIndex(p, iCur, iDb, pIdx, opcode);
+      assert( pIdx->eIndexType==SQLITE4_INDEX_PRIMARYKEY );
+    }else{
+      Vdbe *v = sqlite4GetVdbe(p);
+      KeyInfo *pKey;                /* KeyInfo structure describing PK index */
+      int tnum;
+      if( v==0 ){
+        printf("Error: could not get Vdbe\n");
+      }
+      tnum = pTab->tnum;
+      pKey = sqlite4TableKeyinfo(p, pTab);
+      sqlite4VdbeAddOp3(v, opcode, iCur, tnum, iDb);
+      sqlite4VdbeChangeP4(v, -1, (const char *)pKey, P4_KEYINFO_HANDOFF);
+      VdbeComment((v, "%s", pTab->zName));
+    }
   }
 }
 

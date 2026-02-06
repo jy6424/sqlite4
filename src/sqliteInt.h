@@ -1204,6 +1204,7 @@ struct Table {
   u8 tabFlags;         /* Mask of TF_* values */
   FKey *pFKey;         /* Linked list of all foreign keys in this table */
   char *zColAff;       /* String defining the affinity of each column */
+  int tnum;            /* [koreauniv] Root page for this table */
 #ifndef SQLITE4_OMIT_CHECK
   Expr *pCheck;        /* The AND of all CHECK constraints */
 #endif
