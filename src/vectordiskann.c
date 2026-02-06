@@ -633,6 +633,11 @@ int diskAnnCreateIndex(
   if( rc != SQLITE4_OK ){
     return rc;
   }
+  char *zShadowName = sqlite4MPrintf(db, "%s_shadow", zIdxName);
+  if( zShadowName==0 ) return SQLITE4_NOMEM;
+  rc = diskAnnFillTableTnum(db, zDbSName, zShadowName);
+  sqlite4DbFree(db, zShadowName);
+  if( rc!=SQLITE4_OK ) return rc;
   /*
    * vector blobs are usually pretty huge (more than a page size, for example, node block for 1024d f32 embeddings with 1bit compression will occupy ~20KB)
    * in this case, main table B-Tree takes on redundant shape where all leaf nodes has only 1 cell
@@ -651,17 +656,8 @@ int diskAnnCreateIndex(
   );
   printf("diskAnnCreateIndex: creating index with SQL: %s\n", zSql);
   rc = sqlite4_exec(db, zSql, 0, 0);
-  if ( rc != SQLITE4_OK ){
-    sqlite4DbFree(db, zSql);
-    return rc;
-  }
-  printf("diskAnnCreateIndex: index creation executed with rc=%d\n", rc);
-  
-  char *zShadowName = sqlite4MPrintf(db, "%s_shadow", zIdxName);
-  if( zShadowName==0 ) return SQLITE4_NOMEM;
-  rc = diskAnnFillTableTnum(db, zDbSName, zShadowName);
-  sqlite4DbFree(db, zShadowName);
-  if( rc!=SQLITE4_OK ) return rc;
+  printf("diskAnnCreateIndex: index creation rc=%d\n", rc);
+  sqlite4DbFree(db, zSql);
   printf("Created DiskANN index \"%s\".%s with parameters: type=%d, dims=%d, metric=%d, neighbours=%d, max_neighbors=%llu, block_size=%llu\n",
          zDbSName, zIdxName, type, dims, metric, neighbours, maxNeighborsParam, blockSizeBytes);
   return rc;
