@@ -627,7 +627,7 @@ int vectorIdxParseColumnType(const char *zType, int *pType, int *pDims, const ch
 // creation 사용
 int initVectorIndexMetaTable(sqlite4* db, const char *zDbSName) {
   int rc;
-  static const char *zSqlTemplate = "CREATE TABLE IF NOT EXISTS \"%w\"." VECTOR_INDEX_GLOBAL_META_TABLE " ( name TEXT PRIMARY KEY, metadata BLOB );";
+  static const char *zSqlTemplate = "CREATE TABLE IF NOT EXISTS \"%w\"." VECTOR_INDEX_GLOBAL_META_TABLE " ( name TEXT , metadata BLOB );"; // [koreauniv] TEXT PRIMARY KEY 제거
   char* zSql;
 
   assert( zDbSName != NULL );
