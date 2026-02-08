@@ -3340,4 +3340,8 @@ void sqlite4_result_value(sqlite4_context *pCtx, sqlite4_value *pValue);
 #define XN_ROWID     (-1)     /* Indexed column is the rowid */
 #define XN_EXPR      (-2)     /* Indexed column is an expression */
 
+/* Does the table have a rowid */
+#define HasRowid(X)     (((X)->tabFlags & TF_WithoutRowid)==0)
+#define VisibleRowid(X) (((X)->tabFlags & TF_NoVisibleRowid)==0)
+
 #endif /* _SQLITEINT_H_ */

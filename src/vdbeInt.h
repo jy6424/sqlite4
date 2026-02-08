@@ -474,4 +474,13 @@ void sqlite4VdbeMemSetZeroBlob(Mem *pMem, int n);
 int sqlite4_bind_zeroblob(sqlite4_stmt *pStmt, int i, int n);
 u32 sqlite4VdbeSerialTypeLen(u32 serial_type);
 
+/*
+** The maximum number of times that a statement will try to reparse
+** itself before giving up and returning SQLITE_SCHEMA.
+*/
+#ifndef SQLITE_MAX_SCHEMA_RETRY
+# define SQLITE_MAX_SCHEMA_RETRY 50
+#endif
+
+
 #endif /* !defined(_VDBEINT_H_) */

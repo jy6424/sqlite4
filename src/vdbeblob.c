@@ -242,7 +242,7 @@ int sqlite4_blob_open(
       }
     }
 
-    pBlob->pStmt = (sqlite4_stmt *)sqlite4VdbeCreate(&sParse);
+    pBlob->pStmt = (sqlite4_stmt *)sqlite4VdbeCreate(db);
     assert( pBlob->pStmt || db->mallocFailed );
     if( pBlob->pStmt ){
       
@@ -261,7 +261,7 @@ int sqlite4_blob_open(
       ** which closes the b-tree cursor and (possibly) commits the 
       ** transaction.
       */
-      static const int iLn = VDBE_OFFSET_LINENO(2);
+      // static const int iLn = VDBE_OFFSET_LINENO(2); //[koreauniv] 사용되지 않음
       static const VdbeOpList openBlob[] = {
         {OP_TableLock,      0, 0, 0},  /* 0: Acquire a read or write lock */
         {OP_OpenRead,       0, 0, 0},  /* 1: Open a cursor */
@@ -405,7 +405,7 @@ static int blobReadWrite(
     ** returned, clean-up the statement handle.
     */
     assert( db == v->db );
-    sqlite4VdbeSeekEnd(p->pCsr, +1); // [koreauniv] sqlite3BtreeEnterCursor -> sqlite4VdbeSeekEnd
+    // sqlite4VdbeSeekEnd(p->pCsr, +1); // [koreauniv] sqlite3BtreeEnterCursor -> sqlite4VdbeSeekEnd (수정필요)
 
 #ifdef SQLITE_ENABLE_PREUPDATE_HOOK
     if( xCall==sqlite3BtreePutData && db->xPreUpdateCallback ){
@@ -433,7 +433,7 @@ static int blobReadWrite(
 #endif
 
     rc = xCall(p->pCsr, iOffset+p->iOffset, n, z);
-    sqlite4VdbeFreeCursor(p->pCsr); // [koreauniv] sqlite3BtreeLeaveCursor -> sqlite4VdbeFreeCursor
+    // sqlite4VdbeFreeCursor(p->pCsr); // [koreauniv] sqlite3BtreeLeaveCursor -> sqlite4VdbeFreeCursor (수정필요)
     if( rc==SQLITE4_ABORT ){
       sqlite4VdbeFinalize(v);
       p->pStmt = 0;
