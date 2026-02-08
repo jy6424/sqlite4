@@ -214,7 +214,7 @@ int sqlite4_blob_open(
         ** case.  */
         FKey *pFKey;
         assert( IsOrdinaryTable(pTab) );
-        for(pFKey=pTab->u.tab.pFKey; pFKey; pFKey=pFKey->pNextFrom){
+        for(pFKey=pTab->pFKey; pFKey; pFKey=pFKey->pNextFrom){
           int j;
           for(j=0; j<pFKey->nCol; j++){
             if( pFKey->aCol[j].iFrom==iCol ){
@@ -226,7 +226,7 @@ int sqlite4_blob_open(
 #endif
       for(pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext){
         int j;
-        for(j=0; j<pIdx->nKeyCol; j++){
+        for(j=0; j<pIdx->nColumn; j++){
           /* FIXME: Be smarter about indexes that use expressions */
           if( pIdx->aiColumn[j]==iCol || pIdx->aiColumn[j]==XN_EXPR ){
             zFault = "indexed";
@@ -280,7 +280,7 @@ int sqlite4_blob_open(
                            pTab->pSchema->iGeneration);
       sqlite4VdbeChangeP5(v, 1);
       assert( sqlite4VdbeCurrentAddr(v)==2 || db->mallocFailed );
-      aOp = sqlite4VdbeAddOpList(v, ArraySize(openBlob), openBlob, iLn);
+      aOp = sqlite4VdbeAddOpList(v, ArraySize(openBlob), openBlob);
 
       /* Make sure a mutex is held on the table to be accessed */
       sqlite4VdbeUsesBtree(v, iDb); // [koreauniv] 수정필요
