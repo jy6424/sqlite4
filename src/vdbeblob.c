@@ -441,7 +441,7 @@ static int blobReadWrite(
       v->rc = rc;
     }
   }
-  sqlite4Error(db, rc);
+  sqlite4Error(db, rc, NULL); // [koreauniv] sqlite3Error -> sqlite4Error
   rc = sqlite4ApiExit(db, rc);
   sqlite4_mutex_leave(db->mutex);
   return rc;

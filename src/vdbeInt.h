@@ -66,6 +66,10 @@ struct VdbeCursor {
   sqlite4_vtab_cursor *pVtabCursor;  /* The cursor for a virtual table */
   const sqlite4_module *pModule;     /* Module for cursor pVtabCursor */
   sqlite4_buffer sSeekKey;           /* Key for deferred seek */
+#ifndef SQLITE_OMIT_VECTOR // [koreauniv] 추가
+  VectorIdxCursor *pVecIdx;   /* CURTYPE_VECTOR_IDX.        Vector index cursor */
+#endif
+
 };
 
 /* Methods for the VdbeCursor object */
@@ -444,7 +448,6 @@ int sqlite4VdbeMemHandleBom(Mem *pMem);
 //[koreauniv]
 void sqlite4VdbeMemSetZeroBlob(Mem *pMem, int n);
 int sqlite4_bind_zeroblob(sqlite4_stmt *pStmt, int i, int n);
-
-
+u32 sqlite4VdbeSerialTypeLen(u32 serial_type);
 
 #endif /* !defined(_VDBEINT_H_) */
