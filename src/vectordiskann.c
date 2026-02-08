@@ -191,13 +191,13 @@ int blobSpotCreate(const DiskAnnIndex *pIndex, BlobSpot **ppBlobSpot, u64 nRowid
 
   pBlobSpot = sqlite4_malloc(pIndex->db->pEnv, sizeof(BlobSpot));
   if( pBlobSpot == NULL ){
-    rc = SQLITE4_NOMEM_BKPT;
+    rc = SQLITE4_NOMEM;
     goto out;
   }
 
   pBuffer = sqlite4_malloc(pIndex->db->pEnv, nBufferSize);
   if( pBuffer == NULL ){
-    rc = SQLITE4_NOMEM_BKPT;
+    rc = SQLITE4_NOMEM;
     goto out;
   }
 
@@ -693,7 +693,7 @@ static int diskAnnSelectRandomShadowRow(const DiskAnnIndex *pIndex, u64 *pRowid)
     pIndex->zDbSName, pIndex->zShadow, pIndex->zDbSName, pIndex->zShadow
   );
   if( zSql == NULL ){
-    rc = SQLITE4_NOMEM_BKPT;
+    rc = SQLITE4_NOMEM;
     goto out;
   }
   rc = sqlite4_prepare_v2(pIndex->db, zSql, -1, &pStmt, 0);
@@ -857,7 +857,7 @@ static int diskAnnInsertShadowRow(const DiskAnnIndex *pIndex, const VectorInRow 
       pIndex->zDbSName, pIndex->zShadow, columnSqlNames, columnSqlPlaceholders
   );
   if( zSql == NULL ){
-    rc = SQLITE4_NOMEM_BKPT;
+    rc = SQLITE4_NOMEM;
     goto out;
   }
   rc = sqlite4_prepare_v2(pIndex->db, zSql, -1, &pStmt, 0);
@@ -908,7 +908,7 @@ static int diskAnnDeleteShadowRow(const DiskAnnIndex *pIndex, i64 nRowid){
       pIndex->zDbSName, pIndex->zShadow
   );
   if( zSql == NULL ){
-    rc = SQLITE4_NOMEM_BKPT;
+    rc = SQLITE4_NOMEM;
     goto out;
   }
   rc = sqlite4_prepare_v2(pIndex->db, zSql, -1, &pStmt, 0);
@@ -948,7 +948,7 @@ int initVectorPair(int nodeType, int edgeType, int dims, VectorPair *pPair){
   }
   pPair->pEdge = vectorAlloc(edgeType, dims);
   if( pPair->pEdge == NULL ){
-    return SQLITE4_NOMEM_BKPT;
+    return SQLITE4_NOMEM;
   }
   return 0;
 }
@@ -1049,7 +1049,7 @@ static void diskAnnNodeFree(DiskAnnNode *pNode){
 
 static int diskAnnSearchCtxInit(const DiskAnnIndex *pIndex, DiskAnnSearchCtx *pCtx, const Vector* pQuery, int maxCandidates, int topCandidates, int blobMode){
   if( initVectorPair(pIndex->nNodeVectorType, pIndex->nEdgeVectorType, pIndex->nVectorDims, &pCtx->query) != 0 ){
-    return SQLITE4_NOMEM_BKPT;
+    return SQLITE4_NOMEM;
   }
   loadVectorPair(&pCtx->query, pQuery);
 
@@ -1081,7 +1081,7 @@ static int diskAnnSearchCtxInit(const DiskAnnIndex *pIndex, DiskAnnSearchCtx *pC
     sqlite4_free(pCtx->aTopCandidates);
   }
   deinitVectorPair(&pCtx->query);
-  return SQLITE4_NOMEM_BKPT;
+  return SQLITE4_NOMEM;
 }
 
 static void diskAnnSearchCtxDeinit(DiskAnnSearchCtx *pCtx){
@@ -1392,20 +1392,20 @@ static int diskAnnSearchInternal(DiskAnnIndex *pIndex, DiskAnnSearchCtx *pCtx, u
 
   start = diskAnnNodeAlloc(pIndex, nStartRowid);
   if( start == NULL ){
-    *pzErrMsg = sqlite4_mprintf("vector index(search): failed to allocate new node");
-    rc = SQLITE4_NOMEM_BKPT;
+    printf("vector index(search): failed to allocate new node");
+    rc = SQLITE4_NOMEM;
     goto out;
   }
 
   rc = blobSpotCreate(pIndex, &start->pBlobSpot, nStartRowid, pIndex->nBlockSize, pCtx->blobMode);
   if( rc != SQLITE4_OK ){
-    *pzErrMsg = sqlite4_mprintf("vector index(search): failed to create new blob");
+    printf("vector index(search): failed to create new blob");
     goto out;
   }
 
   rc = blobSpotReload(pIndex, start->pBlobSpot, nStartRowid, pIndex->nBlockSize);
   if( rc != SQLITE4_OK ){
-    *pzErrMsg = sqlite4_mprintf("vector index(search): failed to load new blob");
+    printf("vector index(search): failed to load new blob");
     goto out;
   }
 
@@ -1453,7 +1453,7 @@ static int diskAnnSearchInternal(DiskAnnIndex *pIndex, DiskAnnSearchCtx *pCtx, u
       diskAnnSearchCtxDeleteCandidate(pCtx, iCandidate);
       continue;
     }else if( rc != SQLITE4_OK ){
-      *pzErrMsg = sqlite4_mprintf("vector index(search): failed to create new blob for candidate");
+      printf("vector index(search): failed to create new blob for candidate");
       goto out;
     }
 
@@ -1535,15 +1535,15 @@ int diskAnnSearch(
   DiskAnnTrace(("diskAnnSearch started\n"));
 
   if( k < 0 ){
-    *pzErrMsg = sqlite4_mprintf("vector index(search): k must be a non-negative integer");
+    printf("vector index(search): k must be a non-negative integer");
     return SQLITE4_ERROR;
   }
   if( pVector->dims != pIndex->nVectorDims ){
-    *pzErrMsg = sqlite4_mprintf("vector index(search): dimensions are different: %d != %d", pVector->dims, pIndex->nVectorDims);
+    printf("vector index(search): dimensions are different: %d != %d", pVector->dims, pIndex->nVectorDims);
     return SQLITE4_ERROR;
   }
   if( pVector->type != pIndex->nNodeVectorType ){
-    *pzErrMsg = sqlite4_mprintf("vector index(search): vector type differs from column type: %d != %d", pVector->type, pIndex->nNodeVectorType);
+    printf("vector index(search): vector type differs from column type: %d != %d", pVector->type, pIndex->nNodeVectorType);
     return SQLITE4_ERROR;
   }
 
@@ -1554,12 +1554,12 @@ int diskAnnSearch(
     pRows->nCols = pKey->nKeyColumns;
     return SQLITE4_OK;
   }else if( rc != SQLITE4_OK ){
-    *pzErrMsg = sqlite4_mprintf("vector index(search): failed to select start node for search");
+    printf("vector index(search): failed to select start node for search");
     return rc;
   }
   rc = diskAnnSearchCtxInit(pIndex, &ctx, pVector, pIndex->searchL, k, DISKANN_BLOB_READONLY);
   if( rc != SQLITE4_OK ){
-    *pzErrMsg = sqlite4_mprintf("vector index(search): failed to initialize search context");
+    printf("vector index(search): failed to initialize search context");
     goto out;
   }
   rc = diskAnnSearchInternal(pIndex, &ctx, nStartRowid, pzErrMsg);
@@ -1569,7 +1569,7 @@ int diskAnnSearch(
   nOutRows = MIN(k, ctx.nTopCandidates);
   rc = vectorOutRowsAlloc(pIndex->db, pRows, nOutRows, pKey->nKeyColumns, vectorIdxKeyRowidLike(pKey));
   if( rc != SQLITE4_OK ){
-    *pzErrMsg = sqlite4_mprintf("vector index(search): failed to allocate output rows");
+    printf("vector index(search): failed to allocate output rows");
     goto out;
   }
   for(i = 0; i < nOutRows; i++){
@@ -1579,7 +1579,7 @@ int diskAnnSearch(
       rc = diskAnnGetShadowRowKeys(pIndex, ctx.aTopCandidates[i]->nRowid, pKey, pRows, i);
     }
     if( rc != SQLITE4_OK ){
-      *pzErrMsg = sqlite4_mprintf("vector index(search): failed to put result in the output row");
+      printf("vector index(search): failed to put result in the output row");
       goto out;
     }
   }
@@ -1607,11 +1607,11 @@ int diskAnnInsert(
   vCandidate.pNode = NULL; vCandidate.pEdge = NULL; // vectors for candidate node
 
   if( pVectorInRow->pVector->dims != pIndex->nVectorDims ){
-    *pzErrMsg = sqlite4_mprintf("vector index(insert): dimensions are different: %d != %d", pVectorInRow->pVector->dims, pIndex->nVectorDims);
+    printf("vector index(insert): dimensions are different: %d != %d", pVectorInRow->pVector->dims, pIndex->nVectorDims);
     return SQLITE4_ERROR;
   }
   if( pVectorInRow->pVector->type != pIndex->nNodeVectorType ){
-    *pzErrMsg = sqlite4_mprintf("vector index(insert): vector type differs from column type: %d != %d", pVectorInRow->pVector->type, pIndex->nNodeVectorType);
+    printf("vector index(insert): vector type differs from column type: %d != %d", pVectorInRow->pVector->type, pIndex->nNodeVectorType);
     return SQLITE4_ERROR;
   }
 
@@ -1622,20 +1622,20 @@ int diskAnnInsert(
   // insert 하기 전 search로 어디에 insert 할지 결정해야 함
   rc = diskAnnSearchCtxInit(pIndex, &ctx, pVectorInRow->pVector, pIndex->insertL, 1, DISKANN_BLOB_WRITABLE);
   if( rc != SQLITE4_OK ){
-    *pzErrMsg = sqlite4_mprintf("vector index(insert): failed to initialize search context");
+    printf("vector index(insert): failed to initialize search context");
     return rc;
   }
 
   // initialize vectors (vInsert - 새로운 노드 벡터)
   if( initVectorPair(pIndex->nNodeVectorType, pIndex->nEdgeVectorType, pIndex->nVectorDims, &vInsert) != 0 ){
-    *pzErrMsg = sqlite4_mprintf("vector index(insert): unable to allocate mem for node VectorPair");
-    rc = SQLITE4_NOMEM_BKPT;
+    printf("vector index(insert): unable to allocate mem for node VectorPair");
+    rc = SQLITE4_NOMEM;
     goto out;
   }
   // initialize vectors (vCandidate - 후보 노드 벡터)
   if( initVectorPair(pIndex->nNodeVectorType, pIndex->nEdgeVectorType, pIndex->nVectorDims, &vCandidate) != 0 ){
-    *pzErrMsg = sqlite4_mprintf("vector index(insert): unable to allocate mem for candidate VectorPair");
-    rc = SQLITE4_NOMEM_BKPT;
+    printf("vector index(insert): unable to allocate mem for candidate VectorPair");
+    rc = SQLITE4_NOMEM;
     goto out;
   }
 
@@ -1647,7 +1647,7 @@ int diskAnnInsert(
   if( rc == SQLITE4_DONE ){
     first = 1;
   }else if( rc != SQLITE4_OK ){
-    *pzErrMsg = sqlite4_mprintf("vector index(insert): failed to select start node for search");
+    printf("vector index(insert): failed to select start node for search");
     rc = SQLITE4_ERROR;
     goto out;
   }
@@ -1667,14 +1667,14 @@ int diskAnnInsert(
   // set new rowid to nNewRowid (새로 삽입된 row의 rowid. search에서 찾은 이웃노드의 rowid와 중복될 수 있음)
   rc = diskAnnInsertShadowRow(pIndex, pVectorInRow, &nNewRowid);
   if( rc != SQLITE4_OK ){
-    *pzErrMsg = sqlite4_mprintf("vector index(insert): failed to insert shadow row");
+    printf("vector index(insert): failed to insert shadow row");
     goto out;
   }
 
   // create blob for new node
   rc = blobSpotCreate(pIndex, &pBlobSpot, nNewRowid, pIndex->nBlockSize, 1);
   if( rc != SQLITE4_OK ){
-    *pzErrMsg = sqlite4_mprintf("vector index(insert): failed to read blob for shadow row");
+    printf("vector index(insert): failed to read blob for shadow row");
     goto out;
   }
   // initialize new node blob(데이터를 blob에 저장)
@@ -1738,7 +1738,7 @@ int diskAnnInsert(
     // insert로 인해 변경된 blob을 shadow table에 write back.
     rc = blobSpotFlush(pIndex, pVisited->pBlobSpot);
     if( rc != SQLITE4_OK ){
-      *pzErrMsg = sqlite4_mprintf("vector index(insert): failed to flush blob");
+      printf("vector index(insert): failed to flush blob");
       goto out;
     }
   }
@@ -1750,7 +1750,7 @@ out:
   if( rc == SQLITE4_OK ){
     rc = blobSpotFlush(pIndex, pBlobSpot);
     if( rc != SQLITE4_OK ){
-      *pzErrMsg = sqlite4_mprintf("vector index(insert): failed to flush blob");
+      printf("vector index(insert): failed to flush blob");
     }
   }
   if( pBlobSpot != NULL ){
@@ -1773,7 +1773,7 @@ out:
 //   if( vectorInRowTryGetRowid(pInRow, &nodeRowid) != 0 ){
 //     rc = diskAnnGetShadowRowid(pIndex, pInRow, &nodeRowid);
 //     if( rc != SQLITE4_OK ){
-//       *pzErrMsg = sqlite4_mprintf("vector index(delete): failed to determined node id for deletion");
+//       printf("vector index(delete): failed to determined node id for deletion");
 //       goto out;
 //     }
 //   }
@@ -1787,17 +1787,17 @@ out:
 //     rc = SQLITE4_OK;
 //     goto out;
 //   }else if( rc != SQLITE4_OK ){
-//     *pzErrMsg = sqlite4_mprintf("vector index(delete): failed to create blob for node row");
+//     printf("vector index(delete): failed to create blob for node row");
 //     goto out;
 //   }
 //   rc = blobSpotReload(pIndex, pNodeBlob, nodeRowid, pIndex->nBlockSize);
 //   if( rc != 0 ){
-//     *pzErrMsg = sqlite4_mprintf("vector index(delete): failed to reload blob for node row");
+//     printf("vector index(delete): failed to reload blob for node row");
 //     goto out;
 //   }
 //   rc = blobSpotCreate(pIndex, &pEdgeBlob, nodeRowid, pIndex->nBlockSize, DISKANN_BLOB_WRITABLE);
 //   if( rc != SQLITE4_OK ){
-//     *pzErrMsg = sqlite4_mprintf("vector index(delete): failed to create blob for edge rows");
+//     printf("vector index(delete): failed to create blob for edge rows");
 //     goto out;
 //   }
 //   nNeighbours = nodeBinEdges(pIndex, pNodeBlob);
@@ -1808,7 +1808,7 @@ out:
 //     if( rc == DISKANN_ROW_NOT_FOUND ){
 //       continue;
 //     }else if( rc != SQLITE4_OK ){
-//       *pzErrMsg = sqlite4_mprintf("vector index(delete): failed to reload blob for edge row: %d", rc);
+//       printf("vector index(delete): failed to reload blob for edge row: %d", rc);
 //       goto out;
 //     }
 //     iDelete = nodeBinEdgeFindIdx(pIndex, pEdgeBlob, edgeRowid);
@@ -1818,14 +1818,14 @@ out:
 //     nodeBinDeleteEdge(pIndex, pEdgeBlob, iDelete);
 //     rc = blobSpotFlush(pIndex, pEdgeBlob);
 //     if( rc != SQLITE4_OK ){
-//       *pzErrMsg = sqlite4_mprintf("vector index(delete): failed to flush blob for edge row");
+//       printf("vector index(delete): failed to flush blob for edge row");
 //       goto out;
 //     }
 //   }
 
 //   rc = diskAnnDeleteShadowRow(pIndex, nodeRowid);
 //   if( rc != SQLITE4_OK ){
-//     *pzErrMsg = sqlite4_mprintf("vector index(delete): failed to remove shadow row");
+//     printf("vector index(delete): failed to remove shadow row");
 //     goto out;
 //   }
 
@@ -1861,7 +1861,7 @@ int diskAnnOpenIndex(
   pIndex->zShadow = sqlite4MPrintf(db, "%s_shadow", zIdxName);
   if( pIndex->zShadow == NULL ){
     diskAnnCloseIndex(pIndex);
-    return SQLITE4_NOMEM_BKPT;
+    return SQLITE4_NOMEM;
   }
   nBlockSize = vectorIdxParamsGetU64(pParams, VECTOR_BLOCK_SIZE_PARAM_ID);
   // preserve backward compatibility: treat block size > 128 literally, but <= 128 with shift
