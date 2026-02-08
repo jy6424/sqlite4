@@ -103,6 +103,21 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  // data insertion
+  printf("\n-- inserting data --\n");
+  rc = sqlite4_exec(
+    db,
+    "INSERT INTO x (embedding) VALUES "
+    " (vector32('[0.800, 0.579, 0.481, 0.229]'));",
+    0, 0
+  );
+  if (rc) {
+    printf("sql error (insert data): rc=%d\n", rc);
+    sqlite4_close(db, 0);
+    return 1;
+  }
+  printf("Data inserted successfully\n");
+
   sqlite4_close(db, 0);
   return 0;
 }
