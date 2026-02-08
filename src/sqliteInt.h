@@ -3356,11 +3356,8 @@ void sqlite4_result_value(sqlite4_context *pCtx, sqlite4_value *pValue);
 **         TF_HasStored  == COLFLAG_STORED
 **         TF_HasHidden  == COLFLAG_HIDDEN
 */
-#define TF_Readonly       0x00000001 /* Read-only system table */
+
 #define TF_HasHidden      0x00000002 /* Has one or more hidden columns */
-#define TF_HasPrimaryKey  0x00000004 /* Table has a primary key */
-#define TF_Autoincrement  0x00000008 /* Integer primary key is autoincrement */
-#define TF_HasStat1       0x00000010 /* nRowLogEst set from sqlite_stat1 */
 #define TF_HasVirtual     0x00000020 /* Has one or more VIRTUAL columns */
 #define TF_HasStored      0x00000040 /* Has one or more STORED columns */
 #define TF_HasGenerated   0x00000060 /* Combo: HasVirtual + HasStored */
@@ -3372,7 +3369,6 @@ void sqlite4_result_value(sqlite4_context *pCtx, sqlite4_value *pValue);
 #define TF_HasNotNull     0x00000800 /* Contains NOT NULL constraints */
 #define TF_Shadow         0x00001000 /* True for a shadow table */
 #define TF_HasStat4       0x00002000 /* STAT4 info available for this table */
-#define TF_Ephemeral      0x00004000 /* An ephemeral table */
 #define TF_Eponymous      0x00008000 /* An eponymous virtual table */
 #define TF_Strict         0x00010000 /* STRICT mode */
 
