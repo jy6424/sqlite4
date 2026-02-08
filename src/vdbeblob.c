@@ -26,7 +26,7 @@ struct Incrblob {
   int nByte;              /* Size of open blob, in bytes */
   int iOffset;            /* Byte offset of blob in cursor data */
   u16 iCol;               /* Table column this handle is open on */
-  BtCursor *pCsr;         /* Cursor pointing at blob row */
+  KVCursor *pCsr;         /* Cursor pointing at blob row */ // [koreauniv] BtCursor -> KVCursor
   sqlite4_stmt *pStmt;    /* Statement holding cursor open */
   sqlite4 *db;            /* The associated database */
   char *zDb;              /* Database name */
@@ -283,7 +283,7 @@ int sqlite4_blob_open(
       aOp = sqlite4VdbeAddOpList(v, ArraySize(openBlob), openBlob);
 
       /* Make sure a mutex is held on the table to be accessed */
-      sqlite4VdbeUsesBtree(v, iDb); // [koreauniv] 수정필요
+      sqlite4VdbeUsesStorage(v, iDb); // [koreauniv] sqlite4VdbeUsesBtree -> sqlite4VdbeUsesStorage
 
       if( db->mallocFailed==0 ){
         assert( aOp!=0 );
@@ -341,7 +341,8 @@ blob_open_out:
     if( pBlob && pBlob->pStmt ) sqlite4VdbeFinalize((Vdbe *)pBlob->pStmt);
     sqlite4DbFree(db, pBlob);
   }
-  sqlite4ErrorWithMsg(db, rc, (zErr ? "%s" : (char*)0), zErr); // [koreauniv] 수정필요
+  // sqlite4ErrorwithMsg(db, rc, (zErr ? "%s" : (char*)0), zErr); // [koreauniv] 수정필요
+  printf("[blob] open failed: %s with rc = %d\n", zErr ? zErr : "(no detail)", rc); // [koreauniv] 위 코드 대신 추가
   sqlite4DbFree(db, zErr);
   sqlite4ParseObjectReset(&sParse);
   rc = sqlite4ApiExit(db, rc);
@@ -379,7 +380,7 @@ static int blobReadWrite(
   void *z, 
   int n, 
   int iOffset, 
-  int (*xCall)(BtCursor*, u32, u32, void*)
+  int (*xCall)(KVCursor*, u32, u32, void*)
 ){
   int rc;
   Incrblob *p = (Incrblob *)pBlob;
@@ -457,7 +458,7 @@ int sqlite4_blob_read(sqlite4_blob *pBlob, void *z, int n, int iOffset){
 ** Write data to a blob handle.
 */
 int sqlite4_blob_write(sqlite4_blob *pBlob, const void *z, int n, int iOffset){
-  return blobReadWrite(pBlob, (void *)z, n, iOffset, sqlite4BtreePutData); // [koreauniv] 수정필요
+  return blobReadWrite(pBlob, (void *)z, n, iOffset, sqlite3PutData); // [koreauniv] 수정필요
 }
 
 /*
