@@ -1174,6 +1174,22 @@ int sqlite4_bind_value(sqlite4_stmt *pStmt, int i, const sqlite4_value *pValue){
   return rc;
 }
 
+//[koreauniv] 추가
+int sqlite4_bind_zeroblob(sqlite4_stmt *pStmt, int i, int n){
+  int rc;
+  Vdbe *p = (Vdbe *)pStmt;
+  rc = vdbeUnbind(p, (u32)(i-1));
+  if( rc==SQLITE4_OK ){
+#ifndef SQLITE4_OMIT_INCRBLOB
+    sqlite4VdbeMemSetZeroBlob(&p->aVar[i-1], n);
+#else
+    rc = sqlite4VdbeMemSetZeroBlob(&p->aVar[i-1], n);
+#endif
+    sqlite4_mutex_leave(p->db->mutex);
+  }
+  return rc;
+}
+
 /*
 ** Return the number of wildcards that can be potentially bound to.
 ** This routine is added to support DBD::SQLite.  

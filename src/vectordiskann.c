@@ -696,7 +696,7 @@ static int diskAnnSelectRandomShadowRow(const DiskAnnIndex *pIndex, u64 *pRowid)
     rc = SQLITE4_NOMEM;
     goto out;
   }
-  rc = sqlite4_prepare_v2(pIndex->db, zSql, -1, &pStmt, 0);
+  rc = sqlite4_prepare(pIndex->db, zSql, -1, &pStmt, 0);
   if( rc != SQLITE4_OK ){
     goto out;
   }
@@ -749,7 +749,7 @@ static int diskAnnGetShadowRowid(const DiskAnnIndex *pIndex, const VectorInRow *
     rc = SQLITE4_NOMEM;
     goto out;
   }
-  rc = sqlite4_prepare_v2(pIndex->db, zSql, -1, &pStmt, 0);
+  rc = sqlite4_prepare(pIndex->db, zSql, -1, &pStmt, 0);
   if( rc != SQLITE4_OK ){
     goto out;
   }
@@ -802,7 +802,7 @@ static int diskAnnGetShadowRowKeys(const DiskAnnIndex *pIndex, u64 nRowid, const
     rc = SQLITE4_NOMEM;
     goto out;
   }
-  rc = sqlite4_prepare_v2(pIndex->db, zSql, -1, &pStmt, 0);
+  rc = sqlite4_prepare(pIndex->db, zSql, -1, &pStmt, 0);
   if( rc != SQLITE4_OK ){
     goto out;
   }
@@ -860,7 +860,7 @@ static int diskAnnInsertShadowRow(const DiskAnnIndex *pIndex, const VectorInRow 
     rc = SQLITE4_NOMEM;
     goto out;
   }
-  rc = sqlite4_prepare_v2(pIndex->db, zSql, -1, &pStmt, 0);
+  rc = sqlite4_prepare(pIndex->db, zSql, -1, &pStmt, 0);
   if( rc != SQLITE4_OK ){
     goto out;
   }
@@ -911,7 +911,7 @@ static int diskAnnDeleteShadowRow(const DiskAnnIndex *pIndex, i64 nRowid){
     rc = SQLITE4_NOMEM;
     goto out;
   }
-  rc = sqlite4_prepare_v2(pIndex->db, zSql, -1, &pStmt, 0);
+  rc = sqlite4_prepare(pIndex->db, zSql, -1, &pStmt, 0);
   if( rc != SQLITE4_OK ){
     goto out;
   }
@@ -1029,7 +1029,7 @@ static float diskAnnVectorDistance(const DiskAnnIndex *pIndex, const Vector *pVe
 }
 
 static DiskAnnNode *diskAnnNodeAlloc(const DiskAnnIndex *pIndex, u64 nRowid){
-  DiskAnnNode *pNode = sqlite4_malloc(sizeof(DiskAnnNode));
+  DiskAnnNode *pNode = sqlite4_malloc(pIndex->db->pEnv, sizeof(DiskAnnNode));
   if( pNode == NULL ){
     return NULL;
   }
@@ -1044,7 +1044,7 @@ static void diskAnnNodeFree(DiskAnnNode *pNode){
   if( pNode->pBlobSpot != NULL ){
     blobSpotFree(pNode->pBlobSpot);
   }
-  sqlite4_free(pNode);
+  sqlite4_free(0, pNode);
 }
 
 static int diskAnnSearchCtxInit(const DiskAnnIndex *pIndex, DiskAnnSearchCtx *pCtx, const Vector* pQuery, int maxCandidates, int topCandidates, int blobMode){
@@ -1053,12 +1053,12 @@ static int diskAnnSearchCtxInit(const DiskAnnIndex *pIndex, DiskAnnSearchCtx *pC
   }
   loadVectorPair(&pCtx->query, pQuery);
 
-  pCtx->aDistances = sqlite4_malloc(maxCandidates * sizeof(double));
-  pCtx->aCandidates = sqlite4_malloc(maxCandidates * sizeof(DiskAnnNode*));
+  pCtx->aDistances = sqlite4_malloc(pIndex->db->pEnv, maxCandidates * sizeof(double));
+  pCtx->aCandidates = sqlite4_malloc(pIndex->db->pEnv, maxCandidates * sizeof(DiskAnnNode*));
   pCtx->nCandidates = 0;
   pCtx->maxCandidates = maxCandidates;
-  pCtx->aTopDistances = sqlite4_malloc(topCandidates * sizeof(double));
-  pCtx->aTopCandidates = sqlite4_malloc(topCandidates * sizeof(DiskAnnNode*));
+  pCtx->aTopDistances = sqlite4_malloc(pIndex->db->pEnv, topCandidates * sizeof(double));
+  pCtx->aTopCandidates = sqlite4_malloc(pIndex->db->pEnv, topCandidates * sizeof(DiskAnnNode*));
   pCtx->nTopCandidates = 0;
   pCtx->maxTopCandidates = topCandidates;
   pCtx->visitedList = NULL;
@@ -1069,16 +1069,16 @@ static int diskAnnSearchCtxInit(const DiskAnnIndex *pIndex, DiskAnnSearchCtx *pC
     return SQLITE4_OK;
   }
   if( pCtx->aDistances != NULL ){
-    sqlite4_free(pCtx->aDistances);
+    sqlite4_free(pIndex->db->pEnv, pCtx->aDistances);
   }
   if( pCtx->aCandidates != NULL ){
-    sqlite4_free(pCtx->aCandidates);
+    sqlite4_free(pIndex->db->pEnv, pCtx->aCandidates);
   }
   if( pCtx->aTopDistances != NULL ){
-    sqlite4_free(pCtx->aTopDistances);
+    sqlite4_free(pIndex->db->pEnv, pCtx->aTopDistances);
   }
   if( pCtx->aTopCandidates != NULL ){
-    sqlite4_free(pCtx->aTopCandidates);
+    sqlite4_free(pIndex->db->pEnv, pCtx->aTopCandidates);
   }
   deinitVectorPair(&pCtx->query);
   return SQLITE4_NOMEM;
@@ -1102,10 +1102,10 @@ static void diskAnnSearchCtxDeinit(DiskAnnSearchCtx *pCtx){
     diskAnnNodeFree(pNode);
     pNode = pNext;
   }
-  sqlite4_free(pCtx->aCandidates);
-  sqlite4_free(pCtx->aDistances);
-  sqlite4_free(pCtx->aTopCandidates);
-  sqlite4_free(pCtx->aTopDistances);
+  sqlite4_free(0, pCtx->aCandidates);
+  sqlite4_free(0, pCtx->aDistances);
+  sqlite4_free(0, pCtx->aTopCandidates);
+  sqlite4_free(0, pCtx->aTopDistances);
   deinitVectorPair(&pCtx->query);
 }
 
