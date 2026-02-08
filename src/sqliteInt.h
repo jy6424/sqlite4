@@ -3340,6 +3340,42 @@ void sqlite4_result_value(sqlite4_context *pCtx, sqlite4_value *pValue);
 #define XN_ROWID     (-1)     /* Indexed column is the rowid */
 #define XN_EXPR      (-2)     /* Indexed column is an expression */
 
+
+/*
+** Allowed values for Table.tabFlags.
+**
+** TF_OOOHidden applies to tables or view that have hidden columns that are
+** followed by non-hidden columns.  Example:  "CREATE VIRTUAL TABLE x USING
+** vtab1(a HIDDEN, b);".  Since "b" is a non-hidden column but "a" is hidden,
+** the TF_OOOHidden attribute would apply in this case.  Such tables require
+** special handling during INSERT processing. The "OOO" means "Out Of Order".
+**
+** Constraints:
+**
+**         TF_HasVirtual == COLFLAG_VIRTUAL
+**         TF_HasStored  == COLFLAG_STORED
+**         TF_HasHidden  == COLFLAG_HIDDEN
+*/
+#define TF_Readonly       0x00000001 /* Read-only system table */
+#define TF_HasHidden      0x00000002 /* Has one or more hidden columns */
+#define TF_HasPrimaryKey  0x00000004 /* Table has a primary key */
+#define TF_Autoincrement  0x00000008 /* Integer primary key is autoincrement */
+#define TF_HasStat1       0x00000010 /* nRowLogEst set from sqlite_stat1 */
+#define TF_HasVirtual     0x00000020 /* Has one or more VIRTUAL columns */
+#define TF_HasStored      0x00000040 /* Has one or more STORED columns */
+#define TF_HasGenerated   0x00000060 /* Combo: HasVirtual + HasStored */
+#define TF_WithoutRowid   0x00000080 /* No rowid.  PRIMARY KEY is the key */
+#define TF_StatsUsed      0x00000100 /* Query planner decisions affected by
+                                     ** Index.aiRowLogEst[] values */
+#define TF_NoVisibleRowid 0x00000200 /* No user-visible "rowid" column */
+#define TF_OOOHidden      0x00000400 /* Out-of-Order hidden columns */
+#define TF_HasNotNull     0x00000800 /* Contains NOT NULL constraints */
+#define TF_Shadow         0x00001000 /* True for a shadow table */
+#define TF_HasStat4       0x00002000 /* STAT4 info available for this table */
+#define TF_Ephemeral      0x00004000 /* An ephemeral table */
+#define TF_Eponymous      0x00008000 /* An eponymous virtual table */
+#define TF_Strict         0x00010000 /* STRICT mode */
+
 /* Does the table have a rowid */
 #define HasRowid(X)     (((X)->tabFlags & TF_WithoutRowid)==0)
 #define VisibleRowid(X) (((X)->tabFlags & TF_NoVisibleRowid)==0)
