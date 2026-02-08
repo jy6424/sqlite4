@@ -90,6 +90,10 @@ struct VdbeCursor {
   const u8 *aRow;         /* Data for the current row, if all on one page */
   u32 payloadSize;        /* Total number of bytes in the record */
   u32 szRow;              /* Byte available in aRow */
+    /* 2*nField extra array elements allocated for aType[], beyond the one
+  ** static element declared in the structure.  nField total array slots for
+  ** aType[] and nField+1 array slots for aOffset[] */
+  u32 aType[1];           /* Type values record decode.  MUST BE LAST */
 };
 
 /* Methods for the VdbeCursor object */
