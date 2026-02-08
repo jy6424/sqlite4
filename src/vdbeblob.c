@@ -405,7 +405,7 @@ static int blobReadWrite(
     ** returned, clean-up the statement handle.
     */
     assert( db == v->db );
-    sqlite4BtreeEnterCursor(p->pCsr); // [koreauniv] 수정필요
+    sqlite4VdbeSeekEnd(p->pCsr, +1); // [koreauniv] sqlite3BtreeEnterCursor -> sqlite4VdbeSeekEnd
 
 #ifdef SQLITE_ENABLE_PREUPDATE_HOOK
     if( xCall==sqlite3BtreePutData && db->xPreUpdateCallback ){
