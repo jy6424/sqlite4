@@ -66,9 +66,9 @@ struct VdbeCursor {
   sqlite4_vtab_cursor *pVtabCursor;  /* The cursor for a virtual table */
   const sqlite4_module *pModule;     /* Module for cursor pVtabCursor */
   sqlite4_buffer sSeekKey;           /* Key for deferred seek */
-#ifndef SQLITE_OMIT_VECTOR // [koreauniv] 추가
-  VectorIdxCursor *pVecIdx;   /* CURTYPE_VECTOR_IDX.        Vector index cursor */
-#endif
+// #ifndef SQLITE_OMIT_VECTOR // [koreauniv] 추가
+//   VectorIdxCursor *pVecIdx;   /* CURTYPE_VECTOR_IDX.        Vector index cursor */
+// #endif
 
 };
 
