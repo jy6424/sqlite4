@@ -39,6 +39,17 @@ typedef struct Explain Explain;
 /* Opaque type used by vdbecodec.c */
 typedef struct RowDecoder RowDecoder;
 
+// [koreauniv] 추가
+/* Types of VDBE cursors */
+#define CURTYPE_BTREE       0
+#define CURTYPE_SORTER      1
+#define CURTYPE_VTAB        2
+#define CURTYPE_PSEUDO      3
+
+#ifndef SQLITE_OMIT_VECTOR
+#define CURTYPE_VECTOR_IDX  64
+#endif
+
 /*
 ** A cursor is a pointer into a single database.
 ** The cursor can seek to an entry with a particular key, or
@@ -69,7 +80,18 @@ struct VdbeCursor {
 // #ifndef SQLITE_OMIT_VECTOR // [koreauniv] 추가
 //   VectorIdxCursor *pVecIdx;   /* CURTYPE_VECTOR_IDX.        Vector index cursor */
 // #endif
-
+// [koreauniv] 추가
+  u8 eCurtype;            /* One of the CURTYPE_* values above */
+  KeyInfo *pKeyInfo;      /* Info about index keys needed by index cursors */
+  u32 iHdrOffset;         /* Offset to next unparsed byte of the header */
+  Pgno pgnoRoot;          /* Root page of the open btree cursor */
+  i16 nField;             /* Number of fields in the header */
+  u16 nHdrParsed;         /* Number of header fields parsed so far */
+  i64 movetoTarget;       /* Argument to the deferred sqlite3BtreeMoveto() */
+  u32 *aOffset;           /* Pointer to aType[nField] */
+  const u8 *aRow;         /* Data for the current row, if all on one page */
+  u32 payloadSize;        /* Total number of bytes in the record */
+  u32 szRow;              /* Byte available in aRow */
 };
 
 /* Methods for the VdbeCursor object */
