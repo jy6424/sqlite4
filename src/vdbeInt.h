@@ -478,8 +478,8 @@ u32 sqlite4VdbeSerialTypeLen(u32 serial_type);
 ** The maximum number of times that a statement will try to reparse
 ** itself before giving up and returning SQLITE_SCHEMA.
 */
-#ifndef SQLITE_MAX_SCHEMA_RETRY
-# define SQLITE_MAX_SCHEMA_RETRY 50
+#ifndef SQLITE4_MAX_SCHEMA_RETRY
+# define SQLITE4_MAX_SCHEMA_RETRY 50
 #endif
 
 
