@@ -82,10 +82,8 @@ struct VdbeCursor {
 // #endif
 // [koreauniv] 추가
   u8 eCurtype;            /* One of the CURTYPE_* values above */
-  KeyInfo *pKeyInfo;      /* Info about index keys needed by index cursors */
   u32 iHdrOffset;         /* Offset to next unparsed byte of the header */
-  Pgno pgnoRoot;          /* Root page of the open btree cursor */
-  i16 nField;             /* Number of fields in the header */
+  i64 pgnoRoot;          /* Root page of the open btree cursor */
   u16 nHdrParsed;         /* Number of header fields parsed so far */
   i64 movetoTarget;       /* Argument to the deferred sqlite3BtreeMoveto() */
   u32 *aOffset;           /* Pointer to aType[nField] */
