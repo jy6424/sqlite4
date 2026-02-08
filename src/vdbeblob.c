@@ -433,7 +433,7 @@ static int blobReadWrite(
 #endif
 
     rc = xCall(p->pCsr, iOffset+p->iOffset, n, z);
-    sqlite4BtreeLeaveCursor(p->pCsr); // [koreauniv] 수정필요
+    sqlite4VdbeFreeCursor(p->pCsr); // [koreauniv] sqlite3BtreeLeaveCursor -> sqlite4VdbeFreeCursor
     if( rc==SQLITE4_ABORT ){
       sqlite4VdbeFinalize(v);
       p->pStmt = 0;
@@ -500,7 +500,8 @@ int sqlite4_blob_reopen(sqlite4_blob *pBlob, sqlite4_int64 iRow){
     ((Vdbe*)p->pStmt)->rc = SQLITE4_OK;
     rc = blobSeekToRow(p, iRow, &zErr);
     if( rc!=SQLITE4_OK ){
-      sqlite4ErrorWithMsg(db, rc, (zErr ? "%s" : (char*)0), zErr);
+      // sqlite4ErrorWithMsg(db, rc, (zErr ? "%s" : (char*)0), zErr);
+      printf("[blob] reopen failed: %s with rc = %d\n", zErr ? zErr : "(no detail)", rc); // [koreauniv] 위 코드 대신 추가
       sqlite4DbFree(db, zErr);
     }
     assert( rc!=SQLITE4_SCHEMA );
