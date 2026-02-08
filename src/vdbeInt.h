@@ -443,6 +443,7 @@ int sqlite4VdbeMemHandleBom(Mem *pMem);
 
 //[koreauniv]
 void sqlite4VdbeMemSetZeroBlob(Mem *pMem, int n);
+int sqlite4_bind_zeroblob(sqlite4_stmt *pStmt, int i, int n);
 
 
 
