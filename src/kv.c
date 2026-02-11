@@ -511,3 +511,13 @@ void sqlite4KVStoreDump(KVStore *pStore){
   }
 }
 #endif /* SQLITE4_DEBUG */
+
+
+//[koreauniv] 추가
+
+/*
+** Mark this cursor as an incremental blob cursor.
+*/
+void sqlite4KVIncrblobCursor(KVCursor *pCur){
+  pCur->pStore->hasIncrblobCur = 1;
+}

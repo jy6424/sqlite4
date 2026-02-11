@@ -91,7 +91,7 @@ static int blobSeekToRow(Incrblob *p, sqlite4_int64 iRow, char **pzErr){
       p->iOffset = pC->aType[p->iCol + pC->nField];
       p->nByte = sqlite4VdbeSerialTypeLen(type); // [koreauniv] 수정필요 (임시완료)
       p->pCsr =  pC->uc.pCursor;
-      sqlite4BtreeIncrblobCursor(p->pCsr); // [koreauniv] 수정필요
+      sqlite4KVIncrblobCursor(p->pCsr); // [koreauniv] 수정필요 (임시완료)
     }
   }
 
@@ -263,7 +263,7 @@ int sqlite4_blob_open(
       */
       // static const int iLn = VDBE_OFFSET_LINENO(2); //[koreauniv] 사용되지 않음
       static const VdbeOpList openBlob[] = {
-        {OP_TableLock,      0, 0, 0},  /* 0: Acquire a read or write lock */
+        {OP_Noop,      0, 0, 0},  /* 0: Acquire a read or write lock */ //[koreauniv] OP_TableLock -> OP_Noop
         {OP_OpenRead,       0, 0, 0},  /* 1: Open a cursor */
         /* blobSeekToRow() will initialize r[1] to the desired rowid */
         {OP_NotExists,      0, 5, 1},  /* 2: Seek the cursor to rowid=r[1] */
@@ -458,7 +458,7 @@ int sqlite4_blob_read(sqlite4_blob *pBlob, void *z, int n, int iOffset){
 ** Write data to a blob handle.
 */
 int sqlite4_blob_write(sqlite4_blob *pBlob, const void *z, int n, int iOffset){
-  return blobReadWrite(pBlob, (void *)z, n, iOffset, sqlite3PutData); // [koreauniv] 수정필요
+  return blobReadWrite(pBlob, (void *)z, n, iOffset, sqlite4PutData); // [koreauniv] 수정필요
 }
 
 /*

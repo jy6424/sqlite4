@@ -3978,6 +3978,7 @@ struct sqlite4_kvstore {
   unsigned fTrace;                        /* True to enable tracing */
   char zKVName[12];                       /* Used for debugging */
   /* Subclasses will typically append additional fields */
+  int hasIncrblobCur;
 };
 
 /*
