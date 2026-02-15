@@ -118,6 +118,21 @@ int main(int argc, char **argv) {
   }
   printf("Data inserted successfully\n");
 
+  // select data
+  printf("\n-- selecting data --\n");
+  rc = sqlite4_exec(
+    db,
+    "SELECT embedding FROM x;",
+    print_callback,
+    0
+  );
+  if (rc) {
+    printf("sql error (select data): rc=%d\n", rc);
+    sqlite4_close(db, 0);
+    return 1;
+  }
+  printf("Data selected successfully\n");
+
   sqlite4_close(db, 0);
   return 0;
 }
