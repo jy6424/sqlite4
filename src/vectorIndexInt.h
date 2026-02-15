@@ -45,6 +45,7 @@ struct DiskAnnIndex {
 */
 typedef struct BlobSpot {
   u64 nRowid;
+  sqlite4_blob *pBlob;
   u8 *pBuffer;
   int nBufferSize;
 
@@ -58,7 +59,7 @@ typedef struct BlobSpot {
 
   /* optional: reusable cursor for performance */
   KVCursor *pCur;
-} BlobSpot;
+};
 
 
 /* Special error code for blobSpotCreate/blobSpotReload functions which will fire where rowid doesn't exists in the table */
