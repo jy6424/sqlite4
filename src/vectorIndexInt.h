@@ -59,7 +59,7 @@ struct BlobSpot {
 
   /* optional: reusable cursor for performance */
   KVCursor *pCur;
-}
+};
 
 
 /* Special error code for blobSpotCreate/blobSpotReload functions which will fire where rowid doesn't exists in the table */
