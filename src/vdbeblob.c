@@ -16,7 +16,6 @@
 
 /* Forward decls (these exist in sqlite4) */
 extern int sqlite4PutVarint64(unsigned char*, sqlite4_uint64);
-extern int sqlite4GetVarint64(const unsigned char*, sqlite4_uint64*);
 
 /*
 ** Valid sqlite4_blob* handles point to Incrblob structures.
