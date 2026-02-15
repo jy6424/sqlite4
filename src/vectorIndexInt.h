@@ -43,15 +43,23 @@ struct DiskAnnIndex {
  * Caller can re-load BlobSpot with blobSpotReload(...) method which will reopen blob at new row position
  * sqlite4_blob_reopen API can be visibly faster than close/open pair since a lot of check can be omitted
 */
-struct BlobSpot {
-  u64 nRowid;           /* last rowid for which open/reopen was called; undefined if BlobSpot was never opened */
-  sqlite4_blob *pBlob;  /* BLOB handle */
-  u8 *pBuffer;          /* buffer for BLOB data */
-  int nBufferSize;      /* buffer size */
-  u8 isWritable;        /* blob open mode (readonly or read/write) */
-  u8 isInitialized;     /* was blob read after creation or not */
-  u8 isAborted;         /* set to true if last operation with blob failed with non-zero code */
-};
+typedef struct BlobSpot {
+  u64 nRowid;
+  u8 *pBuffer;
+  int nBufferSize;
+
+  /* KV access */
+  KVStore *pStore;
+  KVByteArray *pKey;  KVSize nKey;
+
+  int isWritable;
+  int isInitialized;
+  int isAborted;
+
+  /* optional: reusable cursor for performance */
+  KVCursor *pCur;
+} BlobSpot;
+
 
 /* Special error code for blobSpotCreate/blobSpotReload functions which will fire where rowid doesn't exists in the table */
 #define DISKANN_ROW_NOT_FOUND 1001

@@ -209,3 +209,6 @@ int sqlite4KVStoreGetSchema(KVStore *p, unsigned int *piVal);
 #ifdef SQLITE4_DEBUG
   void sqlite4KVStoreDump(KVStore *p);
 #endif
+
+// [koreauniv] 추가
+void sqlite4KVIncrblobCursor(KVCursor *pCur);
