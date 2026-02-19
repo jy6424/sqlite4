@@ -140,8 +140,8 @@ int main(int argc, char* argv[]) {
     }
 
     if (strncmp(line, "---", 3) == 0) {
-      rc = sqlite4_wal_checkpoint_v2(db, 0, SQLITE4_CHECKPOINT_FULL, 0, 0);
-      ensure(rc == 0, "failed to checkpoint db: %s\n", sqlite4_errmsg(db));
+      // rc = sqlite4_wal_checkpoint_v2(db, 0, SQLITE4_CHECKPOINT_FULL, 0, 0);
+      // ensure(rc == 0, "failed to checkpoint db: %s\n", sqlite4_errmsg(db));
 
       // print & reset stat
       printf("%s (%s):\n", line + 3, argv[1]);
@@ -214,7 +214,6 @@ int main(int argc, char* argv[]) {
       continue;
     }
 
-    char* error = NULL;
     int count = create_query_template(line, template, (char**)&parameters,
                                       parameter_lengths, parameter_types);
     if (count > 0) {
@@ -241,14 +240,14 @@ int main(int argc, char* argv[]) {
           rc = sqlite4_bind_int(statement, i + 1, get_int(parameters[i], parameter_lengths[i]));
           ensure(rc == 0, "failed to bind int parameter (%d): %s\n", i, sqlite4_errmsg(db));
         } else if (parameter_types[i] == 1) {
-          rc = sqlite4_bind_text(statement, i + 1, parameters[i], parameter_lengths[i], SQLITE4_TRANSIENT);
+          rc = sqlite4_bind_text(statement, i + 1, parameters[i], parameter_lengths[i], SQLITE4_TRANSIENT, 0);
           ensure(rc == 0, "failed to bind string parameter: %d\n", rc);
         } else {
           ensure(false, "unexpected parameter type\n");
         }
       }
 
-      double start_time = now_sec_monotonic();   // WALL TIME START
+      double start_time = now_sec_monotonic();   // set start time
 
       double* total_time = NULL;
       int* total_count = NULL;
@@ -280,7 +279,7 @@ int main(int argc, char* argv[]) {
         ensure(false, "unexpected query type: %s\n", prepared);
       }
 
-      double end_time = now_sec_monotonic();     // WALL TIME END
+      double end_time = now_sec_monotonic();     // set end time
 
       total_reads += sqlite4_stmt_status(statement, 1025, 1);
       total_writes += sqlite4_stmt_status(statement, 1026, 1);
@@ -289,15 +288,14 @@ int main(int argc, char* argv[]) {
       *total_count += 1;
 
     } else {
-      rc = sqlite4_exec(db, line, 0, 0, &error);
-      ensure(rc == 0, "failed to exec simple statement '%s': %s\n", line, error ? error : "(null)");
+      rc = sqlite4_exec(db, line, 0, 0);
+      ensure(rc == 0, "failed to exec simple statement '%s': %s\n", line, sqlite4_errmsg(db));
       eprintf("executed simple statement: '%s'\n", line);
-      if (error) sqlite4_free(error);
     }
   }
 
   if (statement) sqlite4_finalize(statement);
   fclose(queries_f);
-  sqlite4_close(0, db);
+  sqlite4_close(db, 0);
   return 0;
 }
