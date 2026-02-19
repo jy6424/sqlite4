@@ -11,14 +11,31 @@
 
 #include <stdint.h>
 
-extern uint64_t diskann_get_poll_ns(void);
-extern void     diskann_reset_poll_ns(void);
-extern uint64_t diskann_get_poll_calls(void);
-extern void     diskann_reset_poll_calls(void);
-extern void     diskann_print_edge_fill_stats(void);
-
 #define eprintf(...) fprintf(stderr, __VA_ARGS__)
 #define ensure(condition, ...) { if (!(condition)) { eprintf(__VA_ARGS__); exit(1); } }
+
+static inline uint64_t now_ns_monotonic(void) {
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return (uint64_t)ts.tv_sec * 1000000000ULL + (uint64_t)ts.tv_nsec;
+}
+
+_Atomic uint64_t g_diskann_poll_ns = 0;
+_Atomic uint64_t g_diskann_poll_calls = 0;
+
+uint64_t diskann_get_poll_ns(void) {
+  return atomic_load_explicit(&g_diskann_poll_ns, memory_order_relaxed);
+}
+void diskann_reset_poll_ns(void) {
+  atomic_store_explicit(&g_diskann_poll_ns, 0, memory_order_relaxed);
+}
+
+uint64_t diskann_get_poll_calls(void) {
+  return atomic_load_explicit(&g_diskann_poll_calls, memory_order_relaxed);
+}
+void diskann_reset_poll_calls(void) {
+  atomic_store_explicit(&g_diskann_poll_calls, 0, memory_order_relaxed);
+}
 
 /* Wall-clock time (monotonic) in seconds */
 static inline double now_sec_monotonic(void) {
