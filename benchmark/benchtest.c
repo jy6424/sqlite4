@@ -10,6 +10,7 @@
 #include "sys/stat.h"
 
 #include <stdint.h>
+#include <stdatomic.h>
 
 #define eprintf(...) fprintf(stderr, __VA_ARGS__)
 #define ensure(condition, ...) { if (!(condition)) { eprintf(__VA_ARGS__); exit(1); } }
@@ -20,8 +21,8 @@ static inline uint64_t now_ns_monotonic(void) {
   return (uint64_t)ts.tv_sec * 1000000000ULL + (uint64_t)ts.tv_nsec;
 }
 
-_Atomic uint64_t g_diskann_poll_ns = 0;
-_Atomic uint64_t g_diskann_poll_calls = 0;
+static _Atomic uint64_t g_diskann_poll_ns = 0;
+static _Atomic uint64_t g_diskann_poll_calls = 0;
 
 uint64_t diskann_get_poll_ns(void) {
   return atomic_load_explicit(&g_diskann_poll_ns, memory_order_relaxed);
@@ -35,6 +36,36 @@ uint64_t diskann_get_poll_calls(void) {
 }
 void diskann_reset_poll_calls(void) {
   atomic_store_explicit(&g_diskann_poll_calls, 0, memory_order_relaxed);
+}
+
+void diskann_print_edge_fill_stats(void){
+  if( !g_edgeStats.inited ){
+    fprintf(stderr, "[diskann] edge-fill: stats not initialized\n");
+    return;
+  }
+
+  u64 notFull = 0;
+  u64 total = g_edgeStats.totalNodes;
+  u64 notFullEdgesSum = 0;   // Σ(e * hist[e]) for not-full
+  for(int e = 0; e < g_edgeStats.nMaxEdges; e++){
+    u64 cnt = g_edgeStats.hist[e];
+    notFull += cnt;
+    notFullEdgesSum += (u64)e * cnt;
+  }
+
+  double ratio = (total > 0) ? ((double)notFull / (double)total) : 0.0;
+  double avgNotFullEdges = (notFull > 0) ? ((double)notFullEdgesSum / (double)notFull) : 0.0;
+
+  fprintf(stderr,
+    "[diskann] edge-fill: not-full %llu / %llu = %.4f (%.2f%%), "
+    "avgEdges(not-full)=%.2f, nMaxEdges=%d\n",
+    (unsigned long long)notFull,
+    (unsigned long long)total,
+    ratio,
+    ratio * 100.0,
+    avgNotFullEdges,
+    g_edgeStats.nMaxEdges
+  );
 }
 
 /* Wall-clock time (monotonic) in seconds */
