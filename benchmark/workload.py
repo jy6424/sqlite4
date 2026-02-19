@@ -37,7 +37,7 @@ def recall_normal(dim, n, q):
 def no_vectors(n, q):
     n = int(n)
     q = int(q)
-    # print('PRAGMA journal_mode=WAL;')
+    print('PRAGMA journal_mode=WAL;')
     print(f'CREATE TABLE x ( id INTEGER, value TEXT );')
     for i in range(n):
         vector = f"[{','.join(map(str, np.random.uniform(-1, 1, size=64)))}]"
@@ -51,7 +51,7 @@ def bruteforce(dim, n, q):
     dim = int(dim)
     n = int(n)
     q = int(q)
-    # print('PRAGMA journal_mode=WAL;')
+    print('PRAGMA journal_mode=WAL;')
     print(f'CREATE TABLE x ( id INTEGER, embedding FLOAT32({dim}) );')
     for i in range(n):
         vector = f"[{','.join(map(str, np.random.uniform(-1, 1, size=dim)))}]"
@@ -66,7 +66,7 @@ def diskann(dim, n, q):
     dim = int(dim)
     n = int(n)
     q = int(q)
-    # print('PRAGMA journal_mode=WAL;')
+    print('PRAGMA journal_mode=WAL;')
     print(f'CREATE TABLE x ( id INTEGER, embedding FLOAT32({dim}) );')
     print(f"CREATE INDEX x_idx ON x( libsql_vector_idx(embedding) );")
     for i in range(n):
@@ -81,7 +81,7 @@ def diskann(dim, n, q):
 def diskann_build(dim, n):
     dim = int(dim)
     n = int(n)
-    # print('PRAGMA journal_mode=WAL;')
+    print('PRAGMA journal_mode=WAL;')
     print(f'CREATE TABLE x ( id INTEGER, embedding FLOAT32({dim}) );')
     print(f"CREATE INDEX x_idx ON x( libsql_vector_idx(embedding) );")
     for i in range(n):
@@ -92,7 +92,7 @@ def diskann_build(dim, n):
 def diskann_search(dim, q):
     dim = int(dim)
     q = int(q)
-    # print('PRAGMA journal_mode=WAL;')
+    print('PRAGMA journal_mode=WAL;')
     for i in range(q):
         vector = f"[{','.join(map(str, np.random.uniform(-1, 1, size=dim)))}]"
         print(f'SELECT id FROM vector_top_k(\'x_idx\', vector(\'{vector}\'), 1);')
