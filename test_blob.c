@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
   printf("\n-- creating table --\n");
   rc = sqlite4_exec(
     db,
-    "CREATE TABLE movies (title TEXT,);",
+    "CREATE TABLE x (embedding F32_BLOB(4));",
     0, 0
   );
   if (rc) {
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
   printf("\n-- creating index --\n");
   rc = sqlite4_exec(
     db,
-    "CREATE INDEX movies_title_idx ON movies (title);",
+    "CREATE INDEX x_idx ON x (libsql_vector_idx(embedding));",
     0, 0
   );
   if (rc) {
@@ -103,22 +103,35 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-
-  // insertion
-
+  // data insertion
   printf("\n-- inserting data --\n");
   rc = sqlite4_exec(
     db,
-    "INSERT INTO movies (title) VALUES ('Inception');",
-    print_callback,
-    0
+    "INSERT INTO x (embedding) VALUES "
+    " (vector32('[0.800, 0.579, 0.481, 0.229]'));",
+    0, 0
   );
   if (rc) {
-    printf("sql error (insert): rc=%d\n", rc);
+    printf("sql error (insert data): rc=%d\n", rc);
     sqlite4_close(db, 0);
     return 1;
   }
   printf("Data inserted successfully\n");
+
+  // select data
+  printf("\n-- selecting data --\n");
+  rc = sqlite4_exec(
+    db,
+    "SELECT embedding FROM x;",
+    print_callback,
+    0
+  );
+  if (rc) {
+    printf("sql error (select data): rc=%d\n", rc);
+    sqlite4_close(db, 0);
+    return 1;
+  }
+  printf("Data selected successfully\n");
 
   sqlite4_close(db, 0);
   return 0;
