@@ -3377,3 +3377,20 @@ void sqlite4_result_value(sqlite4_context *pCtx, sqlite4_value *pValue);
 #define VisibleRowid(X) (((X)->tabFlags & TF_NoVisibleRowid)==0)
 
 #endif /* _SQLITEINT_H_ */
+
+
+
+
+/*
+** CAPI3REF: Checkpoint Mode Values
+** KEYWORDS: {checkpoint mode}
+**
+** These constants define all valid values for the "checkpoint mode" passed
+** as the third parameter to the [sqlite4_wal_checkpoint_v2()] interface.
+** See the [sqlite4_wal_checkpoint_v2()] documentation for details on the
+** meaning of each of these checkpoint modes.
+*/
+#define SQLITE4_CHECKPOINT_PASSIVE  0  /* Do as much as possible w/o blocking */
+#define SQLITE4_CHECKPOINT_FULL     1  /* Wait for writers, then checkpoint */
+#define SQLITE4_CHECKPOINT_RESTART  2  /* Like FULL but wait for readers */
+#define SQLITE4_CHECKPOINT_TRUNCATE 3  /* Like RESTART but also truncate WAL */

@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
   printf("open queries file at %s\n", argv[1]);
 
   sqlite4* db;
-  int rc = sqlite4_open(argv[2], &db);
+  int rc = sqlite4_open(0, argv[2], &db);
   ensure(rc == 0, "failed to open db: rc=%d\n", rc);
   printf("open sqlite db at '%s'\n", argv[2]);
   
@@ -140,7 +140,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (strncmp(line, "---", 3) == 0) {
-      rc = sqlite4_wal_checkpoint_v2(db, 0, SQLITE_CHECKPOINT_FULL, 0, 0);
+      rc = sqlite4_wal_checkpoint_v2(db, 0, SQLITE4_CHECKPOINT_FULL, 0, 0);
       ensure(rc == 0, "failed to checkpoint db: %s\n", sqlite4_errmsg(db));
 
       // print & reset stat
@@ -241,7 +241,7 @@ int main(int argc, char* argv[]) {
           rc = sqlite4_bind_int(statement, i + 1, get_int(parameters[i], parameter_lengths[i]));
           ensure(rc == 0, "failed to bind int parameter (%d): %s\n", i, sqlite4_errmsg(db));
         } else if (parameter_types[i] == 1) {
-          rc = sqlite4_bind_text(statement, i + 1, parameters[i], parameter_lengths[i], SQLITE_TRANSIENT);
+          rc = sqlite4_bind_text(statement, i + 1, parameters[i], parameter_lengths[i], SQLITE4_TRANSIENT);
           ensure(rc == 0, "failed to bind string parameter: %d\n", rc);
         } else {
           ensure(false, "unexpected parameter type\n");
@@ -298,6 +298,6 @@ int main(int argc, char* argv[]) {
 
   if (statement) sqlite4_finalize(statement);
   fclose(queries_f);
-  sqlite4_close(db);
+  sqlite4_close(0, db);
   return 0;
 }
