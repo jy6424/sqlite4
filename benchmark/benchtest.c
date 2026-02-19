@@ -259,22 +259,22 @@ int main(int argc, char* argv[]) {
 
         do {
           rc = sqlite4_step(statement); 
-        } while (rc == SQLITE_ROW);
-        ensure(rc == SQLITE_DONE, "SELECT query finished incorrectly: %s", sqlite4_errmsg(db));
+        } while (rc == SQLITE4_ROW);
+        ensure(rc == SQLITE4_DONE, "SELECT query finished incorrectly: %s", sqlite4_errmsg(db));
 
       } else if (strncmp(prepared, "INSERT", 6) == 0) {
         total_time = &total_insert_time;
         total_count = &total_inserts;
 
         rc = sqlite4_step(statement);
-        ensure(rc == SQLITE_DONE, "INSERT query finished incorrectly: %s", sqlite4_errmsg(db));
+        ensure(rc == SQLITE4_DONE, "INSERT query finished incorrectly: %s", sqlite4_errmsg(db));
 
       } else if (strncmp(prepared, "DELETE", 6) == 0) {
         total_time = &total_delete_time;
         total_count = &total_deletes;
 
         rc = sqlite4_step(statement);
-        ensure(rc == SQLITE_DONE, "DELETE query finished incorrectly: %s", sqlite4_errmsg(db));
+        ensure(rc == SQLITE4_DONE, "DELETE query finished incorrectly: %s", sqlite4_errmsg(db));
 
       } else {
         ensure(false, "unexpected query type: %s\n", prepared);
