@@ -626,9 +626,9 @@ int diskAnnCreateIndex(
         );
     zRowidColumnName = "rowid";
   }
-  printf("diskAnnCreateIndex: creating shadow table with SQL: %s\n", zSql);
+  // printf("diskAnnCreateIndex: creating shadow table with SQL: %s\n", zSql);
   rc = sqlite4_exec(db, zSql, 0, 0);
-  printf("diskAnnCreateIndex: shadow table creation rc=%d\n", rc);
+  // printf("diskAnnCreateIndex: shadow table creation rc=%d\n", rc);
   sqlite4DbFree(db, zSql);
   if( rc != SQLITE4_OK ){
     return rc;
@@ -654,11 +654,11 @@ int diskAnnCreateIndex(
       zIdxName,
       zRowidColumnName
   );
-  printf("diskAnnCreateIndex: creating index with SQL: %s\n", zSql);
+  // printf("diskAnnCreateIndex: creating index with SQL: %s\n", zSql);
   rc = sqlite4_exec(db, zSql, 0, 0);
-  printf("diskAnnCreateIndex: index creation rc=%d\n", rc);
+  // printf("diskAnnCreateIndex: index creation rc=%d\n", rc);
   sqlite4DbFree(db, zSql);
-  printf("Created DiskANN index \"%s\".%s with parameters: type=%d, dims=%d, metric=%d, neighbours=%d, max_neighbors=%llu, block_size=%llu\n",
+  // printf("Created DiskANN index \"%s\".%s with parameters: type=%d, dims=%d, metric=%d, neighbours=%d, max_neighbors=%llu, block_size=%llu\n",
          zDbSName, zIdxName, type, dims, metric, neighbours, maxNeighborsParam, blockSizeBytes);
   return rc;
 }
