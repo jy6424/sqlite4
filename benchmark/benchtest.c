@@ -15,14 +15,24 @@
 #define eprintf(...) fprintf(stderr, __VA_ARGS__)
 #define ensure(condition, ...) { if (!(condition)) { eprintf(__VA_ARGS__); exit(1); } }
 
+static _Atomic uint64_t g_diskann_poll_ns = 0;
+static _Atomic uint64_t g_diskann_poll_calls = 0;
+
+typedef struct DiskAnnEdgeStats DiskAnnEdgeStats;
+struct DiskAnnEdgeStats {
+  int inited;
+  int nMaxEdges;
+  u64 totalNodes;     // 현재 인덱스의 전체 노드 수(삽입/삭제 반영)
+  u64 *hist;          // hist[e] = nEdges==e 인 노드 개수
+};
+
+static DiskAnnEdgeStats g_edgeStats = {0};
+
 static inline uint64_t now_ns_monotonic(void) {
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
   return (uint64_t)ts.tv_sec * 1000000000ULL + (uint64_t)ts.tv_nsec;
 }
-
-static _Atomic uint64_t g_diskann_poll_ns = 0;
-static _Atomic uint64_t g_diskann_poll_calls = 0;
 
 uint64_t diskann_get_poll_ns(void) {
   return atomic_load_explicit(&g_diskann_poll_ns, memory_order_relaxed);
