@@ -659,7 +659,7 @@ int diskAnnCreateIndex(
   // printf("diskAnnCreateIndex: index creation rc=%d\n", rc);
   sqlite4DbFree(db, zSql);
   // printf("Created DiskANN index \"%s\".%s with parameters: type=%d, dims=%d, metric=%d, neighbours=%d, max_neighbors=%llu, block_size=%llu\n",
-         zDbSName, zIdxName, type, dims, metric, neighbours, maxNeighborsParam, blockSizeBytes);
+  //        zDbSName, zIdxName, type, dims, metric, neighbours, maxNeighborsParam, blockSizeBytes);
   return rc;
 }
 
