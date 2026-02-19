@@ -134,13 +134,13 @@ int main(int argc, char **argv) {
   printf("Data selected successfully\n");
 
   // db info
-  printf("\n-- info --\n");
-  rc = sqlite4_exec(
-    db,
-    "SELECT name, SUM(pgsize)/1024.0/1024.0 AS mb, COUNT(*) AS pages FROM dbstat GROUP BY name ORDER BY mb DESC;",
-    print_callback,
-    0
-  );
+  // printf("\n-- info --\n");
+  // rc = sqlite4_exec(
+  //   db,
+  //   "SELECT name, SUM(pgsize)/1024.0/1024.0 AS mb, COUNT(*) AS pages FROM dbstat GROUP BY name ORDER BY mb DESC;",
+  //   print_callback,
+  //   0
+  // );
   
   sqlite4_close(db, 0);
   return 0;

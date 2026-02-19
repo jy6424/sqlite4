@@ -18,6 +18,29 @@
 static _Atomic uint64_t g_diskann_poll_ns = 0;
 static _Atomic uint64_t g_diskann_poll_calls = 0;
 
+static int print_callback(
+  void *NotUsed,
+  int argc,
+  sqlite4_value **argv,
+  const char **colName
+){
+  int i;
+  for (i = 0; i < argc; i++) {
+    const char *val;
+
+    if (argv[i] == 0) {
+      val = "NULL";
+    } else {
+      val = sqlite4_value_text(argv[i], NULL);
+      if (!val) val = "(non-text)";
+    }
+
+    printf("%s=%s\t", colName[i], val);
+  }
+  printf("\n");
+  return 0;
+}
+
 typedef struct DiskAnnEdgeStats DiskAnnEdgeStats;
 struct DiskAnnEdgeStats {
   int inited;
@@ -351,6 +374,12 @@ int main(int argc, char* argv[]) {
       eprintf("executed simple statement: '%s'\n", line);
     }
   }
+
+
+  sqlite4_exec(db, "SELECT count(*) AS n FROM x;", print_callback, 0);
+  sqlite4_exec(db, "SELECT count(*) AS n FROM x_idx_shadow;", print_callback, 0);
+  sqlite4_exec(db, "SELECT name, sql FROM sqlite_schema WHERE name LIKE 'x_idx%';", print_callback, 0);
+
 
   if (statement) sqlite4_finalize(statement);
   fclose(queries_f);
