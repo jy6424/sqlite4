@@ -2661,6 +2661,10 @@ case OP_OpenWrite: {
   pCur->iRoot = p2;
   rc = sqlite4KVStoreOpenCursor(pX, &pCur->pKVCur);
   pCur->pKeyInfo = pKeyInfo;
+
+  // [koreauniv] debug message
+  printf("OP_OpenRead/OP_OpenWrite: p1=%d, p2=%d, p3=%d, nField=%d\n",
+         pOp->p1, pOp->p2, pOp->p3, nField);
   break;
 }
 
@@ -3724,6 +3728,8 @@ case OP_Insert: {
   );
   pC->rowChnged = 1;
 
+  // [koreauniv] debug message
+  printf("OP_Insert: p1=%d, p2=%d, p3=%d, p5=%d\n", pOp->p1, pOp->p2, pOp->p3, pOp->p5);
   break;
 }
 
