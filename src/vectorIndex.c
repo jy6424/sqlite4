@@ -264,7 +264,7 @@ int vectorInRowPlaceholderRender(const VectorInRow *pVectorInRow, char *pBuf, in
 int vectorInRowAlloc(sqlite4 *db, const UnpackedRecord *pRecord, VectorInRow *pVectorInRow, char **pzErrMsg) {
   int rc = SQLITE4_OK;
   int type, dims;
-  const sqlite4_value *pVectorValue = &pRecord->aMem[0];
+  sqlite4_value *pVectorValue = &pRecord->aMem[0];
   pVectorInRow->pKeyValues = pRecord->aMem + 1;
   pVectorInRow->nKeys = pRecord->nField - 1;
   pVectorInRow->pVector = NULL;
