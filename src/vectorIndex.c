@@ -35,6 +35,7 @@
 #include "sqlite4.h"
 #include "sqliteInt.h"
 #include "vdbeInt.h"
+#include "lsmInt.h"
 #include "vectorIndexInt.h"
 
 /*
