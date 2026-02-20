@@ -2986,7 +2986,8 @@ Index *sqlite4CreateIndex(
   ** processing (in sqlite4GenerateConstraintChecks()) as part of
   ** UPDATE and INSERT statements.  
   */
-  if( pTab ){
+  // if( db->init.busy || pTblName==0 )
+  if( db->init.busy || pTblName==0 ){
     if( onError!=OE_Replace || pTab->pIndex==0
          || pTab->pIndex->onError==OE_Replace){
       pIndex->pNext = pTab->pIndex;
