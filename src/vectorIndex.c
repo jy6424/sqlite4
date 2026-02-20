@@ -1140,7 +1140,7 @@ int vectorIndexSearch(
     // this code is necessary, otherwise sqlite3SchemaMutexHeld assert will fail
     if( iDb !=1 ){
       // not "main" DB which we already hold mutex for
-      lsmMutexEnter(db->aDb[iDb].pBt); //[koreauniv TODO] sqlite3BtreeEnter -> lsmMutexEnter 사용으로 바꾸기
+      sqlite4_mutex_enter(db->aDb[iDb].pMutex); //[koreauniv TODO] sqlite3BtreeEnter -> lsmMutexEnter 사용으로 바꾸기
     }
   }
 
@@ -1178,7 +1178,7 @@ out:
   sqlite4DbFree(db, zIdxNameAlloc);
   sqlite4DbFree(db, zIdxDbSNameAlloc);
   if( iDb >= 0 && iDb != 1 ){
-    lsmMutexLeave(db->aDb[iDb].pBt); //[koreauniv TODO] sqlite3BtreeLeave -> lsmMutexLeave 사용으로 바꾸기
+    sqlite4_mutex_leave(db->aDb[iDb].pMutex); //[koreauniv TODO] sqlite3BtreeLeave -> lsmMutexLeave 사용으로 바꾸기
   }
   return rc;
 }
