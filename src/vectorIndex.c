@@ -1116,7 +1116,7 @@ int vectorIndexSearch(
     rc = SQLITE4_ERROR;
     goto out;
   }
-  zIdxFullName = (const char*)sqlite4_value_text(argv[0]);
+  zIdxFullName = (const char*)sqlite4_value_text(argv[0], 0);
   rc = getIndexNameParts(db, zIdxFullName, &zIdxDbSNameAlloc, &zIdxNameAlloc);
   if( rc != SQLITE4_OK ){
     *pzErrMsg = sqlite4_mprintf(db->pEnv, "vector index(search): failed to parse index name");
