@@ -3398,3 +3398,21 @@ void sqlite4_result_value(sqlite4_context *pCtx, sqlite4_value *pValue);
 #define SQLITE4_CHECKPOINT_FULL     1  /* Wait for writers, then checkpoint */
 #define SQLITE4_CHECKPOINT_RESTART  2  /* Like FULL but wait for readers */
 #define SQLITE4_CHECKPOINT_TRUNCATE 3  /* Like RESTART but also truncate WAL */
+
+
+/*
+** Round up a number to the next larger multiple of 8.  This is used
+** to force 8-byte alignment on 64-bit architectures.
+**
+** ROUND8() always does the rounding, for any argument.
+**
+** ROUND8P() assumes that the argument is already an integer number of
+** pointers in size, and so it is a no-op on systems where the pointer
+** size is 8.
+*/
+#define ROUND8(x)     (((x)+7)&~7)
+#if SQLITE_PTRSIZE==8
+# define ROUND8P(x)   (x)
+#else
+# define ROUND8P(x)   (((x)+7)&~7)
+#endif
