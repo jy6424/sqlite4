@@ -3897,7 +3897,7 @@ KeyInfo *sqlite4IndexKeyinfo(Parse *pParse, Index *pIdx){
   }
   // [koreauniv] mark vector index
   pKey->idxIsVector = (pIdx->idxIsVector ? 1 : 0);
-  pKey->pIndex = pIdx;
+  pKey->pIdx = pIdx;
 
   if( pParse->nErr ){
     sqlite4DbFree(db, pKey);
