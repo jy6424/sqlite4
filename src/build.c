@@ -2986,7 +2986,7 @@ Index *sqlite4CreateIndex(
   ** processing (in sqlite4GenerateConstraintChecks()) as part of
   ** UPDATE and INSERT statements.  
   */
-  // if( db->init.busy || pTblName==0 )
+  // [koreauniv] original code : if( db->init.busy || pTblName==0 )
   if( pTab ){
     if( onError!=OE_Replace || pTab->pIndex==0
          || pTab->pIndex->onError==OE_Replace){
@@ -3895,6 +3895,9 @@ KeyInfo *sqlite4IndexKeyinfo(Parse *pParse, Index *pIdx){
       pKey->nData = pIdx->pTable->nCol;
     }
   }
+  // [koreauniv] mark vector index
+  pKey->idxIsVector = (pIdx->idxIsVector ? 1 : 0);
+  pKey->pIndex = pIdx;
 
   if( pParse->nErr ){
     sqlite4DbFree(db, pKey);

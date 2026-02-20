@@ -1340,6 +1340,10 @@ struct KeyInfo {
   u16 nData;          /* Number of columns of data in KV entry value */
   u8 *aSortOrder;     /* Sort order for each column.  May be NULL */
   CollSeq *aColl[1];  /* Collating sequence for each term of the key */
+
+  // [koreauniv] added for vector index
+  Index *pIdx;        /* back-pointer to Index */
+  u8 idxIsVector;
 };
 
 
