@@ -3740,7 +3740,7 @@ case OP_Insert: {
       goto abort_due_to_error;
     }
 
-    /* Unpack the packed index key into an UnpackedRecord */
+    // Unpack the packed index key into an UnpackedRecord
     UnpackedRecord *pIdxKey = 0;
 
     pIdxKey = sqlite4VdbeAllocUnpackedRecord(pC->pKeyInfo);
@@ -3753,7 +3753,7 @@ case OP_Insert: {
        - vectorIndexInsert signature in your tree may differ.
        Adjust the call accordingly.
     */
-    rc = vectorIndexInsert(db, pC->pKeyInfo->pIdx, pIdxKey, &p->zErrMsg);
+    rc = vectorIndexInsert(pC->pVecIdx, pIdxKey, &p->zErrMsg);
 
     if( pIdxKey ){
       int i;
