@@ -1041,7 +1041,7 @@ int getIndexNameParts(sqlite4 *db, const char *zIdxFullName, char **pzIdxDbSName
   return SQLITE4_OK;
 }
 
-[koreauniv TODO] TBD: vectorIndexSearch 구현하기
+// [koreauniv TODO] TBD: vectorIndexSearch 구현하기
 int vectorIndexSearch(
   sqlite4 *db,
   int argc,
