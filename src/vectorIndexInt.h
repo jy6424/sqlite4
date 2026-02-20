@@ -259,10 +259,10 @@ int vectorIndexClear(sqlite4 *, const char *, const char *);
 int vectorIndexDrop(sqlite4 *, const char *, const char *);
 
 // [koreauniv TODO] 아직 미구현
-// int vectorIndexSearch(sqlite4 *, int, sqlite4_value **, VectorOutRows *, int *, int *, char **);
+int vectorIndexSearch(sqlite4 *, int, sqlite4_value **, VectorOutRows *, int *, int *, char **);
 // int vectorIndexCursorInit(sqlite4 *, const char *, const char *, VectorIdxCursor **);
 // void vectorIndexCursorClose(sqlite4 *, VectorIdxCursor *, int *, int *);
-// int vectorIndexInsert(VectorIdxCursor *, const UnpackedRecord *, char **);
+int vectorIndexInsert(VectorIdxCursor *, const UnpackedRecord *, char **);
 // int vectorIndexDelete(VectorIdxCursor *, const UnpackedRecord *, char **);
 #ifdef __cplusplus
 }  /* end of the 'extern "C"' block */
