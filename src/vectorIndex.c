@@ -261,55 +261,55 @@ int vectorInRowPlaceholderRender(const VectorInRow *pVectorInRow, char *pBuf, in
 
 
 // [koreauniv TODO] 수정 필요. sqlite4_value_type, UnpackedRecord 구현 필요
-// int vectorInRowAlloc(sqlite4 *db, const UnpackedRecord *pRecord, VectorInRow *pVectorInRow, char **pzErrMsg) {
-//   int rc = SQLITE4_OK;
-//   int type, dims;
-//   const sqlite4_value *pVectorValue = &pRecord->aMem[0];
-//   pVectorInRow->pKeyValues = pRecord->aMem + 1;
-//   pVectorInRow->nKeys = pRecord->nField - 1;
-//   pVectorInRow->pVector = NULL;
+int vectorInRowAlloc(sqlite4 *db, const UnpackedRecord *pRecord, VectorInRow *pVectorInRow, char **pzErrMsg) {
+  int rc = SQLITE4_OK;
+  int type, dims;
+  const sqlite4_value *pVectorValue = &pRecord->aMem[0];
+  pVectorInRow->pKeyValues = pRecord->aMem + 1;
+  pVectorInRow->nKeys = pRecord->nField - 1;
+  pVectorInRow->pVector = NULL;
 
-//   if( pVectorInRow->nKeys <= 0 ){
-//     rc = SQLITE4_ERROR;
-//     goto out;
-//   }
+  if( pVectorInRow->nKeys <= 0 ){
+    rc = SQLITE4_ERROR;
+    goto out;
+  }
 
-//   if( sqlite4_value_type(pVectorValue)==SQLITE4_NULL ){
-//     rc = SQLITE4_OK;
-//     goto out;
-//   }
+  if( sqlite4_value_type(pVectorValue)==SQLITE4_NULL ){
+    rc = SQLITE4_OK;
+    goto out;
+  }
 
-//   if( detectVectorParameters(pVectorValue, VECTOR_TYPE_FLOAT32, &type, &dims, pzErrMsg) != 0 ){
-//     rc = SQLITE4_ERROR;
-//     goto out;
-//   }
+  if( detectVectorParameters(pVectorValue, VECTOR_TYPE_FLOAT32, &type, &dims, pzErrMsg) != 0 ){
+    rc = SQLITE4_ERROR;
+    goto out;
+  }
 
-//   pVectorInRow->pVector = vectorAlloc(type, dims);
-//   if( pVectorInRow->pVector == NULL ){
-//     rc = SQLITE4_NOMEM;
-//     goto out;
-//   }
+  pVectorInRow->pVector = vectorAlloc(type, dims);
+  if( pVectorInRow->pVector == NULL ){
+    rc = SQLITE4_NOMEM;
+    goto out;
+  }
 
-//   if( sqlite4_value_type(pVectorValue) == SQLITE4_BLOB ){
-//     vectorInitFromBlob(pVectorInRow->pVector, sqlite4_value_blob(pVectorValue), sqlite4_value_bytes(pVectorValue));
-//   } else if( sqlite4_value_type(pVectorValue) == SQLITE4_TEXT ){
-//     // users can put strings (e.g. '[1,2,3]') in the table and we should process them correctly
-//     if( vectorParseWithType(pVectorValue, pVectorInRow->pVector, pzErrMsg) != 0 ){
-//       rc = SQLITE4_ERROR;
-//       goto out;
-//     }
-//   }
-//   rc = SQLITE4_OK;
-// out:
-//   if( rc != SQLITE4_OK && pVectorInRow->pVector != NULL ){
-//     vectorFree(pVectorInRow->pVector);
-//   }
-//   return rc;
-// }
+  if( sqlite4_value_type(pVectorValue) == SQLITE4_BLOB ){
+    vectorInitFromBlob(pVectorInRow->pVector, sqlite4_value_blob(pVectorValue), sqlite4_value_bytes(pVectorValue));
+  } else if( sqlite4_value_type(pVectorValue) == SQLITE4_TEXT ){
+    // users can put strings (e.g. '[1,2,3]') in the table and we should process them correctly
+    if( vectorParseWithType(pVectorValue, pVectorInRow->pVector, pzErrMsg) != 0 ){
+      rc = SQLITE4_ERROR;
+      goto out;
+    }
+  }
+  rc = SQLITE4_OK;
+out:
+  if( rc != SQLITE4_OK && pVectorInRow->pVector != NULL ){
+    vectorFree(pVectorInRow->pVector);
+  }
+  return rc;
+}
 
-// void vectorInRowFree(sqlite4 *db, VectorInRow *pVectorInRow) {
-//   vectorFree(pVectorInRow->pVector);
-// }
+void vectorInRowFree(sqlite4 *db, VectorInRow *pVectorInRow) {
+  vectorFree(pVectorInRow->pVector);
+}
 
 /**************************************************************************
 ** VectorOutRows utilities
