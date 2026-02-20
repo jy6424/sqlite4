@@ -291,7 +291,8 @@ int vectorInRowAlloc(sqlite4 *db, const UnpackedRecord *pRecord, VectorInRow *pV
   }
 
   if( sqlite4_value_type(pVectorValue) == SQLITE4_BLOB ){
-    vectorInitFromBlob(pVectorInRow->pVector, sqlite4_value_blob(pVectorValue), sqlite4_value_bytes(pVectorValue));
+    int nBlob = 0;
+    vectorInitFromBlob(pVectorInRow->pVector, sqlite4_value_blob(pVectorValue, &nBlob), nBlob);
   } else if( sqlite4_value_type(pVectorValue) == SQLITE4_TEXT ){
     // users can put strings (e.g. '[1,2,3]') in the table and we should process them correctly
     if( vectorParseWithType(pVectorValue, pVectorInRow->pVector, pzErrMsg) != 0 ){
@@ -357,7 +358,7 @@ int vectorOutRowsPut(VectorOutRows *pRows, int iRow, int iCol, const u64 *pInt, 
     assert( sqlite4_value_type(pValue) == SQLITE4_INTEGER );
     pRows->aIntValues[iRow] = sqlite4_value_int64(pValue);
   }else{
-    // pValue can be unprotected and we must own sqlite3_value* - so we are making copy of it
+    // pValue can be unprotected and we must own sqlite4_value* - so we are making copy of it
     pCopy = sqlite4_value_dup(db->pEnv, pValue); //[koreauniv TODO] sqlite4_value_dup 만들기
     if( pCopy == NULL ){
       return SQLITE4_NOMEM;
