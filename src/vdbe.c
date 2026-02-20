@@ -45,6 +45,7 @@
 */
 #include "sqliteInt.h"
 #include "vdbeInt.h"
+#include "vectorIndexInt.h"
 
 /*
 ** Invoke this macro on memory cells just prior to changing the
@@ -3734,7 +3735,7 @@ case OP_Insert: {
     if( (pKey->flags & MEM_Blob)==0 ){
       /* If you ever hit this, it means OP_Insert is being used with int key for
       ** a vector index, which likely indicates a codegen mismatch. */
-      sqlite4VdbeError(p, "vector index(insert): expected packed blob key");
+      printf("vector index(insert): expected packed blob key");
       rc = SQLITE4_ERROR;
       goto abort_due_to_error;
     }
@@ -3742,26 +3743,18 @@ case OP_Insert: {
     /* Unpack the packed index key into an UnpackedRecord */
     UnpackedRecord *pIdxKey = 0;
 
-    /* --- Choose the right allocator/unpack function available in sqlite4 --- */
-    /* Option A (common naming): */
     pIdxKey = sqlite4VdbeAllocUnpackedRecord(pC->pKeyInfo);
     if( pIdxKey==0 ) goto no_mem;
 
     sqlite4VdbeRecordUnpack(pC->pKeyInfo, pKey->n, (u8*)pKey->z, pIdxKey);
 
-    /* Call your vector-index insert routine.
-       - pC->pKeyInfo->pIndex is the Index* you stored in sqlite4IndexKeyinfo()
+    /* Call vector-index insert routine.
+       - pC->pKeyInfo->pIdx is the Index* you stored in sqlite4IndexKeyinfo()
        - vectorIndexInsert signature in your tree may differ.
        Adjust the call accordingly.
     */
-    rc = vectorIndexInsert(db, pC->pKeyInfo->pIndex, pIdxKey, &p->zErrMsg);
-    /* If your vectorIndexInsert signature is like:
-       rc = vectorIndexInsert(pC->uc.pVecIdx, pIdxKey, &p->zErrMsg);
-       then use that instead.
-    */
+    rc = vectorIndexInsert(db, pC->pKeyInfo->pIdx, pIdxKey, &p->zErrMsg);
 
-    /* vectorIndexInsert may allocate or modify Mem inside UnpackedRecord.
-       Release each Mem then free record (sqlite3 pattern). */
     if( pIdxKey ){
       int i;
       for(i=0; i<pIdxKey->nField; i++){
@@ -3777,7 +3770,7 @@ case OP_Insert: {
 
     printf("OP_Insert(vector): cur=%d root=%d idx=%s\n",
            pOp->p1, pC->iRoot,
-           (pC->pKeyInfo->pIndex ? pC->pKeyInfo->pIndex->zName : "(null)"));
+           (pC->pKeyInfo->pIdx ? pC->pKeyInfo->pIdx->zName : "(null)"));
     break;
   }
 #endif /* SQLITE4_OMIT_VECTOR */
