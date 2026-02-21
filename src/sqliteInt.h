@@ -2874,7 +2874,7 @@ void sqlite4EncodeIndexKey(Parse *, Index *, int, Index *, int, int, int);
 void sqlite4EncodeIndexValue(Parse*, int, Index*, int);
 void sqlite4GenerateConstraintChecks(Parse*,Table*,int,int,
                                      int*,int,int,int,int,int*);
-void sqlite4CompleteInsertion(Parse*, Table*, int, int, int*, int, int, int);
+void sqlite4CompleteInsertion(Parse*, Table*, int, int, int*, int, int, int, int);
 int sqlite4OpenTableAndIndices(Parse*, Table*, int, int);
 void sqlite4BeginWriteOperation(Parse*, int, int);
 void sqlite4MultiWrite(Parse*);
