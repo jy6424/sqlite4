@@ -997,7 +997,7 @@ void sqlite4Insert(
       );
       sqlite4FkCheck(pParse, pTab, 0, regContent);
       sqlite4CompleteInsertion(pParse, pTab, baseCur, 
-          regContent, aRegIdx, 0, appendFlag, isReplace==0
+          regContent, aRegIdx, 0, appendFlag, isReplace==0, regRowid
       );
     }
   }
@@ -1497,7 +1497,8 @@ void sqlite4CompleteInsertion(
   int *aRegIdx,       /* Register used by each index.  0 for unused indices */
   int isUpdate,       /* True for UPDATE, False for INSERT */
   int appendBias,     /* True if this is likely to be an append */
-  int useSeekResult   /* True to set the USESEEKRESULT flag on OP_[Idx]Insert */
+  int useSeekResult,  /* True to set the USESEEKRESULT flag on OP_[Idx]Insert */
+  int regRowid        /* [koreauniv] added to unpack */ 
 ){
   int i;
   Vdbe *v;
@@ -1543,22 +1544,46 @@ void sqlite4CompleteInsertion(
     else if( aRegIdx[i] ){
       int regData = 0;
       int flags = 0;
-      if( pIdx->eIndexType==SQLITE4_INDEX_PRIMARYKEY ){
-        regData = regRec;
-        flags = pik_flags;
-      }else if( pIdx->nCover>0 ){
-        int nByte = sizeof(int)*pIdx->nCover;
-        int *aiPermute = (int *)sqlite4DbMallocRaw(pParse->db, nByte);
 
-        if( aiPermute ){
-          memcpy(aiPermute, pIdx->aiCover, nByte);
-          sqlite4VdbeAddOp4(
-              v, OP_Permutation, pIdx->nCover, 0, 0,
-              (char*)aiPermute, P4_INTARRAY
-          );
+      // [koreauniv] vector index
+      // P1: cursor of the index
+      // P2: register containing the index key
+      // P3: number of columns in the index
+      if( pIdx->idxIsVector ){
+        int k;
+        int nVecField = pIdx->nColumn + 1;  /* +1 for row identifier */
+        int regVec = sqlite4GetTempRange(pParse, nVecField);
+        for(k=0; k<pIdx->nColumn; k++){
+          int iCol = pIdx->aiColumn[k];
+          if( iCol>=0){
+            sqlite4VdbeAddOp2(v, OP_SCopy, regContent + iCol, regVec + k);
+          }else{
+            sqlite4VdbeAddOp2(v, OP_SCopy, regRowid, regVec + k);
+          }
         }
-        regData = regCover;
-        sqlite4VdbeAddOp3(v, OP_MakeRecord, regContent, pIdx->nCover, regData);
+        sqlite4VdbeAddOp2(v, OP_SCopy, regRowid, regVec + (nVecField-1));
+        sqlite4VdbeAddOp3(v, OP_VectorInsert, baseCur+i, regVec, pIdx->nColumn);
+        sqlite4ReleaseTempRange(pParse, regVec, nVecField);
+        continue;
+      }
+      else {
+        if( pIdx->eIndexType==SQLITE4_INDEX_PRIMARYKEY ){
+          regData = regRec;
+          flags = pik_flags;
+        }else if( pIdx->nCover>0 ){
+          int nByte = sizeof(int)*pIdx->nCover;
+          int *aiPermute = (int *)sqlite4DbMallocRaw(pParse->db, nByte);
+
+          if( aiPermute ){
+            memcpy(aiPermute, pIdx->aiCover, nByte);
+            sqlite4VdbeAddOp4(
+                v, OP_Permutation, pIdx->nCover, 0, 0,
+                (char*)aiPermute, P4_INTARRAY
+            );
+          }
+          regData = regCover;
+          sqlite4VdbeAddOp3(v, OP_MakeRecord, regContent, pIdx->nCover, regData);
+        }
       }
       sqlite4VdbeAddOp3(v, OP_Insert, baseCur+i, regData, aRegIdx[i]);
       sqlite4VdbeChangeP5(v, flags);
