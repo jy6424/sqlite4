@@ -46,14 +46,22 @@ void sqlite4OpenIndex(
   assert( pIdx->tnum>0 );
 
   v = sqlite4GetVdbe(p);
+
+  // [koreauniv] added for vector index
+  if( pIdx->idxIsVector ){
+    sqlite4VdbeAddOp3(v, OP_OpenVectorIdx, iCur, pIdx->tnum, iDb);
+    sqlite4VdbeChangeP4(v, -1, (const char *)pIdx, P4_STATIC);
+    VdbeComment((v, "%s", pIdx->zName));
+    return;
+  }
+
   pKey = sqlite4IndexKeyinfo(p, pIdx);
   if (pKey == 0) {
     printf("Error: could not get KeyInfo for index\n");
   }
   testcase( pKey==0 );
-
-  sqlite4VdbeAddOp3(v, opcode, iCur, pIdx->tnum, iDb);
-  sqlite4VdbeChangeP4(v, -1, (const char *)pKey, P4_KEYINFO_HANDOFF);
+    sqlite4VdbeAddOp3(v, opcode, iCur, pIdx->tnum, iDb);
+    sqlite4VdbeChangeP4(v, -1, (const char *)pKey, P4_KEYINFO_HANDOFF);
   VdbeComment((v, "%s", pIdx->zName));
 }
 

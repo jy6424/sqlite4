@@ -3725,7 +3725,7 @@ case OP_Insert: {
   }
 
 
-  /* [koreauniv] VECTOR INDEX HOOK:
+  /* [koreauniv] VECTOR INDEX HOOK (deprecated. instead, use OP_VectorInsert):
   ** If this cursor is a vector index, intercept and update shadow/index
   ** using vectorIndexInsert() instead of writing to KV directly.
   */
@@ -3821,6 +3821,51 @@ case OP_VectorInsert: {
   goto abort_due_to_error;
 #endif
 }
+
+// [koreauniv] VECTOR INDEX opcode
+/* Opcode: OpenVectorIdx P1 P2 P3 P4 P5
+** Synopsis: cursor=P1 root=P2 iDb=P3 pIdx=P4
+*/
+#ifndef SQLITE4_OMIT_VECTOR
+case OP_OpenVectorIdx: {
+  const char *zDbSName;
+  const char *zIndexName;
+  VectorIdxCursor *cursor = 0;
+  VdbeCursor *pCur;
+
+  /* iDb is in P3 */
+  assert( pOp->p3>=0 && pOp->p3<db->nDb );
+  zDbSName = db->aDb[pOp->p3].zName;
+
+  /* index name comes via P4 */
+  assert( pOp->p4type==P4_STATIC || pOp->p4type==P4_DYNAMIC || pOp->p4type==P4_TRANSIENT );
+  zIndexName = pOp->p4.z;
+
+  assert( zDbSName && zIndexName );
+
+  if( pOp->p5 == OPFLAG_FORDELETE ){
+    rc = vectorIndexClear(db, zDbSName, zIndexName);
+    if( rc ) goto abort_due_to_error;
+  }
+
+  rc = vectorIndexCursorInit(db, zDbSName, zIndexName, &cursor);
+  if( rc ) goto abort_due_to_error;
+
+  /* Allocate Vdbe cursor slot, then attach vector cursor */
+  pCur = allocateCursor(p, pOp->p1, 0, CURTYPE_VECTOR_IDX);
+  if( pCur==0 ) goto no_mem;
+
+  pCur->iDb = pOp->p3;
+  pCur->nullRow = 1;
+  pCur->isOrdered = 1;
+  pCur->pgnoRoot = pOp->p2;
+  pCur->isTable = 0;
+
+  pCur->uc.pVecIdx = cursor;
+
+  break;
+}
+#endif /* SQLITE4_OMIT_VECTOR */
 
 /* Opcode: IdxDelete P1 * P3 * *
 **
