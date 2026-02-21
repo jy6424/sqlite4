@@ -511,9 +511,10 @@ void sqlite4Update(
     if( hasFK ){
       sqlite4FkCheck(pParse, pTab, 0, regNew);
     }
-  
+    int regRowidLike = bImplicitPk ? (regNew-1) : 0;
+
     /* Insert the new index entries and the new record. */
-    sqlite4CompleteInsertion(pParse, pTab, iCur, regNew, aRegIdx, 1, 0, 0);
+    sqlite4CompleteInsertion(pParse, pTab, iCur, regNew, aRegIdx, 1, 0, 0, regRowidLike);
 
     /* Do any ON CASCADE, SET NULL or SET DEFAULT operations required to
     ** handle rows (possibly in other tables) that refer via a foreign key
