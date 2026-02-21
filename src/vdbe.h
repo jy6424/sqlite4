@@ -241,20 +241,20 @@ int sqlite4VdbeEncodeKey(
 # define VdbeNoopComment(X)
 #endif
 
-void sqlite4VdbeSerialGet(
-  const unsigned char *buf,     /* Buffer to deserialize from */
-  u32 serial_type,              /* Serial type to deserialize */
-  Mem *pMem                     /* Memory cell to write value into */
-);
-void sqlite4VdbeRecordUnpack(
-  KeyInfo *pKeyInfo,     /* Information about the record format */
-  int nKey,              /* Size of the binary record */
-  const void *pKey,      /* The binary record */
-  UnpackedRecord *p      /* Populate this structure before returning. */
-);
-UnpackedRecord *sqlite4VdbeAllocUnpackedRecord(
-  KeyInfo *pKeyInfo               /* Description of the record */
-);
+// void sqlite4VdbeSerialGet(
+//   const unsigned char *buf,     /* Buffer to deserialize from */
+//   u32 serial_type,              /* Serial type to deserialize */
+//   Mem *pMem                     /* Memory cell to write value into */
+// );
+// void sqlite4VdbeRecordUnpack(
+//   KeyInfo *pKeyInfo,     /* Information about the record format */
+//   int nKey,              /* Size of the binary record */
+//   const void *pKey,      /* The binary record */
+//   UnpackedRecord *p      /* Populate this structure before returning. */
+// );
+// UnpackedRecord *sqlite4VdbeAllocUnpackedRecord(
+//   KeyInfo *pKeyInfo               /* Description of the record */
+// );
 
 
 #endif
