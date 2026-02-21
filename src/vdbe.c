@@ -3852,16 +3852,15 @@ case OP_OpenVectorIdx: {
   if( rc ) goto abort_due_to_error;
 
   /* Allocate Vdbe cursor slot, then attach vector cursor */
-  pCur = allocateCursor(p, pOp->p1, 0, CURTYPE_VECTOR_IDX);
+  pCur = allocateCursor(p, pOp->p1, 0, 0, 0);
   if( pCur==0 ) goto no_mem;
 
+  pCur->eCurtype = CURTYPE_VECTOR_IDX;
   pCur->iDb = pOp->p3;
   pCur->nullRow = 1;
-  pCur->isOrdered = 1;
+  pCur->pVecIdx = cursor;
   pCur->pgnoRoot = pOp->p2;
-  pCur->isTable = 0;
 
-  pCur->uc.pVecIdx = cursor;
 
   break;
 }

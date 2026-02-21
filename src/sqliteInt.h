@@ -2333,6 +2333,10 @@ struct AuthContext {
 #define OPFLAG_SEQCOUNT      0x08    /* Append sequence number to key */
 #define OPFLAG_CLEARCACHE    0x10    /* Clear pseudo-table cache in OP_Column */
 
+//[koreauniv] added for OP_OpenVectorIndex
+/* For OP_OpenRead/OP_OpenWrite P5 flags */
+#define OPFLAG_FORDELETE 0x08  /* OP_Open should use BTREE_FORDELETE (or delete-only hint) */
+
 /*
  * Each trigger present in the database schema is stored as an instance of
  * struct Trigger. 
