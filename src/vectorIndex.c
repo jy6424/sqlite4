@@ -823,23 +823,23 @@ int vectorIndexGetParameters(
 
 
 // [koreauniv TODO] 아래 두 함수 추후 구현
-// int vectorIndexDrop(sqlite4 *db, const char *zDbSName, const char *zIdxName) {
-//   // we want to try delete all traces of index on every attempt
-//   // this is done to prevent unrecoverable situations where index were dropped but index parameters deletion failed and second attempt will fail on first step
-//   int rcIdx, rcParams;
+int vectorIndexDrop(sqlite4 *db, const char *zDbSName, const char *zIdxName) {
+  // we want to try delete all traces of index on every attempt
+  // this is done to prevent unrecoverable situations where index were dropped but index parameters deletion failed and second attempt will fail on first step
+  int rcIdx, rcParams;
 
-//   assert( zDbSName != NULL );
+  assert( zDbSName != NULL );
 
-//   rcIdx = diskAnnDropIndex(db, zDbSName, zIdxName);
-//   rcParams = removeIndexParameters(db, zIdxName);
-//   return rcIdx != SQLITE4_OK ? rcIdx : rcParams;
-// }
+  rcIdx = diskAnnDropIndex(db, zDbSName, zIdxName);
+  rcParams = removeIndexParameters(db, zIdxName);
+  return rcIdx != SQLITE4_OK ? rcIdx : rcParams;
+}
 
-// int vectorIndexClear(sqlite4 *db, const char *zDbSName, const char *zIdxName) {
-//   assert( zDbSName != NULL );
+int vectorIndexClear(sqlite4 *db, const char *zDbSName, const char *zIdxName) {
+  assert( zDbSName != NULL );
 
-//   return diskAnnClearIndex(db, zDbSName, zIdxName);
-// }
+  return diskAnnClearIndex(db, zDbSName, zIdxName);
+}
 
 /*
  * vectorIndexCreate analyzes any index creation expression and create vector index if needed
