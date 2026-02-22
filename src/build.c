@@ -2998,6 +2998,9 @@ Index *sqlite4CreateIndex(
   // [koreauniv] original code : if( db->init.busy || pTblName==0 )
 link_index_and_exit:
   if( pTab ){
+    for(Index *p=pTab->pIndex; p; p=p->pNext){
+      printf("IDX(before): %s ptr=%p\n", p->zName, (void*)p);
+    }
     if( onError!=OE_Replace || pTab->pIndex==0
          || pTab->pIndex->onError==OE_Replace){
       pIndex->pNext = pTab->pIndex;
@@ -3010,6 +3013,9 @@ link_index_and_exit:
       pIndex->pNext = pOther->pNext;
       pOther->pNext = pIndex;
     }
+      for(Index *p=pTab->pIndex; p; p=p->pNext){
+        printf("IDX(after): %s ptr=%p\n", p->zName, (void*)p);
+      }      
     pRet = pIndex;
     pIndex = 0;
   }
