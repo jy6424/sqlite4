@@ -50,7 +50,7 @@ void sqlite4OpenIndex(
   // [koreauniv] added for vector index
   if( pIdx->idxIsVector ){
     sqlite4VdbeAddOp3(v, OP_OpenVectorIdx, iCur, pIdx->tnum, iDb);
-    sqlite4VdbeChangeP4(v, -1, (const char *)pIdx, P4_STATIC);
+    sqlite4VdbeChangeP4(v, -1, pIdx->zName, P4_STATIC);
     VdbeComment((v, "%s", pIdx->zName));
     return;
   }
