@@ -39,29 +39,28 @@ void sqlite4OpenIndex(
   Index *pIdx,                    /* The index to be opened */
   int opcode                      /* OP_OpenRead or OP_OpenWrite */
 ){
-  KeyInfo *pKey;                /* KeyInfo structure describing PK index */
-  Vdbe *v;                      /* VM to write code into */
-  printf( "sqlite4OpenIndex %s\n", pIdx->zName );
+  Vdbe *v = sqlite4GetVdbe(p);
   assert( opcode==OP_OpenWrite || opcode==OP_OpenRead );
-  assert( pIdx->tnum>0 );
 
-  v = sqlite4GetVdbe(p);
+  printf("sqlite4OpenIndex %s\n", pIdx->zName);
 
-  // [koreauniv] added for vector index
+#ifndef SQLITE4_OMIT_VECTOR
   if( pIdx->idxIsVector ){
-    sqlite4VdbeAddOp3(v, OP_OpenVectorIdx, iCur, pIdx->tnum, iDb);
+    /* tnum 필요 없으면 0 넣고, 이름으로 찾아서 open하는 방식으로 */
+    sqlite4VdbeAddOp3(v, OP_OpenVectorIdx, iCur, 0 /*or pIdx->tnum*/, iDb);
     sqlite4VdbeChangeP4(v, -1, pIdx->zName, P4_STATIC);
     VdbeComment((v, "%s", pIdx->zName));
     return;
   }
+#endif
 
-  pKey = sqlite4IndexKeyinfo(p, pIdx);
-  if (pKey == 0) {
-    printf("Error: could not get KeyInfo for index\n");
-  }
-  testcase( pKey==0 );
-    sqlite4VdbeAddOp3(v, opcode, iCur, pIdx->tnum, iDb);
-    sqlite4VdbeChangeP4(v, -1, (const char *)pKey, P4_KEYINFO_HANDOFF);
+  /* 일반 인덱스만 tnum>0 보장 */
+  assert( pIdx->tnum>0 );
+
+  KeyInfo *pKey = sqlite4IndexKeyinfo(p, pIdx);
+  testcase(pKey==0);
+  sqlite4VdbeAddOp3(v, opcode, iCur, pIdx->tnum, iDb);
+  sqlite4VdbeChangeP4(v, -1, (const char *)pKey, P4_KEYINFO_HANDOFF);
   VdbeComment((v, "%s", pIdx->zName));
   
   printf("index opened %s keyinfo=%p\n", pIdx->zName, pKey);
