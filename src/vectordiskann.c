@@ -860,8 +860,10 @@ static int diskAnnInsertShadowRow(const DiskAnnIndex *pIndex, const VectorInRow 
     rc = SQLITE4_NOMEM;
     goto out;
   }
-  rc = sqlite4_prepare(pIndex->db, zSql, -1, &pStmt, 0);
+  rc = sqlite4_prepare(...);
   if( rc != SQLITE4_OK ){
+    printf("diskAnnInsertShadowRow prepare rc=%d errmsg=%s sql=%s\n",
+          rc, sqlite4_errmsg(pIndex->db), zSql);
     goto out;
   }
   for(i = 0; i < pVectorInRow->nKeys; i++){
