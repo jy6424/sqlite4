@@ -1378,7 +1378,6 @@ void sqlite4GenerateConstraintChecks(
 
     // [koreauniv] Vector index does not require key generation and uniqueness check.
     if( pIdx->idxIsVector ){
-        aRegIdx[iCur] = 0;   /* key 생성 안 함 */
         continue;            /* OP_MakeKey 생성 금지 */
     }
     
