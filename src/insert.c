@@ -1599,7 +1599,17 @@ void sqlite4CompleteInsertion(
         regData = regRec;
         flags = pik_flags;
       }else if( pIdx->nCover>0 ){
-        ...
+        int nByte = sizeof(int) * pIdx->nCover;
+        int *aiPermute = (int*)sqlite4DbMallocRaw(pParse->db, nByte);
+
+        if( aiPermute ){
+          memcpy(aiPermute, pIdx->aiCover, nByte);
+          sqlite4VdbeAddOp4(
+            v, OP_Permutation,
+            pIdx->nCover, 0, 0,
+            (char*)aiPermute, P4_INTARRAY
+          );
+        }
         regData = regCover;
         sqlite4VdbeAddOp3(v, OP_MakeRecord, regContent, pIdx->nCover, regData);
       }
