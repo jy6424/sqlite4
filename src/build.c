@@ -2867,7 +2867,7 @@ Index *sqlite4CreateIndex(
     if( vectorIdxRc >= 1 ){
       pIndex->idxIsVector = 1;
       /* 코어 디스크 생성만 스킵 */
-      goto link_index_and_exit;
+      goto exit_create_index;
     }
     if( vectorIdxRc == 1 ){
       skipRefill = 1;
