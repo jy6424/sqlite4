@@ -2981,7 +2981,8 @@ Index *sqlite4CreateIndex(
     if( pIndex->idxIsVector ){
       /* Vector index는 우리가 diskAnnCreateIndex()에서 shadow/meta를 만들고
       ** 파라미터도 저장했으므로, 코어의 일반 인덱스 스키마/디스크 생성은 스킵 */
-      goto link_index_and_exit;  /* 아래 pTab->pIndex 연결은 하고 싶으면 */
+      // goto link_index_and_exit;  /* 아래 pTab->pIndex 연결은 하고 싶으면 */
+      goto exit_create_index;  /* 인덱스 연결도 하지 않으려면 */
     }
   #endif
     createIndexWriteSchema(pParse, pIndex, pName, pEnd);
