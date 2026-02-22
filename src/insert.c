@@ -1376,6 +1376,12 @@ void sqlite4GenerateConstraintChecks(
     int regKey = aRegIdx[iCur];   /* Write encoded index key for pIdx here */
     int iIdx = baseCur+iCur;      /* Cursor for index pIdx */
 
+    printf("Constraint loop: %s idxIsVector=%d iCur=%d regKey=%d\n",
+       pIdx->zName,
+       pIdx->idxIsVector,
+       iCur,
+       aRegIdx[iCur]);
+
     // [koreauniv] Vector index does not require key generation and uniqueness check.
     if( pIdx->idxIsVector ){
         continue;            /* OP_MakeKey 생성 금지 */
