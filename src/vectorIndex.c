@@ -991,7 +991,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
   // [koreauniv TODO] diskAnnCreateIndex 수정하기
   printf("vectorIndexCreate: calling diskAnnCreateIndex\n");
   rc = diskAnnCreateIndex(db, zDbSName, pIdx->zName, &idxKey, &idxParams, &pzErrMsg);
-  printf("diskAnnCreateIndex rc=%d\n", rc);
+  printf("diskAnnCreateIndex rc=%d errmsg=%s\n", rc, sqlite4_errmsg(db));
   // rc = 0; // 임시
   if( rc != SQLITE4_OK ){
     if( pzErrMsg != NULL ){
@@ -1002,6 +1002,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
     return CREATE_FAIL;
   }
   rc = insertIndexParameters(db, zDbSName, pIdx->zName, &idxParams);
+  printf("insertIndexParameters rc=%d errmsg=%s\n", rc, sqlite4_errmsg(db));
 
   // we must consider only lower bits because with sqlite3_extended_result_codes on
   // we can recieve different subtypes of CONSTRAINT error
