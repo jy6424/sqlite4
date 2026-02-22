@@ -1543,7 +1543,7 @@ void sqlite4CompleteInsertion(
   regCover = sqlite4GetTempReg(pParse);
 
   /* Write the entry to each index. */
-  for(i=0, pIdx=pTab->pIndex; pIdx; i++, pIdx=pIdx->pNext){
+  for(i=0, pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext){
     assert( pIdx->eIndexType!=SQLITE4_INDEX_PRIMARYKEY || aRegIdx[i] );
 
     if( pIdx->eIndexType==SQLITE4_INDEX_FTS5 ){
@@ -1605,6 +1605,7 @@ void sqlite4CompleteInsertion(
 
       sqlite4VdbeAddOp3(v, OP_Insert, baseCur+i, regData, aRegIdx[i]);
       sqlite4VdbeChangeP5(v, flags);
+      i++;
     }
   }
 }
