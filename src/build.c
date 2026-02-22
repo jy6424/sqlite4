@@ -2977,6 +2977,13 @@ Index *sqlite4CreateIndex(
   ** step can be skipped.
   */
   else{
+  #ifndef SQLITE_OMIT_VECTOR
+    if( pIndex->idxIsVector ){
+      /* Vector index는 우리가 diskAnnCreateIndex()에서 shadow/meta를 만들고
+      ** 파라미터도 저장했으므로, 코어의 일반 인덱스 스키마/디스크 생성은 스킵 */
+      goto link_index_and_exit;  /* 아래 pTab->pIndex 연결은 하고 싶으면 */
+    }
+  #endif
     createIndexWriteSchema(pParse, pIndex, pName, pEnd);
   }
 
@@ -2987,6 +2994,7 @@ Index *sqlite4CreateIndex(
   ** UPDATE and INSERT statements.  
   */
   // [koreauniv] original code : if( db->init.busy || pTblName==0 )
+link_index_and_exit:
   if( pTab ){
     if( onError!=OE_Replace || pTab->pIndex==0
          || pTab->pIndex->onError==OE_Replace){
