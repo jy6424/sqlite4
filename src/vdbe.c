@@ -3697,6 +3697,18 @@ case OP_Next: {        /* jump */
 ** incremented (otherwise not).
 */
 case OP_Insert: {
+
+  /* vector index는 OP_VectorInsert만 사용 */
+  #ifndef SQLITE4_OMIT_VECTOR
+  if( pC->eCurtype == CURTYPE_VECTOR_IDX ){
+      /* 여기 오면 코드 생성이 잘못된 것 */
+      printf("ERROR: OP_Insert called on vector index cursor\n");
+      rc = SQLITE_ERROR;
+      goto abort_due_to_error;
+  }
+  #endif
+
+
   VdbeCursor *pC;
   Mem *pKey;
   Mem *pData;
