@@ -3697,18 +3697,6 @@ case OP_Next: {        /* jump */
 ** incremented (otherwise not).
 */
 case OP_Insert: {
-
-  /* vector index는 OP_VectorInsert만 사용 */
-  #ifndef SQLITE4_OMIT_VECTOR
-  if( pC->eCurtype == CURTYPE_VECTOR_IDX ){
-      /* 여기 오면 코드 생성이 잘못된 것 */
-      printf("ERROR: OP_Insert called on vector index cursor\n");
-      rc = SQLITE_ERROR;
-      goto abort_due_to_error;
-  }
-  #endif
-
-
   VdbeCursor *pC;
   Mem *pKey;
   Mem *pData;
@@ -3718,6 +3706,15 @@ case OP_Insert: {
   
 
   pC = p->apCsr[pOp->p1];
+
+#ifndef SQLITE4_OMIT_VECTOR
+  if( pC->eCurtype == CURTYPE_VECTOR_IDX || pC->pVecIdx ){
+    printf("ERROR: OP_Insert called on vector index cursor\n");
+    rc = SQLITE4_ERROR;
+    goto abort_due_to_error;
+  }
+#endif
+
   pKey = &aMem[pOp->p3];
   pData = pOp->p2 ? &aMem[pOp->p2] : 0;
 
@@ -3735,57 +3732,6 @@ case OP_Insert: {
     nKVKey = pKey->n;
     pKVKey = pKey->z;
   }
-
-
-  /* [koreauniv] VECTOR INDEX HOOK (deprecated. instead, use OP_VectorInsert):
-  ** If this cursor is a vector index, intercept and update shadow/index
-  ** using vectorIndexInsert() instead of writing to KV directly.
-  */
-#ifndef SQLITE4_OMIT_VECTOR
-  // if( pC->pKeyInfo && pC->pKeyInfo->idxIsVector ){
-  //   /* We expect pKey to be a packed record (blob) representing the index key. */
-  //   if( (pKey->flags & MEM_Blob)==0 ){
-  //     /* If you ever hit this, it means OP_Insert is being used with int key for
-  //     ** a vector index, which likely indicates a codegen mismatch. */
-  //     printf("vector index(insert): expected packed blob key");
-  //     rc = SQLITE4_ERROR;
-  //     goto abort_due_to_error;
-  //   }
-
-  //   // Unpack the packed index key into an UnpackedRecord
-  //   UnpackedRecord *pIdxKey = 0;
-
-  //   pIdxKey = sqlite4VdbeAllocUnpackedRecord(pC->pKeyInfo);
-  //   if( pIdxKey==0 ) goto no_mem;
-
-  //   sqlite4VdbeRecordUnpack(pC->pKeyInfo, pKey->n, (u8*)pKey->z, pIdxKey);
-
-  //   /* Call vector-index insert routine.
-  //      - pC->pKeyInfo->pIdx is the Index* you stored in sqlite4IndexKeyinfo()
-  //      - vectorIndexInsert signature in your tree may differ.
-  //      Adjust the call accordingly.
-  //   */
-  //   rc = vectorIndexInsert(pC->pVecIdx, pIdxKey, &p->zErrMsg);
-
-  //   if( pIdxKey ){
-  //     int i;
-  //     for(i=0; i<pIdxKey->nField; i++){
-  //       sqlite4VdbeMemRelease(&pIdxKey->aMem[i]);
-  //     }
-  //     sqlite4DbFree(db, pIdxKey);
-  //   }
-
-  //   if( rc ) goto abort_due_to_error;
-
-  //   /* Mark row changed (for consistency) and SKIP KVStoreReplace for vector index */
-  //   pC->rowChnged = 1;
-
-  //   printf("OP_Insert(vector): cur=%d root=%d idx=%s\n",
-  //          pOp->p1, pC->iRoot,
-  //          (pC->pKeyInfo->pIdx ? pC->pKeyInfo->pIdx->zName : "(null)"));
-  //   break;
-  // }
-#endif /* SQLITE4_OMIT_VECTOR */
 
   rc = sqlite4KVStoreReplace(
      pC->pKVCur->pStore,
