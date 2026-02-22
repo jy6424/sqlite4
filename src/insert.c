@@ -1543,56 +1543,51 @@ void sqlite4CompleteInsertion(
 
   /* Write the entry to each index. */
   for(i=0, pIdx=pTab->pIndex; pIdx; i++, pIdx=pIdx->pNext){
-    assert( pIdx->eIndexType!=SQLITE4_INDEX_PRIMARYKEY || aRegIdx[i] );
+
     if( pIdx->eIndexType==SQLITE4_INDEX_FTS5 ){
       int iPK;
       sqlite4FindPrimaryKey(pTab, &iPK);
       sqlite4Fts5CodeUpdate(pParse, pIdx, 0, aRegIdx[iPK], regContent, 0);
+      continue;
     }
-    else if( aRegIdx[i] ){
+
+  #ifndef SQLITE_OMIT_VECTOR
+    if( pIdx->idxIsVector ){
+      int k;
+      int nVecField = pIdx->nColumn + 1;  /* +1 for row identifier */
+      int regVec = sqlite4GetTempRange(pParse, nVecField);
+
+      for(k=0; k<pIdx->nColumn; k++){
+        int iCol = pIdx->aiColumn[k];
+        if( iCol>=0 ){
+          sqlite4VdbeAddOp2(v, OP_SCopy, regContent + iCol, regVec + k);
+        }else{
+          sqlite4VdbeAddOp2(v, OP_SCopy, regRowid, regVec + k);
+        }
+      }
+      sqlite4VdbeAddOp2(v, OP_SCopy, regRowid, regVec + (nVecField-1));
+
+      /* !!! P3는 반드시 nVecField !!! */
+      sqlite4VdbeAddOp3(v, OP_VectorInsert, baseCur+i, regVec, nVecField);
+
+      sqlite4ReleaseTempRange(pParse, regVec, nVecField);
+      continue;
+    }
+  #endif
+
+    if( aRegIdx[i] ){
       int regData = 0;
       int flags = 0;
 
-      // [koreauniv] vector index
-      // P1: cursor of the index
-      // P2: register containing the index key
-      // P3: number of columns in the index
-      if( pIdx->idxIsVector ){
-        int k;
-        int nVecField = pIdx->nColumn + 1;  /* +1 for row identifier */
-        int regVec = sqlite4GetTempRange(pParse, nVecField);
-        for(k=0; k<pIdx->nColumn; k++){
-          int iCol = pIdx->aiColumn[k];
-          if( iCol>=0){
-            sqlite4VdbeAddOp2(v, OP_SCopy, regContent + iCol, regVec + k);
-          }else{
-            sqlite4VdbeAddOp2(v, OP_SCopy, regRowid, regVec + k);
-          }
-        }
-        sqlite4VdbeAddOp2(v, OP_SCopy, regRowid, regVec + (nVecField-1));
-        sqlite4VdbeAddOp3(v, OP_VectorInsert, baseCur+i, regVec, pIdx->nColumn);
-        sqlite4ReleaseTempRange(pParse, regVec, nVecField);
-        continue;
+      if( pIdx->eIndexType==SQLITE4_INDEX_PRIMARYKEY ){
+        regData = regRec;
+        flags = pik_flags;
+      }else if( pIdx->nCover>0 ){
+        ...
+        regData = regCover;
+        sqlite4VdbeAddOp3(v, OP_MakeRecord, regContent, pIdx->nCover, regData);
       }
-      else {
-        if( pIdx->eIndexType==SQLITE4_INDEX_PRIMARYKEY ){
-          regData = regRec;
-          flags = pik_flags;
-        }else if( pIdx->nCover>0 ){
-          int nByte = sizeof(int)*pIdx->nCover;
-          int *aiPermute = (int *)sqlite4DbMallocRaw(pParse->db, nByte);
 
-          if( aiPermute ){
-            memcpy(aiPermute, pIdx->aiCover, nByte);
-            sqlite4VdbeAddOp4(
-                v, OP_Permutation, pIdx->nCover, 0, 0,
-                (char*)aiPermute, P4_INTARRAY
-            );
-          }
-          regData = regCover;
-          sqlite4VdbeAddOp3(v, OP_MakeRecord, regContent, pIdx->nCover, regData);
-        }
-      }
       sqlite4VdbeAddOp3(v, OP_Insert, baseCur+i, regData, aRegIdx[i]);
       sqlite4VdbeChangeP5(v, flags);
     }
