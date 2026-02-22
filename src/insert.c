@@ -1543,6 +1543,7 @@ void sqlite4CompleteInsertion(
 
   /* Write the entry to each index. */
   for(i=0, pIdx=pTab->pIndex; pIdx; i++, pIdx=pIdx->pNext){
+    assert( pIdx->eIndexType!=SQLITE4_INDEX_PRIMARYKEY || aRegIdx[i] );
 
     if( pIdx->eIndexType==SQLITE4_INDEX_FTS5 ){
       int iPK;
@@ -1552,9 +1553,10 @@ void sqlite4CompleteInsertion(
     }
 
   #ifndef SQLITE_OMIT_VECTOR
+    /* Vector index는 aRegIdx[i]가 0이어도 반드시 갱신해야 한다 */
     if( pIdx->idxIsVector ){
       int k;
-      int nVecField = pIdx->nColumn + 1;  /* +1 for row identifier */
+      int nVecField = pIdx->nColumn + 1;  /* +1 for row identifier(rowid) */
       int regVec = sqlite4GetTempRange(pParse, nVecField);
 
       for(k=0; k<pIdx->nColumn; k++){
@@ -1562,19 +1564,22 @@ void sqlite4CompleteInsertion(
         if( iCol>=0 ){
           sqlite4VdbeAddOp2(v, OP_SCopy, regContent + iCol, regVec + k);
         }else{
+          /* XN_EXPR 등인 경우: rowid를 넣거나(정책에 맞게 조정) */
           sqlite4VdbeAddOp2(v, OP_SCopy, regRowid, regVec + k);
         }
       }
+      /* 마지막 필드는 항상 rowid(식별자) */
       sqlite4VdbeAddOp2(v, OP_SCopy, regRowid, regVec + (nVecField-1));
 
-      /* !!! P3는 반드시 nVecField !!! */
+      /* !!! P3는 pIdx->nColumn이 아니라 nVecField 여야 함 !!! */
       sqlite4VdbeAddOp3(v, OP_VectorInsert, baseCur+i, regVec, nVecField);
 
       sqlite4ReleaseTempRange(pParse, regVec, nVecField);
       continue;
     }
-  #endif
+  #endif /* SQLITE_OMIT_VECTOR */
 
+    /* 일반 인덱스는 기존대로: aRegIdx[i]!=0인 경우만 수정 */
     if( aRegIdx[i] ){
       int regData = 0;
       int flags = 0;
@@ -1583,7 +1588,16 @@ void sqlite4CompleteInsertion(
         regData = regRec;
         flags = pik_flags;
       }else if( pIdx->nCover>0 ){
-        ...
+        int nByte = sizeof(int)*pIdx->nCover;
+        int *aiPermute = (int *)sqlite4DbMallocRaw(pParse->db, nByte);
+
+        if( aiPermute ){
+          memcpy(aiPermute, pIdx->aiCover, nByte);
+          sqlite4VdbeAddOp4(
+              v, OP_Permutation, pIdx->nCover, 0, 0,
+              (char*)aiPermute, P4_INTARRAY
+          );
+        }
         regData = regCover;
         sqlite4VdbeAddOp3(v, OP_MakeRecord, regContent, pIdx->nCover, regData);
       }
