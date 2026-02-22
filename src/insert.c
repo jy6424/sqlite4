@@ -63,6 +63,8 @@ void sqlite4OpenIndex(
     sqlite4VdbeAddOp3(v, opcode, iCur, pIdx->tnum, iDb);
     sqlite4VdbeChangeP4(v, -1, (const char *)pKey, P4_KEYINFO_HANDOFF);
   VdbeComment((v, "%s", pIdx->zName));
+  
+  printf("open index %s keyinfo=%p\n", pIdx->zName, pKey);
 }
 
 
@@ -114,7 +116,6 @@ static KeyInfo *sqlite4TablePrimaryKeyinfo(Parse *pParse, Table *pTab){
     }
     pKey->aColl[j-1] = pColl;
   }
-
   return pKey;
 }
 
