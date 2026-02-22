@@ -1516,6 +1516,8 @@ void sqlite4CompleteInsertion(
   int regRec;
   int regCover;
 
+  int idx = 0;
+
   v = sqlite4GetVdbe(pParse);
   assert( v!=0 );
   assert( pTab->pSelect==0 );  /* This table is not a VIEW */
@@ -1543,8 +1545,8 @@ void sqlite4CompleteInsertion(
   regCover = sqlite4GetTempReg(pParse);
 
   /* Write the entry to each index. */
-  for(i=0, pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext){
-    assert( pIdx->eIndexType!=SQLITE4_INDEX_PRIMARYKEY || aRegIdx[i] );
+  for(pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext){
+    assert( pIdx->eIndexType!=SQLITE4_INDEX_PRIMARYKEY || aRegIdx[idx] );
 
     if( pIdx->eIndexType==SQLITE4_INDEX_FTS5 ){
       int iPK;
@@ -1573,7 +1575,7 @@ void sqlite4CompleteInsertion(
       sqlite4VdbeAddOp2(v, OP_SCopy, regRowid, regVec + (nVecField-1));
 
       /* !!! P3는 pIdx->nColumn이 아니라 nVecField 여야 함 !!! */
-      sqlite4VdbeAddOp3(v, OP_VectorInsert, baseCur+i, regVec, nVecField);
+      sqlite4VdbeAddOp3(v, OP_VectorInsert, baseCur+idx, regVec, nVecField);
 
       sqlite4ReleaseTempRange(pParse, regVec, nVecField);
       continue;
@@ -1581,7 +1583,7 @@ void sqlite4CompleteInsertion(
   #endif /* SQLITE_OMIT_VECTOR */
 
     /* 일반 인덱스는 기존대로: aRegIdx[i]!=0인 경우만 수정 */
-    if( aRegIdx[i] ){
+    if( aRegIdx[idx] ){
       int regData = 0;
       int flags = 0;
 
@@ -1603,10 +1605,10 @@ void sqlite4CompleteInsertion(
         sqlite4VdbeAddOp3(v, OP_MakeRecord, regContent, pIdx->nCover, regData);
       }
 
-      sqlite4VdbeAddOp3(v, OP_Insert, baseCur+i, regData, aRegIdx[i]);
+      sqlite4VdbeAddOp3(v, OP_Insert, baseCur+idx, regData, aRegIdx[idx]);
       sqlite4VdbeChangeP5(v, flags);
-      i++;
     }
+    idx++;
   }
 }
 
