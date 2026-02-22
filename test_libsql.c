@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 
   rc = sqlite4_open(0, "test.db", &db);
   if (rc) {
-    printf("open failed: %d\n", rc);
+    printf("open failed: %d, msg=%s\n", rc, sqlite4_errmsg(db));
     return 1;
   }
   printf("Database opened successfully\n");
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
     0, 0
   );
   if (rc) {
-    printf("sql error (create): rc=%d\n", rc);
+    printf("sql error (create): rc=%d, msg=%s\n", rc, sqlite4_errmsg(db));
     sqlite4_close(db, 0);
     return 1;
   }
@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
     0, 0
   );
   if (rc) {
-    printf("sql error (create index): rc=%d\n", rc);
+    printf("sql error (create index): rc=%d, msg=%s\n", rc, sqlite4_errmsg(db));
     sqlite4_close(db, 0);
     return 1;
   }
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     0
   );
   if (rc) {
-    printf("sql error (select tables): rc=%d\n", rc);
+    printf("sql error (select tables): rc=%d, msg=%s\n", rc, sqlite4_errmsg(db));
     sqlite4_close(db, 0);
     return 1;
   }
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
     0
   );
   if (rc) {
-    printf("sql error (select indexes): rc=%d\n", rc);
+    printf("sql error (select indexes): rc=%d, msg=%s\n", rc, sqlite4_errmsg(db));
     sqlite4_close(db, 0);
     return 1;
   }
@@ -98,7 +98,8 @@ int main(int argc, char **argv) {
     0
   );
   if (rc) {
-    printf("sql error (print tables and indexes): rc=%d\n", rc);
+    printf("sql error (select tables and indexes SQL): rc=%d, msg=%s\n",
+          rc, sqlite4_errmsg(db));
     sqlite4_close(db, 0);
     return 1;
   }
@@ -112,7 +113,8 @@ int main(int argc, char **argv) {
     0, 0
   );
   if (rc) {
-    printf("sql error (insert data): rc=%d\n", rc);
+    printf("sql error (insert data): rc=%d, msg=%s\n",
+          rc, sqlite4_errmsg(db));
     sqlite4_close(db, 0);
     return 1;
   }
@@ -127,7 +129,8 @@ int main(int argc, char **argv) {
     0
   );
   if (rc) {
-    printf("sql error (select data): rc=%d\n", rc);
+    printf("sql error (select data): rc=%d, msg=%s\n",
+          rc, sqlite4_errmsg(db));
     sqlite4_close(db, 0);
     return 1;
   }
