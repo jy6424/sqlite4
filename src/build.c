@@ -2999,15 +2999,15 @@ Index *sqlite4CreateIndex(
 link_index_and_exit:
   if( pTab ){
     for(Index *p = pTab->pIndex; p; p = p->pNext){
-      if( p->zName && pIndex->zName
-          && sqlite4_stricmp(p->zName, pIndex->zName)==0
-          && p->pTable && pIndex->pTable
-          && sqlite4_stricmp(p->pTable->zName, pIndex->pTable->zName)==0
-      ){
-        printf("DUP INDEX LINK BLOCKED: %s (reuse existing)\n", pIndex->zName);
-        pRet = p;
-        goto exit_create_index;
-      }
+      // if( p->zName && pIndex->zName
+      //     && sqlite4_stricmp(p->zName, pIndex->zName)==0
+      //     && p->pTable && pIndex->pTable
+      //     && sqlite4_stricmp(p->pTable->zName, pIndex->pTable->zName)==0
+      // ){
+      //   printf("DUP INDEX LINK BLOCKED: %s (reuse existing)\n", pIndex->zName);
+      //   pRet = p;
+      //   goto exit_create_index;
+      // }
     }
     if( onError!=OE_Replace || pTab->pIndex==0
          || pTab->pIndex->onError==OE_Replace){
