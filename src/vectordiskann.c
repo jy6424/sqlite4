@@ -855,7 +855,7 @@ static int diskAnnInsertShadowRow(const DiskAnnIndex *pIndex, const VectorInRow 
   }
   zSql = sqlite4MPrintf(
       pIndex->db,
-      "INSERT INTO \"%w\".%s(%s, data) VALUES (%s, ?) RETURNING rowid",
+      "INSERT INTO \"%w\".%s(%s, data) VALUES (%s, ?)", // [koreauniv] RETURNING rowid 제거
       pIndex->zDbSName, pIndex->zShadow, columnSqlNames, columnSqlPlaceholders
   );
   if( zSql == NULL ){
