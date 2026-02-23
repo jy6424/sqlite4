@@ -39,38 +39,41 @@ void sqlite4OpenIndex(
   Index *pIdx,                    /* The index to be opened */
   int opcode                      /* OP_OpenRead or OP_OpenWrite */
 ){
+  sqlite4 *db = p->db;
   Vdbe *v = sqlite4GetVdbe(p);
-  assert( opcode==OP_OpenWrite || opcode==OP_OpenRead );
+  KeyInfo *pKey;
 
-  printf("sqlite4OpenIndex %s\n", pIdx->zName);
+  assert(opcode==OP_OpenWrite || opcode==OP_OpenRead);
+
+  printf("sqlite4OpenIndex %s idxIsVector=%d tnum=%d iDb=%d\n",
+         pIdx->zName, (int)pIdx->idxIsVector, pIdx->tnum, iDb);
 
 #ifndef SQLITE4_OMIT_VECTOR
   if( pIdx->idxIsVector ){
-    /* tnum 필요 없으면 0 넣고, 이름으로 찾아서 open하는 방식으로 */
-      KeyInfo *pKey = sqlite4IndexKeyinfo(p, pIdx);
-      if( !pKey ) goto no_mem;
+    pKey = sqlite4IndexKeyinfo(p, pIdx);
+    if( pKey==0 ) return; /* OOM: 기존 스타일에 맞게 처리 */
 
-      pKey->zDbSName    = db->aDb[iDb].zName;  /* borrowed 정책이면 free 금지 */
-      pKey->zIndexName  = pIdx->zName;
-      pKey->pIdx        = pIdx;
-      pKey->idxIsVector = 1;
+    /* borrowed 정책(=free 금지)로 둘 거면 KeyInfo free 루틴에서 free하면 안 됨 */
+    pKey->zDbSName    = db->aDb[iDb].zName;
+    pKey->zIndexName  = pIdx->zName;
+    pKey->pIdx        = pIdx;
+    pKey->idxIsVector = 1;
+
     sqlite4VdbeAddOp3(v, OP_OpenVectorIdx, iCur, 0, iDb);
-    sqlite4VdbeChangeP4(v, -1, (char*)pKey, P4_KEYINFO);  // <- 핵심
+    sqlite4VdbeChangeP4(v, -1, (const char*)pKey, P4_KEYINFO);
     VdbeComment((v, "%s", pIdx->zName));
     return;
   }
 #endif
 
-  /* 일반 인덱스만 tnum>0 보장 */
-  assert( pIdx->tnum>0 );
+  assert(pIdx->tnum>0);
 
-  KeyInfo *pKey = sqlite4IndexKeyinfo(p, pIdx);
-  testcase(pKey==0);
+  pKey = sqlite4IndexKeyinfo(p, pIdx);
+  if( pKey==0 ) return;
+
   sqlite4VdbeAddOp3(v, opcode, iCur, pIdx->tnum, iDb);
-  sqlite4VdbeChangeP4(v, -1, (const char *)pKey, P4_KEYINFO);
+  sqlite4VdbeChangeP4(v, -1, (const char*)pKey, P4_KEYINFO);
   VdbeComment((v, "%s", pIdx->zName));
-  
-  printf("index opened %s keyinfo=%p\n", pIdx->zName, pKey);
 }
 
 
