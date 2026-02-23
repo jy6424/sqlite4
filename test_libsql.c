@@ -104,11 +104,11 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  printf("\n-- before insert --\n");
-  printf("\n-- number of data from table (x) --\n");
-  sqlite4_exec(db, "SELECT count(*) AS n FROM x;", print_callback, 0);
-  printf("\n-- number of data from shadow table (x_idx_shadow) --\n");
-  sqlite4_exec(db, "SELECT count(*) AS n FROM x_idx_shadow;", print_callback, 0);
+  // printf("\n-- before insert --\n");
+  // printf("\n-- number of data from table (x) --\n");
+  // sqlite4_exec(db, "SELECT count(*) AS n FROM x;", print_callback, 0);
+  // printf("\n-- number of data from shadow table (x_idx_shadow) --\n");
+  // sqlite4_exec(db, "SELECT count(*) AS n FROM x_idx_shadow;", print_callback, 0);
 
   // data insertion
   printf("\n-- inserting data --\n");
@@ -146,8 +146,8 @@ int main(int argc, char **argv) {
   sqlite4_exec(db, "SELECT count(*) AS n FROM x;", print_callback, 0);
   printf("\n-- number of data from shadow table (x_idx_shadow) --\n");
   sqlite4_exec(db, "SELECT count(*) AS n FROM x_idx_shadow;", print_callback, 0);
-  printf("\n-- number of data from vector index table (x_idx) --\n");
-  sqlite4_exec(db, "SELECT name, sql FROM sqlite_schema WHERE name LIKE 'x_idx%';", print_callback, 0);
+  // printf("\n-- number of data from vector index table (x_idx) --\n");
+  // sqlite4_exec(db, "SELECT name, sql FROM sqlite_schema WHERE name LIKE 'x_idx%';", print_callback, 0);
   
   sqlite4_close(db, 0);
   return 0;
