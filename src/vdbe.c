@@ -3797,7 +3797,7 @@ case OP_OpenVectorIdx: {
     pKeyInfo = pOp->p4.pKeyInfo;
     assert( pKeyInfo->enc==ENC(db) );
     assert( pKeyInfo->db==db );
-    nField = pKeyInfo->nAllField;
+    nField = pKeyInfo->nField;
   }else if( pOp->p4type==P4_INT32 ){
     nField = pOp->p4.i;
   }
