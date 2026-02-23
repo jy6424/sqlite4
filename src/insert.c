@@ -59,7 +59,7 @@ void sqlite4OpenIndex(
     pKey->pIdx        = pIdx;
     pKey->idxIsVector = 1;
 
-    sqlite4VdbeAddOp3(v, OP_OpenVectorIdx, iCur, 0, iDb);
+    sqlite4VdbeAddOp3(v, OP_OpenVectorIdx, iCur, pIdx->tnum, iDb);
     sqlite4VdbeChangeP4(v, -1, (const char*)pKey, P4_KEYINFO);
     VdbeComment((v, "%s", pIdx->zName));
     return;
