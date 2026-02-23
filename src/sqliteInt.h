@@ -1451,6 +1451,7 @@ struct Index {
 #ifndef SQLITE4_OMIT_VECTOR
   ExprList *aColExpr;   /* Expression list for index columns (if any) */
   unsigned idxIsVector:1;  /* 0:Normal 1:VECTOR INDEX */
+  struct VectorIdxParams *pVecParamsCached; /* cached vector params */
 #endif
 
   Fts5Index *pFts; /* Fts5 data (or NULL if this is not an fts index) */
