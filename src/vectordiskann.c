@@ -605,27 +605,42 @@ int diskAnnCreateIndex(
   // also, we don't want to store redundant set of fields - so the strategy is like that:
   // 1. If we have single PK with INTEGER affinity and BINARY collation we only need single PK of same type
   // 2. In other case we need rowid PK and unique index over other fields
-  if( vectorIdxKeyRowidLike(pKey) ){
-    zSql = sqlite4MPrintf(
-        db,
-        "CREATE TABLE IF NOT EXISTS \"%w\".%s_shadow (%s, data BLOB, PRIMARY KEY (%s))",
-        zDbSName,
-        zIdxName,
-        columnSqlDefs,
-        columnSqlNames
-        );
-    zRowidColumnName = "index_key";
-  }else{
-    zSql = sqlite4MPrintf(
-        db,
-        "CREATE TABLE IF NOT EXISTS \"%w\".%s_shadow (rowid INTEGER PRIMARY KEY, %s, data BLOB, UNIQUE (%s))",
-        zDbSName,
-        zIdxName,
-        columnSqlDefs,
-        columnSqlNames
-        );
-    zRowidColumnName = "rowid";
-  }
+  // if( vectorIdxKeyRowidLike(pKey) ){
+  //   zSql = sqlite4MPrintf(
+  //       db,
+  //       "CREATE TABLE IF NOT EXISTS \"%w\".%s_shadow (%s, data BLOB, PRIMARY KEY (%s))",
+  //       zDbSName,
+  //       zIdxName,
+  //       columnSqlDefs,
+  //       columnSqlNames
+  //       );
+  //   zRowidColumnName = "index_key";
+  // }else{
+  //   zSql = sqlite4MPrintf(
+  //       db,
+  //       "CREATE TABLE IF NOT EXISTS \"%w\".%s_shadow (rowid INTEGER PRIMARY KEY, %s, data BLOB, UNIQUE (%s))",
+  //       zDbSName,
+  //       zIdxName,
+  //       columnSqlDefs,
+  //       columnSqlNames
+  //       );
+  //   zRowidColumnName = "rowid";
+  // }
+  // [koreauniv] we want to preserve rowid for simplicity of implementation - so we always create separate rowid column and unique index over user defined key columns
+  zSql = sqlite4MPrintf(
+    db,
+    "CREATE TABLE IF NOT EXISTS \"%w\".%s_shadow ("
+    "id INTEGER PRIMARY KEY, "
+    "%s, "
+    "data BLOB, "
+    "UNIQUE (%s)"
+    ")",
+    zDbSName,
+    zIdxName,
+    columnSqlDefs,
+    columnSqlNames
+);
+zRowidColumnName = "id";
   // printf("diskAnnCreateIndex: creating shadow table with SQL: %s\n", zSql);
   rc = sqlite4_exec(db, zSql, 0, 0);
   // printf("diskAnnCreateIndex: shadow table creation rc=%d\n", rc);
@@ -689,7 +704,7 @@ static int diskAnnSelectRandomShadowRow(const DiskAnnIndex *pIndex, u64 *pRowid)
 
   zSql = sqlite4MPrintf(
     pIndex->db,
-    "SELECT index_key FROM \"%w\".%s LIMIT 1 OFFSET ABS(RANDOM()) %% MAX((SELECT COUNT(*) FROM \"%w\".%s), 1)",
+    "SELECT id FROM \"%w\".%s LIMIT 1 OFFSET ABS(RANDOM()) %% MAX((SELECT COUNT(*) FROM \"%w\".%s), 1)",
     pIndex->zDbSName, pIndex->zShadow, pIndex->zDbSName, pIndex->zShadow
   );
   if( zSql == NULL ){
