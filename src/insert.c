@@ -47,7 +47,7 @@ void sqlite4OpenIndex(
 #ifndef SQLITE4_OMIT_VECTOR
   if( pIdx->idxIsVector ){
     /* tnum 필요 없으면 0 넣고, 이름으로 찾아서 open하는 방식으로 */
-    sqlite4VdbeAddOp3(v, OP_OpenVectorIdx, iCur, 0 /*or pIdx->tnum*/, iDb);
+    sqlite4VdbeAddOp3(v, OP_OpenVectorIdx, iCur, pIdx->tnum, iDb);
     sqlite4VdbeChangeP4(v, -1, (char*)pIdx, P4_DYNAMIC);  // <- 핵심
     VdbeComment((v, "%s", pIdx->zName));
     return;
