@@ -1654,11 +1654,11 @@ int sqlite4OpenAllIndexes(
 
     iDb = sqlite4SchemaToIndex(pParse->db, pTab->pSchema);
     for(pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext){
-        if( !pIdx->idxIsVector && pIdx->tnum==0 ){
-          /* 물리 루트 없는 일반 인덱스는 절대 열면 안 됨 */
-          i++;
-          continue;
-        }
+        // if( !pIdx->idxIsVector && pIdx->tnum==0 ){
+        //   /* 물리 루트 없는 일반 인덱스는 절대 열면 안 됨 */
+        //   i++;
+        //   continue;
+        // }
       sqlite4OpenIndex(pParse, baseCur+i, iDb, pIdx, op);
       i++;
     }
