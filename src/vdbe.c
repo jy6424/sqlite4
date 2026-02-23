@@ -3790,23 +3790,27 @@ case OP_OpenVectorIdx: {
   const char *zIndexName;
   VectorIdxCursor *cursor = 0;
   VdbeCursor *pCur;
+  KeyInfo *pKeyInfo = NULL;
+  int nField = 0;
 
+  if( pOp->p4type==P4_KEYINFO ){
+    pKeyInfo = pOp->p4.pKeyInfo;
+    assert( pKeyInfo->enc==ENC(db) );
+    assert( pKeyInfo->db==db );
+    nField = pKeyInfo->nAllField;
+  }else if( pOp->p4type==P4_INT32 ){
+    nField = pOp->p4.i;
+  }
+  assert( pKeyInfo->zDbSName != NULL );
   /* iDb is in P3 */
   assert( pOp->p3>=0 && pOp->p3<db->nDb );
-  zDbSName = db->aDb[pOp->p3].zName;
-
-  /* index name comes via P4 */
-  assert( pOp->p4type==P4_STATIC || pOp->p4type==P4_DYNAMIC || pOp->p4type==P4_TRANSIENT );
-  zIndexName = pOp->p4.z;
-
-  assert( zDbSName && zIndexName );
 
   if( pOp->p5 == OPFLAG_FORDELETE ){
-    rc = vectorIndexClear(db, zDbSName, zIndexName);
+    rc = vectorIndexClear(db, pKeyInfo->zDbSName, pKeyInfo->zIndexName);
     if( rc ) goto abort_due_to_error;
   }
 
-  rc = vectorIndexCursorInit(db, zDbSName, zIndexName, &cursor);
+  rc = vectorIndexCursorInit(db, pKeyInfo->zDbSName, pKeyInfo->zIndexName, &cursor);
   if( rc ) goto abort_due_to_error;
 
   /* Allocate Vdbe cursor slot, then attach vector cursor */

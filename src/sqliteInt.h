@@ -1342,6 +1342,8 @@ struct KeyInfo {
   CollSeq *aColl[1];  /* Collating sequence for each term of the key */
 
   // [koreauniv] added for vector index
+  char *zIndexName;   /* Name of the index (might be NULL) */
+  char *zDbSName;     /* Name of the database schema (might be NULL) */
   Index *pIdx;        /* back-pointer to Index */
   u8 idxIsVector;
 };
