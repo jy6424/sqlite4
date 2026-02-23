@@ -3787,23 +3787,23 @@ case OP_VectorInsert: {
 #ifndef SQLITE4_OMIT_VECTOR
 case OP_OpenVectorIdx: {
 #ifndef SQLITE4_OMIT_VECTOR
-  const char *zDbSName;
   VectorIdxCursor *cursor = 0;
   VdbeCursor *pCur;
-  Index *pIdx;
+  KeyInfo *pKeyInfo;
 
   /* iDb is in P3 */
   assert( pOp->p3>=0 && pOp->p3<db->nDb );
-  zDbSName = db->aDb[pOp->p3].zName;
 
-  /* Index* comes via P4 */
-  assert( pOp->p4type==P4_PTR );
-  pIdx = (Index*)pOp->p4.p;
+  /* KeyInfo comes via P4 */
+  assert( pOp->p4type==P4_KEYINFO );
+  pKeyInfo = pOp->p4.pKeyInfo;
 
-  assert( zDbSName && pIdx && pIdx->zName );
+  assert( pKeyInfo );
+  assert( pKeyInfo->zDbSName );
+  assert( pKeyInfo->zIndexName );
 
-  if( pOp->p5 == OPFLAG_FORDELETE ){
-    rc = vectorIndexClear(db, zDbSName, pIdx->zName);
+  if( pOp->p5 & OPFLAG_FORDELETE ){
+    rc = vectorIndexClear(db, pKeyInfo->zDbSName, pKeyInfo->zIndexName);
     if( rc ) goto abort_due_to_error;
   }
 
