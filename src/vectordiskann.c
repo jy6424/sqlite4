@@ -689,7 +689,7 @@ static int diskAnnSelectRandomShadowRow(const DiskAnnIndex *pIndex, u64 *pRowid)
 
   zSql = sqlite4MPrintf(
     pIndex->db,
-    "SELECT rowid FROM \"%w\".%s LIMIT 1 OFFSET ABS(RANDOM()) %% MAX((SELECT COUNT(*) FROM \"%w\".%s), 1)",
+    "SELECT index_key FROM \"%w\".%s LIMIT 1 OFFSET ABS(RANDOM()) %% MAX((SELECT COUNT(*) FROM \"%w\".%s), 1)",
     pIndex->zDbSName, pIndex->zShadow, pIndex->zDbSName, pIndex->zShadow
   );
   if( zSql == NULL ){
@@ -698,12 +698,12 @@ static int diskAnnSelectRandomShadowRow(const DiskAnnIndex *pIndex, u64 *pRowid)
   }
   rc = sqlite4_prepare(pIndex->db, zSql, -1, &pStmt, 0);
   if( rc != SQLITE4_OK ){
-    printf("diskAnnSelectRandomShadowRow: db: %s sqlite4_prepare failed with error: %s\n", pIndex->db->zDbSName, sqlite4_errmsg(pIndex->db));
+    printf("diskAnnSelectRandomShadowRow: sqlite4_prepare failed with error: %s\n", sqlite4_errmsg(pIndex->db));
     goto out;
   }
   rc = sqlite4_step(pStmt);
   if( rc != SQLITE4_ROW ){
-    printf("diskAnnSelectRandomShadowRow: db: %s sqlite4_step failed with error: %s\n", pIndex->db->zDbSName, sqlite4_errmsg(pIndex->db));
+    printf("diskAnnSelectRandomShadowRow: sqlite4_step failed with error: %s\n", sqlite4_errmsg(pIndex->db));
     goto out;
   }
 
