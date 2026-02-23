@@ -1364,9 +1364,18 @@ void sqlite4GenerateConstraintChecks(
   assert( v!=0 );
   assert( pTab->pSelect==0 );  /* This table is not a VIEW */
   pPk = sqlite4FindPrimaryKey(pTab, 0);
-  nPkRoot = sqlite4PutVarint64(aPkRoot, pPk->tnum);
 
-  assert( pPk->eIndexType==SQLITE4_INDEX_PRIMARYKEY );
+  // [koreauniv] Vector index does not require key generation and uniqueness check.
+  if( pPk ){
+    nPkRoot = sqlite4PutVarint64(aPkRoot, pPk->tnum);
+  }else{
+    /* Rowid table or table without explicit PK index */
+    nPkRoot = 0;
+  }
+
+  if( pPk ){
+    assert( pPk->eIndexType==SQLITE4_INDEX_PRIMARYKEY );
+  }
 
   /* Test all NOT NULL constraints. */
   generateNotNullChecks(pParse, pTab, regContent, overrideError, ignoreDest);
@@ -1410,7 +1419,8 @@ void sqlite4GenerateConstraintChecks(
       sqlite4VdbeAddOp1(v, OP_ToBlob, regKey);
       regPk = regKey;
     }else{
-      nTmpReg = 1 + pIdx->nColumn + (pIdx==pPk ? 0 : pPk->nColumn);
+      int nPkCol = (pPk ? pPk->nColumn : 0);
+      nTmpReg = 1 + pIdx->nColumn + (pIdx==pPk ? 0 : nPkCol);
       regTmp = sqlite4GetTempRange(pParse, nTmpReg);
       regPk = regTmp + nTmpReg - 1;
 
@@ -1418,7 +1428,7 @@ void sqlite4GenerateConstraintChecks(
         int idx = pIdx->aiColumn[i];
         sqlite4VdbeAddOp2(v, OP_SCopy, regContent+idx, regTmp+i);
       }
-      if( pIdx!=pPk ){
+      if( pPk && pIdx!=pPk ){
         for(i=0; i<pPk->nColumn; i++){
           int idx = pPk->aiColumn[i];
           sqlite4VdbeAddOp2(v, OP_SCopy, regContent+idx,regTmp+i+pIdx->nColumn);
