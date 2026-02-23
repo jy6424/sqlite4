@@ -47,8 +47,15 @@ void sqlite4OpenIndex(
 #ifndef SQLITE4_OMIT_VECTOR
   if( pIdx->idxIsVector ){
     /* tnum 필요 없으면 0 넣고, 이름으로 찾아서 open하는 방식으로 */
-    sqlite4VdbeAddOp3(v, OP_OpenVectorIdx, iCur, pIdx->tnum, iDb);
-    sqlite4VdbeChangeP4(v, -1, (char*)pIdx, P4_KEYINFO);  // <- 핵심
+      KeyInfo *pKey = sqlite4IndexKeyinfo(p, pIdx);
+      if( !pKey ) goto no_mem;
+
+      pKey->zDbSName    = db->aDb[iDb].zName;  /* borrowed 정책이면 free 금지 */
+      pKey->zIndexName  = pIdx->zName;
+      pKey->pIdx        = pIdx;
+      pKey->idxIsVector = 1;
+    sqlite4VdbeAddOp3(v, OP_OpenVectorIdx, iCur, 0, iDb);
+    sqlite4VdbeChangeP4(v, -1, (char*)pKey, P4_KEYINFO);  // <- 핵심
     VdbeComment((v, "%s", pIdx->zName));
     return;
   }
@@ -60,7 +67,7 @@ void sqlite4OpenIndex(
   KeyInfo *pKey = sqlite4IndexKeyinfo(p, pIdx);
   testcase(pKey==0);
   sqlite4VdbeAddOp3(v, opcode, iCur, pIdx->tnum, iDb);
-  sqlite4VdbeChangeP4(v, -1, (const char *)pKey, P4_KEYINFO_HANDOFF);
+  sqlite4VdbeChangeP4(v, -1, (const char *)pKey, P4_KEYINFO);
   VdbeComment((v, "%s", pIdx->zName));
   
   printf("index opened %s keyinfo=%p\n", pIdx->zName, pKey);
