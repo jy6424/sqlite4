@@ -3807,7 +3807,7 @@ case OP_OpenVectorIdx: {
     if( rc ) goto abort_due_to_error;
   }
 
-  rc = vectorIndexCursorInitFromIndex(db, zDbSName, pIdx, &cursor);
+  rc = vectorIndexCursorInit(db, pKeyInfo->zDbSName, pKeyInfo->zIndexName, &cursor);
   if( rc ) goto abort_due_to_error;
 
   pCur = allocateCursor(p, pOp->p1, 0, 0, 0);
