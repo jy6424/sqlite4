@@ -109,8 +109,6 @@ int main(int argc, char **argv) {
   sqlite4_exec(db, "SELECT count(*) AS n FROM x;", print_callback, 0);
   printf("\n-- number of data from shadow table (x_idx_shadow) --\n");
   sqlite4_exec(db, "SELECT count(*) AS n FROM x_idx_shadow;", print_callback, 0);
-  printf("\n-- number of data from vector index table (x_idx) --\n");
-  sqlite4_exec(db, "SELECT name, sql FROM sqlite_schema WHERE name LIKE 'x_idx%';", print_callback, 0);
 
   // data insertion
   printf("\n-- inserting data --\n");
