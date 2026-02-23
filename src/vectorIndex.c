@@ -1258,4 +1258,43 @@ void vectorIndexCursorClose(sqlite4 *db, VectorIdxCursor *pCursor, int *nReads, 
   sqlite4DbFree(db, pCursor);
 }
 
+
+int vectorIndexCursorInitFromIndex(
+  sqlite4 *db,
+  const char *zDbSName,
+  Index *pIdx,
+  VectorIdxCursor **ppCursor
+){
+  int rc;
+  VectorIdxCursor* pCursor;
+  VectorIdxParams params;
+
+  assert( zDbSName!=0 );
+  assert( pIdx!=0 );
+  assert( pIdx->zName!=0 );
+
+  /* IMPORTANT: No SQL here. Use cached params. */
+  if( pIdx->pVecParamsCached==0 ){
+    return SQLITE4_ERROR;  /* params not cached => avoid re-entrant SQL */
+  }
+
+  params = *(pIdx->pVecParamsCached);  /* shallow copy (see note) */
+
+  pCursor = sqlite4DbMallocZero(db, sizeof(VectorIdxCursor));
+  if( pCursor==0 ){
+    return SQLITE4_NOMEM;
+  }
+
+  rc = diskAnnOpenIndex(db, zDbSName, pIdx->zName, &params, &pCursor->pIndex);
+  if( rc!=SQLITE4_OK ){
+    sqlite4DbFree(db, pCursor);
+    return rc;
+  }
+
+  pCursor->db = db;
+  *ppCursor = pCursor;
+  return SQLITE4_OK;
+}
+
+
 #endif /* !defined(SQLITE_OMIT_VECTOR) */

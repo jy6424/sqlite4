@@ -273,7 +273,7 @@ int vectorIndexCursorInitFromIndex(
   const char *zDbSName,
   Index *pIdx,
   VectorIdxCursor **ppCursor
-)
+);
 
 #endif /* _VECTOR_INDEX_H */
 
