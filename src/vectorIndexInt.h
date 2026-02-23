@@ -268,5 +268,12 @@ int vectorIndexInsert(VectorIdxCursor *, const UnpackedRecord *, char **);
 }  /* end of the 'extern "C"' block */
 #endif
 
+int vectorIndexCursorInitFromIndex(
+  sqlite4 *db,
+  const char *zDbSName,
+  Index *pIdx,
+  VectorIdxCursor **ppCursor
+)
+
 #endif /* _VECTOR_INDEX_H */
 

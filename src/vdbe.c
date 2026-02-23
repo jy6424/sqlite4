@@ -3786,30 +3786,30 @@ case OP_VectorInsert: {
 */
 #ifndef SQLITE4_OMIT_VECTOR
 case OP_OpenVectorIdx: {
+#ifndef SQLITE4_OMIT_VECTOR
   const char *zDbSName;
-  const char *zIndexName;
   VectorIdxCursor *cursor = 0;
   VdbeCursor *pCur;
+  Index *pIdx;
 
   /* iDb is in P3 */
   assert( pOp->p3>=0 && pOp->p3<db->nDb );
   zDbSName = db->aDb[pOp->p3].zName;
 
-  /* index name comes via P4 */
-  assert( pOp->p4type==P4_STATIC || pOp->p4type==P4_DYNAMIC || pOp->p4type==P4_TRANSIENT );
-  zIndexName = pOp->p4.z;
+  /* Index* comes via P4 */
+  assert( pOp->p4type==P4_PTR );
+  pIdx = (Index*)pOp->p4.p;
 
-  assert( zDbSName && zIndexName );
+  assert( zDbSName && pIdx && pIdx->zName );
 
   if( pOp->p5 == OPFLAG_FORDELETE ){
-    rc = vectorIndexClear(db, zDbSName, zIndexName);
+    rc = vectorIndexClear(db, zDbSName, pIdx->zName);
     if( rc ) goto abort_due_to_error;
   }
 
-  rc = vectorIndexCursorInit(db, zDbSName, zIndexName, &cursor);
+  rc = vectorIndexCursorInitFromIndex(db, zDbSName, pIdx, &cursor);
   if( rc ) goto abort_due_to_error;
 
-  /* Allocate Vdbe cursor slot, then attach vector cursor */
   pCur = allocateCursor(p, pOp->p1, 0, 0, 0);
   if( pCur==0 ) goto no_mem;
 
@@ -3819,8 +3819,11 @@ case OP_OpenVectorIdx: {
   pCur->pVecIdx = cursor;
   pCur->pgnoRoot = pOp->p2;
 
-
   break;
+#else
+  rc = SQLITE4_ERROR;
+  goto abort_due_to_error;
+#endif
 }
 #endif /* SQLITE4_OMIT_VECTOR */
 
