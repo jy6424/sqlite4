@@ -1411,20 +1411,20 @@ static int diskAnnSearchInternal(DiskAnnIndex *pIndex, DiskAnnSearchCtx *pCtx, u
 
   start = diskAnnNodeAlloc(pIndex, nStartRowid);
   if( start == NULL ){
-    printf("vector index(search): failed to allocate new node");
+    printf("vector index(search): failed to allocate new node\n");
     rc = SQLITE4_NOMEM;
     goto out;
   }
 
   rc = blobSpotCreate(pIndex, &start->pBlobSpot, nStartRowid, pIndex->nBlockSize, pCtx->blobMode);
   if( rc != SQLITE4_OK ){
-    printf("vector index(search): failed to create new blob");
+    printf("vector index(search): failed to create new blob\n");
     goto out;
   }
 
   rc = blobSpotReload(pIndex, start->pBlobSpot, nStartRowid, pIndex->nBlockSize);
   if( rc != SQLITE4_OK ){
-    printf("vector index(search): failed to load new blob");
+    printf("vector index(search): failed to load new blob\n");
     goto out;
   }
 
@@ -1472,7 +1472,7 @@ static int diskAnnSearchInternal(DiskAnnIndex *pIndex, DiskAnnSearchCtx *pCtx, u
       diskAnnSearchCtxDeleteCandidate(pCtx, iCandidate);
       continue;
     }else if( rc != SQLITE4_OK ){
-      printf("vector index(search): failed to create new blob for candidate");
+      printf("vector index(search): failed to create new blob for candidate\n");
       goto out;
     }
 
@@ -1554,15 +1554,15 @@ int diskAnnSearch(
   DiskAnnTrace(("diskAnnSearch started\n"));
 
   if( k < 0 ){
-    printf("vector index(search): k must be a non-negative integer");
+    printf("vector index(search): k must be a non-negative integer\n");
     return SQLITE4_ERROR;
   }
   if( pVector->dims != pIndex->nVectorDims ){
-    printf("vector index(search): dimensions are different: %d != %d", pVector->dims, pIndex->nVectorDims);
+    printf("vector index(search): dimensions are different: %d != %d\n", pVector->dims, pIndex->nVectorDims);
     return SQLITE4_ERROR;
   }
   if( pVector->type != pIndex->nNodeVectorType ){
-    printf("vector index(search): vector type differs from column type: %d != %d", pVector->type, pIndex->nNodeVectorType);
+    printf("vector index(search): vector type differs from column type: %d != %d\n", pVector->type, pIndex->nNodeVectorType);
     return SQLITE4_ERROR;
   }
 
@@ -1573,12 +1573,12 @@ int diskAnnSearch(
     pRows->nCols = pKey->nKeyColumns;
     return SQLITE4_OK;
   }else if( rc != SQLITE4_OK ){
-    printf("vector index(search): failed to select start node for search");
+    printf("vector index(search): failed to select start node for search\n");
     return rc;
   }
   rc = diskAnnSearchCtxInit(pIndex, &ctx, pVector, pIndex->searchL, k, DISKANN_BLOB_READONLY);
   if( rc != SQLITE4_OK ){
-    printf("vector index(search): failed to initialize search context");
+    printf("vector index(search): failed to initialize search context\n");
     goto out;
   }
   rc = diskAnnSearchInternal(pIndex, &ctx, nStartRowid, pzErrMsg);
@@ -1588,7 +1588,7 @@ int diskAnnSearch(
   nOutRows = MIN(k, ctx.nTopCandidates);
   rc = vectorOutRowsAlloc(pIndex->db, pRows, nOutRows, pKey->nKeyColumns, vectorIdxKeyRowidLike(pKey));
   if( rc != SQLITE4_OK ){
-    printf("vector index(search): failed to allocate output rows");
+    printf("vector index(search): failed to allocate output rows\n");
     goto out;
   }
   for(i = 0; i < nOutRows; i++){
@@ -1598,7 +1598,7 @@ int diskAnnSearch(
       rc = diskAnnGetShadowRowKeys(pIndex, ctx.aTopCandidates[i]->nRowid, pKey, pRows, i);
     }
     if( rc != SQLITE4_OK ){
-      printf("vector index(search): failed to put result in the output row");
+      printf("vector index(search): failed to put result in the output row\n");
       goto out;
     }
   }
@@ -1634,26 +1634,26 @@ int diskAnnInsert(
     return SQLITE4_ERROR;
   }
 
-  DiskAnnTrace(("diskAnnInset started\n"));
+  DiskAnnTrace(("diskAnnInsert started\n"));
 
 
   // initialize search context
   // insert 하기 전 search로 어디에 insert 할지 결정해야 함
   rc = diskAnnSearchCtxInit(pIndex, &ctx, pVectorInRow->pVector, pIndex->insertL, 1, DISKANN_BLOB_WRITABLE);
   if( rc != SQLITE4_OK ){
-    printf("vector index(insert): failed to initialize search context");
+    printf("vector index(insert): failed to initialize search context\n");
     return rc;
   }
 
   // initialize vectors (vInsert - 새로운 노드 벡터)
   if( initVectorPair(pIndex->nNodeVectorType, pIndex->nEdgeVectorType, pIndex->nVectorDims, &vInsert) != 0 ){
-    printf("vector index(insert): unable to allocate mem for node VectorPair");
+    printf("vector index(insert): unable to allocate mem for node VectorPair\n");
     rc = SQLITE4_NOMEM;
     goto out;
   }
   // initialize vectors (vCandidate - 후보 노드 벡터)
   if( initVectorPair(pIndex->nNodeVectorType, pIndex->nEdgeVectorType, pIndex->nVectorDims, &vCandidate) != 0 ){
-    printf("vector index(insert): unable to allocate mem for candidate VectorPair");
+    printf("vector index(insert): unable to allocate mem for candidate VectorPair\n");
     rc = SQLITE4_NOMEM;
     goto out;
   }
@@ -1666,7 +1666,7 @@ int diskAnnInsert(
   if( rc == SQLITE4_DONE ){
     first = 1;
   }else if( rc != SQLITE4_OK ){
-    printf("vector index(insert): failed to select start node for search");
+    printf("vector index(insert): failed to select start node for search\n");
     rc = SQLITE4_ERROR;
     goto out;
   }
@@ -1686,14 +1686,14 @@ int diskAnnInsert(
   // set new rowid to nNewRowid (새로 삽입된 row의 rowid. search에서 찾은 이웃노드의 rowid와 중복될 수 있음)
   rc = diskAnnInsertShadowRow(pIndex, pVectorInRow, &nNewRowid);
   if( rc != SQLITE4_OK ){
-    printf("vector index(insert): failed to insert shadow row");
+    printf("vector index(insert): failed to insert shadow row\n");
     goto out;
   }
 
   // create blob for new node
   rc = blobSpotCreate(pIndex, &pBlobSpot, nNewRowid, pIndex->nBlockSize, 1);
   if( rc != SQLITE4_OK ){
-    printf("vector index(insert): failed to read blob for shadow row");
+    printf("vector index(insert): failed to read blob for shadow row\n");
     goto out;
   }
   // initialize new node blob(데이터를 blob에 저장)
@@ -1757,7 +1757,7 @@ int diskAnnInsert(
     // insert로 인해 변경된 blob을 shadow table에 write back.
     rc = blobSpotFlush(pIndex, pVisited->pBlobSpot);
     if( rc != SQLITE4_OK ){
-      printf("vector index(insert): failed to flush blob");
+      printf("vector index(insert): failed to flush blob\n");
       goto out;
     }
   }
@@ -1769,7 +1769,7 @@ out:
   if( rc == SQLITE4_OK ){
     rc = blobSpotFlush(pIndex, pBlobSpot);
     if( rc != SQLITE4_OK ){
-      printf("vector index(insert): failed to flush blob");
+      printf("vector index(insert): failed to flush blob\n");
     }
   }
   if( pBlobSpot != NULL ){
