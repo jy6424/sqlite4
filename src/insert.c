@@ -1585,10 +1585,15 @@ void sqlite4CompleteInsertion(
 
       for(k=0; k<pIdx->nColumn; k++){
         int iCol = pIdx->aiColumn[k];
-        if( iCol>=0 ){
-          sqlite4VdbeAddOp2(v, OP_SCopy, regContent + iCol, regVec + k);
+        Expr *pE = pIdx->aColExpr->a[k].pExpr;
+        Expr *pArg = 0;
+        if( pE && pE->op==TK_FUNCTION && pE->x.pList && pE->x.pList->nExpr>0 ){
+          pArg = pE->x.pList->a[0].pExpr;
+        }
+        if( pArg && pArg->op==TK_COLUMN ){
+          sqlite4VdbeAddOp2(v, OP_SCopy, regContent + pArg->iColumn, regVec + k);
         }else{
-          sqlite4VdbeAddOp2(v, OP_SCopy, regRowid, regVec + k);
+          sqlite4ExprCode(pParse, pE, regVec + k); /* fallback */
         }
       }
       sqlite4VdbeAddOp2(v, OP_SCopy, regRowid, regVec + (nVecField-1));

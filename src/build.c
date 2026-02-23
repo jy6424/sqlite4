@@ -2501,43 +2501,125 @@ static int createIndexAuth(
 ** the VDBE code to assign a root page number to the new index and, if 
 ** required, to write a new entry into the sqlite_master table.
 */
-static void createIndexWriteSchema(
-  Parse *pParse,                  /* Parser context */
-  Index *pIdx,                    /* New index object */
-  Token *pName,                   /* Token containing name of new index */
-  Token *pEnd                     /* Token for final closing paren of CREATE */
-){
+// static void createIndexWriteSchema(
+//   Parse *pParse,                  /* Parser context */
+//   Index *pIdx,                    /* New index object */
+//   Token *pName,                   /* Token containing name of new index */
+//   Token *pEnd                     /* Token for final closing paren of CREATE */
+// ){
+//   sqlite4 *db = pParse->db;
+//   int iDb;
+
+//   assert( db->init.busy==0 );
+//   iDb = sqlite4SchemaToIndex(db, pIdx->pSchema);
+//   pIdx->tnum = ++pParse->nMem;
+//   allocateTableNumber(pParse, iDb, pIdx->tnum);
+
+//   if( pIdx->eIndexType!=SQLITE4_INDEX_PRIMARYKEY ){
+//     Vdbe *v;
+//     char *zStmt;
+
+//     v = sqlite4GetVdbe(pParse);
+//     if( v==0 ) return;
+
+//     sqlite4BeginWriteOperation(pParse, 1, iDb);
+
+//     /* Unless this index is an automatic index created by a UNIQUE 
+//     ** constraint, assemble a CREATE INDEX statement to write into the 
+//     ** sqlite_master table.  */
+//     if( pIdx->eIndexType!=SQLITE4_INDEX_UNIQUE ){
+//       int n = (int)(pEnd->z - pName->z) + pEnd->n;
+//       const char *zUnique = (pIdx->onError==OE_None ? "" : " UNIQUE");
+//       zStmt = sqlite4MPrintf(db, "CREATE%s INDEX %.*s", zUnique, n, pName->z);
+//     }else{
+//       /* An automatic index created by a PRIMARY KEY or UNIQUE constraint */
+//       zStmt = 0;
+//     }
+
+//     /* Add an entry in sqlite_master for this index */
+//     sqlite4NestedParse(pParse, 
+//         "INSERT INTO %Q.%s VALUES('index',%Q,%Q,#%d,%Q);",
+//         db->aDb[iDb].zName, SCHEMA_TABLE(iDb),
+//         pIdx->zName,
+//         pIdx->pTable->zName,
+//         pIdx->tnum,
+//         zStmt
+//     );
+//     sqlite4DbFree(db, zStmt);
+
+//     /* Fill the index with data and reparse the schema. Code an OP_Expire
+//     ** to invalidate all pre-compiled statements.
+//     */
+//     if( pIdx->eIndexType!=SQLITE4_INDEX_UNIQUE ){
+//       sqlite4RefillIndex(pParse, pIdx, 1);
+//       sqlite4ChangeCookie(pParse, iDb);
+//       sqlite4VdbeAddParseSchemaOp(v, iDb,
+//           sqlite4MPrintf(db, "name='%q' AND type='index'", pIdx->zName));
+//       sqlite4VdbeAddOp1(v, OP_Expire, 0);
+//     }
+//   }
+// }
+
+static void createIndexWriteSchema(Parse *pParse, Index *pIdx, Token *pName, Token *pEnd){
   sqlite4 *db = pParse->db;
   int iDb;
+  Vdbe *v;
+  char *zStmt = 0;
 
-  assert( db->init.busy==0 );
+  assert(db->init.busy==0);
   iDb = sqlite4SchemaToIndex(db, pIdx->pSchema);
+
+  v = sqlite4GetVdbe(pParse);
+  if( v==0 ) return;
+
+#ifndef SQLITE4_OMIT_VECTOR
+  if( pIdx->idxIsVector ){
+    /* Vector index: do NOT allocate a btree root page. */
+    pIdx->tnum = 0;
+
+    sqlite4BeginWriteOperation(pParse, 1, iDb);
+
+    /* keep SQL text in sqlite_master */
+    if( pIdx->eIndexType!=SQLITE4_INDEX_UNIQUE && pIdx->eIndexType!=SQLITE4_INDEX_PRIMARYKEY ){
+      int n = (int)(pEnd->z - pName->z) + pEnd->n;
+      const char *zUnique = (pIdx->onError==OE_None ? "" : " UNIQUE");
+      zStmt = sqlite4MPrintf(db, "CREATE%s INDEX %.*s", zUnique, n, pName->z);
+    }
+
+    sqlite4NestedParse(pParse,
+        "INSERT INTO %Q.%s VALUES('index',%Q,%Q,#%d,%Q);",
+        db->aDb[iDb].zName, SCHEMA_TABLE(iDb),
+        pIdx->zName,
+        pIdx->pTable->zName,
+        0,              /* <- important: no root page */
+        zStmt
+    );
+    sqlite4DbFree(db, zStmt);
+
+    /* Still change cookie + reparse schema so the new index is visible */
+    sqlite4ChangeCookie(pParse, iDb);
+    sqlite4VdbeAddParseSchemaOp(v, iDb,
+        sqlite4MPrintf(db, "name='%q' AND type='index'", pIdx->zName));
+    sqlite4VdbeAddOp1(v, OP_Expire, 0);
+
+    return;
+  }
+#endif
+
+  /* 기존 일반 인덱스 경로 */
   pIdx->tnum = ++pParse->nMem;
   allocateTableNumber(pParse, iDb, pIdx->tnum);
 
   if( pIdx->eIndexType!=SQLITE4_INDEX_PRIMARYKEY ){
-    Vdbe *v;
-    char *zStmt;
-
-    v = sqlite4GetVdbe(pParse);
-    if( v==0 ) return;
-
     sqlite4BeginWriteOperation(pParse, 1, iDb);
 
-    /* Unless this index is an automatic index created by a UNIQUE 
-    ** constraint, assemble a CREATE INDEX statement to write into the 
-    ** sqlite_master table.  */
     if( pIdx->eIndexType!=SQLITE4_INDEX_UNIQUE ){
       int n = (int)(pEnd->z - pName->z) + pEnd->n;
       const char *zUnique = (pIdx->onError==OE_None ? "" : " UNIQUE");
       zStmt = sqlite4MPrintf(db, "CREATE%s INDEX %.*s", zUnique, n, pName->z);
-    }else{
-      /* An automatic index created by a PRIMARY KEY or UNIQUE constraint */
-      zStmt = 0;
     }
 
-    /* Add an entry in sqlite_master for this index */
-    sqlite4NestedParse(pParse, 
+    sqlite4NestedParse(pParse,
         "INSERT INTO %Q.%s VALUES('index',%Q,%Q,#%d,%Q);",
         db->aDb[iDb].zName, SCHEMA_TABLE(iDb),
         pIdx->zName,
@@ -2547,9 +2629,6 @@ static void createIndexWriteSchema(
     );
     sqlite4DbFree(db, zStmt);
 
-    /* Fill the index with data and reparse the schema. Code an OP_Expire
-    ** to invalidate all pre-compiled statements.
-    */
     if( pIdx->eIndexType!=SQLITE4_INDEX_UNIQUE ){
       sqlite4RefillIndex(pParse, pIdx, 1);
       sqlite4ChangeCookie(pParse, iDb);
