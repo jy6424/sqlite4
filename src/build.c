@@ -2714,6 +2714,37 @@ static int findTableColumn(Parse *pParse, Table *pTab, const char *zName){
   return j;
 }
 
+
+/* true if pIndex is exactly: CREATE INDEX ... ON ... (libsql_vector_idx(...)) */
+static int sqlite4IsLibsqlVectorIndex(Index *pIndex){
+  if( pIndex==0 ) return 0;
+  if( pIndex->aColExpr==0 ) return 0;
+  if( pIndex->aColExpr->nExpr!=1 ) return 0;
+
+  Expr *e = pIndex->aColExpr->a[0].pExpr;
+  if( e==0 ) return 0;
+
+  /* Strip COLLATE wrapper(s) */
+  while( e && e->op==TK_COLLATE ){
+    e = e->pLeft;
+  }
+  if( e==0 ) return 0;
+
+  /* Function-call node must have token (=function name) and arg list */
+  /* In sqlite4 codebase, function call op is typically TK_FUNCTION. */
+  if( e->op!=TK_FUNCTION ) return 0;
+
+  /* e->u.zToken holds the function name (dequoted) */
+  if( e->u.zToken==0 ) return 0;
+  if( sqlite4_stricmp(e->u.zToken, "libsql_vector_idx")!=0 ) return 0;
+
+  /* optional sanity: has args */
+  if( e->x.pList==0 || e->x.pList->nExpr<1 ) return 0;
+
+  return 1;
+}
+
+
 /*
 ** Create a new index for an SQL table.  pName1.pName2 is the name of the index 
 ** and pTblList is the name of the table that is to be indexed.  Both will 
@@ -2935,23 +2966,23 @@ Index *sqlite4CreateIndex(
 
   printf("Creating vector index entering\n");
   // [koreauniv] place to add vector index support 
-  #ifndef SQLITE_OMIT_VECTOR
-    // we want to have complete information about index columns before invocation of vectorIndexCreate method
-    printf("Creating vector index\n");
+#ifndef SQLITE_OMIT_VECTOR
+  /* Only run vector hook for libsql_vector_idx(...) indexes */
+  if( sqlite4IsLibsqlVectorIndex(pIndex) ){
     vectorIdxRc = vectorIndexCreate(pParse, pIndex, db->aDb[iDb].zName);
-    printf("vectorIdxRc = %d\n", vectorIdxRc);
-    if( vectorIdxRc < 0 ){
-      goto exit_create_index;
-    }
+    if( vectorIdxRc < 0 ) goto exit_create_index;
+
     if( vectorIdxRc >= 1 ){
       pIndex->idxIsVector = 1;
-      /* 코어 디스크 생성만 스킵 */
-      // goto link_index_and_exit;
+
+      /* sqlite3-style: vector index does NOT use core btree schema creation */
+      goto link_index_and_exit;
     }
     if( vectorIdxRc == 1 ){
       skipRefill = 1;
     }
-  #endif
+  }
+#endif
 
   /* Scan the names of any covered columns. */
   for(i=0; i<nCover; i++){
