@@ -59,7 +59,7 @@ void sqlite4OpenIndex(
     pKey->pIdx        = pIdx;
     pKey->idxIsVector = 1;
 
-    sqlite4VdbeAddOp3(v, OP_OpenVectorIdx, iCur, pIdx->tnum, iDb);
+    sqlite4VdbeAddOp3(v, OP_OpenVectorIdx, iCur, 0, iDb); // [koreauniv] OP_OpenVectorIdx는 tnum이 필요 없음. 대신 KeyInfo에 Index 정보 담아서 넘김. (idx->tnum)
     sqlite4VdbeChangeP4(v, -1, (const char*)pKey, P4_KEYINFO);
     VdbeComment((v, "%s", pIdx->zName));
     return;
@@ -996,7 +996,7 @@ void sqlite4Insert(
     sqlite4VdbeAddOp2(v, OP_NewRowid, baseCur+iPk, regRowid);
   }
 
-  /* ✅ 벡터 인덱스가 있으면 regRowid를 “항상” 유효하게 */
+  /* regRowid must be valid if any vector index needs it */
   int hasVec = 0;
   for(Index *p=pTab->pIndex; p; p=p->pNext){
     if(p->idxIsVector){ hasVec = 1; break; }
@@ -1004,9 +1004,6 @@ void sqlite4Insert(
   if( hasVec ){
     if( iIntPKCol>=0 ){
       sqlite4VdbeAddOp2(v, OP_SCopy, regContent+iIntPKCol, regRowid);
-    }else if( bImplicitPK ){
-      /* 이미 위에서 NewRowid 했으면 굳이 또 할 필요 없음 */
-      /* (원하면 이 줄은 생략 가능) */
     }else{
       sqlite4VdbeAddOp2(v, OP_NewRowid, baseCur, regRowid);
     }

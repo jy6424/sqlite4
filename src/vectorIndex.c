@@ -259,7 +259,6 @@ int vectorInRowPlaceholderRender(const VectorInRow *pVectorInRow, char *pBuf, in
   return 0;
 }
 
-
 // [koreauniv TODO] 수정 필요. sqlite4_value_type, UnpackedRecord 구현 필요
 int vectorInRowAlloc(sqlite4 *db, const UnpackedRecord *pRecord, VectorInRow *pVectorInRow, char **pzErrMsg) {
   int rc = SQLITE4_OK;
@@ -1198,6 +1197,10 @@ int vectorIndexInsert(
   if( rc != SQLITE4_OK ){
     return rc;
   }
+  printf("nField=%d aMem0.type=%d aMem1.type=%d\n",
+       pRecord->nField,
+       sqlite4_value_type(&pRecord->aMem[0]),
+       sqlite4_value_type(&pRecord->aMem[1]));
   printf("vectorIndexInsert: vectorInRowAlloc rc=%d, vectorInRow.pVector=%p, vectorInRow.nKeys=%d, vectorInRow.pKeyValues=%p\n", rc, vectorInRow.pVector, vectorInRow.nKeys, vectorInRow.pKeyValues);
   printf("vectorIndexInsert: vectorInRow.pVector->type=%d, vectorInRow.pKeyValues->type=%d\n", vectorInRow.pVector->type, vectorInRow.pKeyValues->type);
   if( vectorInRow.pVector == NULL ){
