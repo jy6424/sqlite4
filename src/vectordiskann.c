@@ -884,6 +884,9 @@ static int diskAnnInsertShadowRow(const DiskAnnIndex *pIndex, const VectorInRow 
     goto out;
   }
   for(i = 0; i < pVectorInRow->nKeys; i++){
+    //[koreauniv] for debugging
+    sqlite4_value *v = vectorInRowKey(pVectorInRow, i);
+    printf("diskAnnInsertShadowRow: binding key %d with value type %d\n", i, sqlite4_value_type(v));
     rc = sqlite4_bind_value(pStmt, i + 1, vectorInRowKey(pVectorInRow, i));
     if( rc != SQLITE4_OK ){
       goto out;
@@ -894,7 +897,7 @@ static int diskAnnInsertShadowRow(const DiskAnnIndex *pIndex, const VectorInRow 
     goto out;
   }
   rc = sqlite4_step(pStmt);
-  if( rc != SQLITE4_ROW ){
+  if( rc != SQLITE4_DONE ){ // [koreauniv] RETURNING 절 제거로 인해 SQLITE4_ROW가 아닌 SQLITE4_DONE이 반환
     rc = SQLITE4_ERROR;
     goto out;
   }
