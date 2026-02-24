@@ -993,7 +993,7 @@ void sqlite4Insert(
 
   if( bImplicitPK ){
     assert( !isView );
-    sqlite4VdbeAddOp2(v, OP_NewRowid, baseCur+iPk, regRowid);
+    sqlite4VdbeAddOp2(v, OP_NewRowid, baseCur, regRowid); // [koreauniv] 원래 baseCur+iPk
   }
 
   /* regRowid must be valid if any vector index needs it */
