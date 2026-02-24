@@ -1003,9 +1003,13 @@ void sqlite4Insert(
   }
   if( hasVec ){
     if( iIntPKCol>=0 ){
+      /* INTEGER PRIMARY KEY 컬럼 값이 rowid */
       sqlite4VdbeAddOp2(v, OP_SCopy, regContent+iIntPKCol, regRowid);
+    }else if( bImplicitPK ){
+      /* 위에서 OP_NewRowid(baseCur+iPk, regRowid) 했으니 그대로 사용 */
     }else{
-      sqlite4VdbeAddOp3(v, OP_NewRowid, baseCur, regRowid, regAutoinc);
+      /* rowid 테이블이면 테이블 커서 기준으로 생성 */
+      sqlite4VdbeAddOp2(v, OP_NewRowid, baseCur, regRowid);
     }
   }
 
