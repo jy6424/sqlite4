@@ -870,7 +870,7 @@ static int diskAnnInsertShadowRow(const DiskAnnIndex *pIndex, const VectorInRow 
   }
   zSql = sqlite4MPrintf(
       pIndex->db,
-      "INSERT INTO \"%w\".%s(%s, data) VALUES (%s, ?)", // [koreauniv] RETURNING rowid 제거
+      "INSERT INTO \"%w\".%s(%s, data) VALUES (%s, ?) RETURNING id",
       pIndex->zDbSName, pIndex->zShadow, columnSqlNames, columnSqlPlaceholders
   );
   if( zSql == NULL ){
@@ -897,7 +897,7 @@ static int diskAnnInsertShadowRow(const DiskAnnIndex *pIndex, const VectorInRow 
     goto out;
   }
   rc = sqlite4_step(pStmt);
-  if( rc != SQLITE4_DONE ){ // [koreauniv] RETURNING 절 제거로 인해 SQLITE4_ROW가 아닌 SQLITE4_DONE이 반환
+  if( rc != SQLITE4_ROW ){
     rc = SQLITE4_ERROR;
     goto out;
   }
