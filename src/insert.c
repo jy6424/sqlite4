@@ -1005,7 +1005,7 @@ void sqlite4Insert(
     if( iIntPKCol>=0 ){
       sqlite4VdbeAddOp2(v, OP_SCopy, regContent+iIntPKCol, regRowid);
     }else{
-      sqlite4VdbeAddOp2(v, OP_NewRowid, baseCur, regRowid);
+      sqlite4VdbeAddOp3(v, OP_NewRowid, baseCur, regRowid, regAutoinc);
     }
   }
 
@@ -1542,16 +1542,134 @@ void sqlite4GenerateConstraintChecks(
 ** a register containing the serialized key to insert into the index.
 ** aRegIdx[0] (the PRIMARY KEY index key) is never 0.
 */
+// void sqlite4CompleteInsertion(
+//   Parse *pParse,      /* The parser context */
+//   Table *pTab,        /* the table into which we are inserting */
+//   int baseCur,        /* Index of a read/write cursor pointing at pTab */
+//   int regContent,     /* First register of content */
+//   int *aRegIdx,       /* Register used by each index.  0 for unused indices */
+//   int isUpdate,       /* True for UPDATE, False for INSERT */
+//   int appendBias,     /* True if this is likely to be an append */
+//   int useSeekResult,  /* True to set the USESEEKRESULT flag on OP_[Idx]Insert */
+//   int regRowid        /* [koreauniv] added to unpack */ 
+// ){
+//   int i;
+//   Vdbe *v;
+//   Index *pIdx;
+//   u8 pik_flags;
+//   int regRec;
+//   int regCover;
+
+
+//   v = sqlite4GetVdbe(pParse);
+//   assert( v!=0 );
+//   assert( pTab->pSelect==0 );  /* This table is not a VIEW */
+
+//   if( pParse->nested ){
+//     pik_flags = 0;
+//   }else{
+//     pik_flags = OPFLAG_NCHANGE | (isUpdate?OPFLAG_ISUPDATE:0);
+//   }
+
+//   /* Generate code to serialize array of registers into a database record. 
+//   ** This OP_MakeRecord also serves to apply affinities to the array of
+//   ** input registers at regContent. For this reason it must be executed 
+//   ** before any MakeRecord instructions used to create covering index
+//   ** records.  */
+//   regRec = sqlite4GetTempReg(pParse);
+//   if( IsKvstore(pTab) ){
+//     sqlite4VdbeAddOp2(v, OP_SCopy, regContent+1, regRec);
+//     sqlite4VdbeAddOp1(v, OP_ToBlob, regRec);
+//   }else{
+//     sqlite4VdbeAddOp3(v, OP_MakeRecord, regContent, pTab->nCol, regRec);
+//     sqlite4TableAffinityStr(v, pTab);
+//     sqlite4ExprCacheAffinityChange(pParse, regContent, pTab->nCol);
+//   }
+//   regCover = sqlite4GetTempReg(pParse);
+
+//   /* Write the entry to each index. */
+//   int iCur = 0;
+//   for(pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, iCur++){
+
+//     assert( pIdx->eIndexType!=SQLITE4_INDEX_PRIMARYKEY || aRegIdx[iCur] );
+
+//     if( pIdx->eIndexType==SQLITE4_INDEX_FTS5 ){
+//       int iPK;
+//       sqlite4FindPrimaryKey(pTab, &iPK);
+//       sqlite4Fts5CodeUpdate(pParse, pIdx, 0, aRegIdx[iPK], regContent, 0);
+//       continue;
+//     }
+
+//   #ifndef SQLITE_OMIT_VECTOR
+//     if( pIdx->idxIsVector ){
+//       int k;
+//       int nVecField = pIdx->nColumn + 1;
+//       int regVec = sqlite4GetTempRange(pParse, nVecField);
+
+//       for(k=0; k<pIdx->nColumn; k++){
+//         int iCol = pIdx->aiColumn[k];
+//         Expr *pE = pIdx->aColExpr->a[k].pExpr;
+//         Expr *pArg = 0;
+//         if( pE && pE->op==TK_FUNCTION && pE->x.pList && pE->x.pList->nExpr>0 ){
+//           pArg = pE->x.pList->a[0].pExpr;
+//         }
+//         if( pArg && pArg->op==TK_COLUMN ){
+//           sqlite4VdbeAddOp2(v, OP_SCopy, regContent + pArg->iColumn, regVec + k);
+//         }else{
+//           sqlite4ExprCode(pParse, pE, regVec + k); /* fallback */
+//         }
+//       }
+//       sqlite4VdbeAddOp2(v, OP_SCopy, regRowid, regVec + (nVecField-1));
+
+//       //[koreauniv] for debug
+//       printf("sqlite4CompleteInsertion: regRowid: %d, regVec: %d, nVecField: %d\n", regRowid, regVec, nVecField);
+
+//       sqlite4VdbeAddOp3(v, OP_VectorInsert, baseCur+iCur, regVec, nVecField);
+
+//       sqlite4ReleaseTempRange(pParse, regVec, nVecField);
+//       continue;
+//     }
+//   #endif
+
+//     if( aRegIdx[iCur] ){
+//       int regData = 0;
+//       int flags = 0;
+
+//       if( pIdx->eIndexType==SQLITE4_INDEX_PRIMARYKEY ){
+//         regData = regRec;
+//         flags = pik_flags;
+//       }else if( pIdx->nCover>0 ){
+//         int nByte = sizeof(int) * pIdx->nCover;
+//         int *aiPermute = (int*)sqlite4DbMallocRaw(pParse->db, nByte);
+
+//         if( aiPermute ){
+//           memcpy(aiPermute, pIdx->aiCover, nByte);
+//           sqlite4VdbeAddOp4(
+//             v, OP_Permutation,
+//             pIdx->nCover, 0, 0,
+//             (char*)aiPermute, P4_INTARRAY
+//           );
+//         }
+//         regData = regCover;
+//         sqlite4VdbeAddOp3(v, OP_MakeRecord, regContent, pIdx->nCover, regData);
+//       }
+
+//       sqlite4VdbeAddOp3(v, OP_Insert, baseCur+iCur, regData, aRegIdx[iCur]);
+//       sqlite4VdbeChangeP5(v, flags);
+//     }
+//   }
+// }
+
 void sqlite4CompleteInsertion(
-  Parse *pParse,      /* The parser context */
-  Table *pTab,        /* the table into which we are inserting */
-  int baseCur,        /* Index of a read/write cursor pointing at pTab */
-  int regContent,     /* First register of content */
-  int *aRegIdx,       /* Register used by each index.  0 for unused indices */
-  int isUpdate,       /* True for UPDATE, False for INSERT */
-  int appendBias,     /* True if this is likely to be an append */
-  int useSeekResult,  /* True to set the USESEEKRESULT flag on OP_[Idx]Insert */
-  int regRowid        /* [koreauniv] added to unpack */ 
+  Parse *pParse,
+  Table *pTab,
+  int baseCur,
+  int regContent,
+  int *aRegIdx,
+  int isUpdate,
+  int appendBias,
+  int useSeekResult,
+  int regRowid
 ){
   int i;
   Vdbe *v;
@@ -1560,10 +1678,9 @@ void sqlite4CompleteInsertion(
   int regRec;
   int regCover;
 
-
   v = sqlite4GetVdbe(pParse);
-  assert( v!=0 );
-  assert( pTab->pSelect==0 );  /* This table is not a VIEW */
+  assert(v!=0);
+  assert(pTab->pSelect==0);
 
   if( pParse->nested ){
     pik_flags = 0;
@@ -1571,11 +1688,7 @@ void sqlite4CompleteInsertion(
     pik_flags = OPFLAG_NCHANGE | (isUpdate?OPFLAG_ISUPDATE:0);
   }
 
-  /* Generate code to serialize array of registers into a database record. 
-  ** This OP_MakeRecord also serves to apply affinities to the array of
-  ** input registers at regContent. For this reason it must be executed 
-  ** before any MakeRecord instructions used to create covering index
-  ** records.  */
+  /* Make table record */
   regRec = sqlite4GetTempReg(pParse);
   if( IsKvstore(pTab) ){
     sqlite4VdbeAddOp2(v, OP_SCopy, regContent+1, regRec);
@@ -1585,51 +1698,22 @@ void sqlite4CompleteInsertion(
     sqlite4TableAffinityStr(v, pTab);
     sqlite4ExprCacheAffinityChange(pParse, regContent, pTab->nCol);
   }
+
   regCover = sqlite4GetTempReg(pParse);
 
-  /* Write the entry to each index. */
+  /* =========================================================
+     1️⃣ FIRST PASS: 일반 인덱스 / PK만 처리
+     ========================================================= */
   int iCur = 0;
   for(pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, iCur++){
 
-    assert( pIdx->eIndexType!=SQLITE4_INDEX_PRIMARYKEY || aRegIdx[iCur] );
-
-    if( pIdx->eIndexType==SQLITE4_INDEX_FTS5 ){
-      int iPK;
-      sqlite4FindPrimaryKey(pTab, &iPK);
-      sqlite4Fts5CodeUpdate(pParse, pIdx, 0, aRegIdx[iPK], regContent, 0);
-      continue;
-    }
-
-  #ifndef SQLITE_OMIT_VECTOR
+#ifndef SQLITE_OMIT_VECTOR
     if( pIdx->idxIsVector ){
-      int k;
-      int nVecField = pIdx->nColumn + 1;
-      int regVec = sqlite4GetTempRange(pParse, nVecField);
-
-      for(k=0; k<pIdx->nColumn; k++){
-        int iCol = pIdx->aiColumn[k];
-        Expr *pE = pIdx->aColExpr->a[k].pExpr;
-        Expr *pArg = 0;
-        if( pE && pE->op==TK_FUNCTION && pE->x.pList && pE->x.pList->nExpr>0 ){
-          pArg = pE->x.pList->a[0].pExpr;
-        }
-        if( pArg && pArg->op==TK_COLUMN ){
-          sqlite4VdbeAddOp2(v, OP_SCopy, regContent + pArg->iColumn, regVec + k);
-        }else{
-          sqlite4ExprCode(pParse, pE, regVec + k); /* fallback */
-        }
-      }
-      sqlite4VdbeAddOp2(v, OP_SCopy, regRowid, regVec + (nVecField-1));
-
-      //[koreauniv] for debug
-      printf("sqlite4CompleteInsertion: regRowid: %d, regVec: %d, nVecField: %d\n", regRowid, regVec, nVecField);
-
-      sqlite4VdbeAddOp3(v, OP_VectorInsert, baseCur+iCur, regVec, nVecField);
-
-      sqlite4ReleaseTempRange(pParse, regVec, nVecField);
-      continue;
+      continue;   /* vector index는 두 번째 패스에서 */
     }
-  #endif
+#endif
+
+    assert(pIdx->eIndexType!=SQLITE4_INDEX_PRIMARYKEY || aRegIdx[iCur]);
 
     if( aRegIdx[iCur] ){
       int regData = 0;
@@ -1650,6 +1734,7 @@ void sqlite4CompleteInsertion(
             (char*)aiPermute, P4_INTARRAY
           );
         }
+
         regData = regCover;
         sqlite4VdbeAddOp3(v, OP_MakeRecord, regContent, pIdx->nCover, regData);
       }
@@ -1658,8 +1743,52 @@ void sqlite4CompleteInsertion(
       sqlite4VdbeChangeP5(v, flags);
     }
   }
-}
 
+#ifndef SQLITE_OMIT_VECTOR
+  /* =========================================================
+     2️⃣ SECOND PASS: Vector index 처리 (rowid 확정 이후)
+     ========================================================= */
+  iCur = 0;
+  for(pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, iCur++){
+
+    if( !pIdx->idxIsVector ) continue;
+
+    int k;
+    int nVecField = pIdx->nColumn + 1;
+    int regVec = sqlite4GetTempRange(pParse, nVecField);
+
+    /* 벡터 필드 채우기 */
+    for(k=0; k<pIdx->nColumn; k++){
+      Expr *pE = pIdx->aColExpr->a[k].pExpr;
+      Expr *pArg = 0;
+
+      if( pE && pE->op==TK_FUNCTION && pE->x.pList && pE->x.pList->nExpr>0 ){
+        pArg = pE->x.pList->a[0].pExpr;
+      }
+
+      if( pArg && pArg->op==TK_COLUMN ){
+        sqlite4VdbeAddOp2(v, OP_SCopy,
+                         regContent + pArg->iColumn,
+                         regVec + k);
+      }else{
+        sqlite4ExprCode(pParse, pE, regVec + k);
+      }
+    }
+
+    /* 🔴 rowid는 이제 확정된 상태 */
+    sqlite4VdbeAddOp2(v, OP_SCopy,
+                     regRowid,
+                     regVec + (nVecField-1));
+
+    sqlite4VdbeAddOp3(v, OP_VectorInsert,
+                     baseCur+iCur,
+                     regVec,
+                     nVecField);
+
+    sqlite4ReleaseTempRange(pParse, regVec, nVecField);
+  }
+#endif
+}
 /*
 ** Generate code that will open cursors for a table and for all
 ** indices of that table.  The "baseCur" parameter is the cursor number used
