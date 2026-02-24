@@ -1637,7 +1637,7 @@ int diskAnnInsert(
     return SQLITE4_ERROR;
   }
 
-  DiskAnnTrace(("diskAnnInsert started\n"));
+  printf(("diskAnnInsert started\n"));
 
 
   // initialize search context
@@ -1689,7 +1689,7 @@ int diskAnnInsert(
   // set new rowid to nNewRowid (새로 삽입된 row의 rowid. search에서 찾은 이웃노드의 rowid와 중복될 수 있음)
   rc = diskAnnInsertShadowRow(pIndex, pVectorInRow, &nNewRowid);
   if( rc != SQLITE4_OK ){
-    printf("vector index(insert): failed to insert shadow row\n");
+    // printf("vector index(insert): failed to insert shadow row\n");
     goto out;
   }
 
@@ -1704,7 +1704,7 @@ int diskAnnInsert(
 
   // 빈 테이블에 삽입한 경우(첫 번째 노드 삽입 시)에는 이웃 노드가 없으므로 여기서 종료
   if( first ){
-    DiskAnnTrace(("inserted first row\n"));
+    printf("inserted first row\n");
     rc = SQLITE4_OK;
     goto out;
   }
