@@ -1004,13 +1004,13 @@ void sqlite4Insert(
 
   if( hasVec ){
     if( iIntPKCol>=0 ){
-      /* INTEGER PRIMARY KEY column value is the rowid */
-      sqlite4VdbeAddOp2(v, OP_SCopy, regContent+iIntPKCol, regRowid);
+      /* INTEGER PRIMARY KEY 컬럼 값이 rowid */
+      sqlite4VdbeAddOp2(v, OP_SCopy, regContent + iIntPKCol, regRowid);
     }else if( bImplicitPK ){
-      /* PK index cursor exists */
-      sqlite4VdbeAddOp2(v, OP_NewRowid, baseCur+iPk, regRowid);
+      /* implicit PK면 PK 커서에서 new rowid 생성 */
+      sqlite4VdbeAddOp2(v, OP_NewRowid, baseCur + iPk, regRowid);
     }else{
-      /* rowid table (no explicit PK index) */
+      /* rowid table이면 table cursor(baseCur)에서 new rowid 생성 */
       sqlite4VdbeAddOp2(v, OP_NewRowid, baseCur, regRowid);
     }
   }
