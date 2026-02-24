@@ -713,12 +713,12 @@ static int diskAnnSelectRandomShadowRow(const DiskAnnIndex *pIndex, u64 *pRowid)
   }
   rc = sqlite4_prepare(pIndex->db, zSql, -1, &pStmt, 0);
   if( rc != SQLITE4_OK ){
-    printf("diskAnnSelectRandomShadowRow: sqlite4_prepare failed with error: %s\n", sqlite4_errmsg(pIndex->db));
+    // printf("diskAnnSelectRandomShadowRow: sqlite4_prepare failed with error: %s\n", sqlite4_errmsg(pIndex->db));
     goto out;
   }
   rc = sqlite4_step(pStmt);
   if( rc != SQLITE4_ROW ){
-    printf("diskAnnSelectRandomShadowRow: sqlite4_step failed with error: %s\n", sqlite4_errmsg(pIndex->db));
+    // printf("diskAnnSelectRandomShadowRow: sqlite4_step failed with error: %s\n", sqlite4_errmsg(pIndex->db));
     goto out;
   }
 
