@@ -1199,7 +1199,7 @@ int vectorIndexInsert(
     return rc;
   }
   printf("vectorIndexInsert: vectorInRowAlloc rc=%d, vectorInRow.pVector=%p, vectorInRow.nKeys=%d, vectorInRow.pKeyValues=%p\n", rc, vectorInRow.pVector, vectorInRow.nKeys, vectorInRow.pKeyValues);
-  printf("vectorIndexInsert: vectorInRow.pVector->type=%d, vectorInRow.pKeyValues->type\n", vectorInRow.pVector->type, vectorInRow.pKeyValues->type);
+  printf("vectorIndexInsert: vectorInRow.pVector->type=%d, vectorInRow.pKeyValues->type=%d\n", vectorInRow.pVector->type, vectorInRow.pKeyValues->type);
   if( vectorInRow.pVector == NULL ){
     return SQLITE4_OK;
   }
