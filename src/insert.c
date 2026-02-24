@@ -982,10 +982,10 @@ void sqlite4Insert(
     );
   }
 
+  /* 기존 로직 그대로 */
   if( iIntPKCol>=0 ){
     int regDest = regContent+iIntPKCol;
-    int a1;
-    a1 = sqlite4VdbeAddOp1(v, OP_NotNull, regDest);
+    int a1 = sqlite4VdbeAddOp1(v, OP_NotNull, regDest);
     sqlite4VdbeAddOp3(v, OP_NewRowid, baseCur, regDest, regAutoinc);
     sqlite4VdbeJumpHere(v, a1);
     autoIncStep(pParse, regAutoinc, regDest);
@@ -993,24 +993,21 @@ void sqlite4Insert(
 
   if( bImplicitPK ){
     assert( !isView );
-    sqlite4VdbeAddOp2(v, OP_NewRowid, baseCur, regRowid); // [koreauniv] 원래 baseCur+iPk
+    sqlite4VdbeAddOp2(v, OP_NewRowid, baseCur+iPk, regRowid);
   }
 
-  /* regRowid must be valid if any vector index needs it */
+  /* ✅ 벡터 인덱스가 있으면 regRowid를 “항상” 유효하게 */
   int hasVec = 0;
   for(Index *p=pTab->pIndex; p; p=p->pNext){
     if(p->idxIsVector){ hasVec = 1; break; }
   }
-
   if( hasVec ){
     if( iIntPKCol>=0 ){
-      /* INTEGER PRIMARY KEY 컬럼 값이 rowid */
-      sqlite4VdbeAddOp2(v, OP_SCopy, regContent + iIntPKCol, regRowid);
+      sqlite4VdbeAddOp2(v, OP_SCopy, regContent+iIntPKCol, regRowid);
     }else if( bImplicitPK ){
-      /* implicit PK면 PK 커서에서 new rowid 생성 */
-      sqlite4VdbeAddOp2(v, OP_NewRowid, baseCur + iPk, regRowid);
+      /* 이미 위에서 NewRowid 했으면 굳이 또 할 필요 없음 */
+      /* (원하면 이 줄은 생략 가능) */
     }else{
-      /* rowid table이면 table cursor(baseCur)에서 new rowid 생성 */
       sqlite4VdbeAddOp2(v, OP_NewRowid, baseCur, regRowid);
     }
   }
