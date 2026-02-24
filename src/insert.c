@@ -1608,6 +1608,9 @@ void sqlite4CompleteInsertion(
       }
       sqlite4VdbeAddOp2(v, OP_SCopy, regRowid, regVec + (nVecField-1));
 
+      //[koreauniv] for debug
+      printf("sqlite4CompleteInsertion: regRowid: %d, regVec: %d, nVecField: %d\n", regRowid, regVec, nVecField);
+
       sqlite4VdbeAddOp3(v, OP_VectorInsert, baseCur+iCur, regVec, nVecField);
 
       sqlite4ReleaseTempRange(pParse, regVec, nVecField);
