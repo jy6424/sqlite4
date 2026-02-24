@@ -996,6 +996,25 @@ void sqlite4Insert(
     sqlite4VdbeAddOp2(v, OP_NewRowid, baseCur+iPk, regRowid);
   }
 
+  /* regRowid must be valid if any vector index needs it */
+  int hasVec = 0;
+  for(Index *p=pTab->pIndex; p; p=p->pNext){
+    if(p->idxIsVector){ hasVec = 1; break; }
+  }
+
+  if( hasVec ){
+    if( iIntPKCol>=0 ){
+      /* INTEGER PRIMARY KEY column value is the rowid */
+      sqlite4VdbeAddOp2(v, OP_SCopy, regContent+iIntPKCol, regRowid);
+    }else if( bImplicitPK ){
+      /* PK index cursor exists */
+      sqlite4VdbeAddOp2(v, OP_NewRowid, baseCur+iPk, regRowid);
+    }else{
+      /* rowid table (no explicit PK index) */
+      sqlite4VdbeAddOp2(v, OP_NewRowid, baseCur, regRowid);
+    }
+  }
+
   if( !isView ){
 #ifndef SQLITE4_OMIT_VIRTUALTABLE
     if( IsVirtual(pTab) ){
