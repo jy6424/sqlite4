@@ -870,7 +870,7 @@ static int diskAnnInsertShadowRow(const DiskAnnIndex *pIndex, const VectorInRow 
   }
   zSql = sqlite4MPrintf(
       pIndex->db,
-      "INSERT INTO \"%w\".%s(%s, data) VALUES (%s, ?) RETURNING id",
+      "INSERT INTO \"%w\".%s(%s, data) VALUES (%s, ?)",
       pIndex->zDbSName, pIndex->zShadow, columnSqlNames, columnSqlPlaceholders
   );
   if( zSql == NULL ){
@@ -897,7 +897,7 @@ static int diskAnnInsertShadowRow(const DiskAnnIndex *pIndex, const VectorInRow 
     goto out;
   }
   rc = sqlite4_step(pStmt);
-  if( rc != SQLITE4_ROW ){
+  if( rc != SQLITE4_DONE ){
     rc = SQLITE4_ERROR;
     goto out;
   }
