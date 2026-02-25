@@ -2879,8 +2879,9 @@ Index *sqlite4CreateIndex(
 
   if( isVectorIndex ){
     if( pParse->nested || db->init.busy ){
-      vectorIdxRc = 1;         /* CREATE_OK_SKIP_REFILL 의미 */
-      skipRefill = 1;
+      // vectorIdxRc = 1;         /* CREATE_OK_SKIP_REFILL 의미 */
+      // skipRefill = 1;
+      pIndex->idxIsVector = 1;
     }else{
       vectorIdxRc = vectorIndexCreate(pParse, pIndex, db->aDb[iDb].zName);
     }

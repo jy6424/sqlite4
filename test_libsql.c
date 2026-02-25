@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
     0, 0
   );
   if (rc) {
-    printf("sql error (create): rc=%d\n", rc);
+    printf("sql error (create): rc=%d\n with errmsg : %s\n", rc, sqlite4_errmsg(db));
     sqlite4_close(db, 0);
     return 1;
   }
@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
     0, 0
   );
   if (rc) {
-    printf("sql error (create index): rc=%d\n", rc);
+    printf("sql error (create index): rc=%d\n with errmsg : %s\n", rc, sqlite4_errmsg(db));
     sqlite4_close(db, 0);
     return 1;
   }
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     0
   );
   if (rc) {
-    printf("sql error (select tables): rc=%d\n", rc);
+    printf("sql error (select tables): rc=%d\n with errmsg : %s\n", rc, sqlite4_errmsg(db));
     sqlite4_close(db, 0);
     return 1;
   }
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
     0
   );
   if (rc) {
-    printf("sql error (select indexes): rc=%d\n", rc);
+    printf("sql error (select indexes): rc=%d\n with errmsg : %s\n", rc, sqlite4_errmsg(db));
     sqlite4_close(db, 0);
     return 1;
   }
@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
     0
   );
   if (rc) {
-    printf("sql error (print tables and indexes): rc=%d\n", rc);
+    printf("sql error (print tables and indexes): rc=%d\n with errmsg : %s\n", rc, sqlite4_errmsg(db));
     sqlite4_close(db, 0);
     return 1;
   }
@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
     0, 0
   );
   if (rc) {
-    printf("sql error (insert data): rc=%d\n", rc);
+    printf("sql error (insert data): rc=%d\n with errmsg : %s\n", rc, sqlite4_errmsg(db));
     sqlite4_close(db, 0);
     return 1;
   }
@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
     0
   );
   if (rc) {
-    printf("sql error (select data): rc=%d\n", rc);
+    printf("sql error (select data): rc=%d\n with errmsg : %s\n", rc, sqlite4_errmsg(db));
     sqlite4_close(db, 0);
     return 1;
   }
