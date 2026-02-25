@@ -2550,7 +2550,7 @@ static void createIndexWriteSchema(
     /* Fill the index with data and reparse the schema. Code an OP_Expire
     ** to invalidate all pre-compiled statements.
     */
-    if( pIdx->eIndexType!=SQLITE4_INDEX_UNIQUE ){
+    if( pIdx->eIndexType!=SQLITE4_INDEX_UNIQUE && pIdx->idxIsVector == 0 ){
       sqlite4RefillIndex(pParse, pIdx, 1);
       sqlite4ChangeCookie(pParse, iDb);
       sqlite4VdbeAddParseSchemaOp(v, iDb,
@@ -2958,6 +2958,8 @@ Index *sqlite4CreateIndex(
   if( vectorIdxRc >= 1 ){
     printf("Created vector index %s with vectorIdxRc = %d\n", pIndex->zName, vectorIdxRc);
     pIndex->idxIsVector = 1;
+    skipRefill = (vectorIdxRc == 1);
+    goto exit_create_index;   // 🔥 핵심
   }
   if( vectorIdxRc == 1 ){
     printf("Skip index refill for vector index(vectorIdxRc = %d)\n", vectorIdxRc);
