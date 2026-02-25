@@ -897,7 +897,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
   //   return CREATE_OK;
   // }
   if (db->init.busy) {
-    return SQLITE4_OK;
+    return CREATE_OK;
   }
   printf("vectorIndexCreate: entered\n");
   printf("vectorIndexCreate: db->init.busy = %d\n", db->init.busy);
