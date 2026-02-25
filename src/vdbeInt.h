@@ -48,8 +48,6 @@ typedef struct RowDecoder RowDecoder;
 
 #ifndef SQLITE_OMIT_VECTOR
 #define CURTYPE_VECTOR_IDX  64
-/* Opaque type used in code in vectorIndex.c */
-typedef struct VectorIdxCursor VectorIdxCursor;
 #endif
 
 /*
@@ -79,9 +77,9 @@ struct VdbeCursor {
   sqlite4_vtab_cursor *pVtabCursor;  /* The cursor for a virtual table */
   const sqlite4_module *pModule;     /* Module for cursor pVtabCursor */
   sqlite4_buffer sSeekKey;           /* Key for deferred seek */
-#ifndef SQLITE_OMIT_VECTOR // [koreauniv] 추가
-  VectorIdxCursor *pVecIdx;   /* CURTYPE_VECTOR_IDX.        Vector index cursor */
-#endif
+// #ifndef SQLITE_OMIT_VECTOR // [koreauniv] 추가
+//   VectorIdxCursor *pVecIdx;   /* CURTYPE_VECTOR_IDX.        Vector index cursor */
+// #endif
 // [koreauniv] 추가
   u8 eCurtype;            /* One of the CURTYPE_* values above */
   u32 iHdrOffset;         /* Offset to next unparsed byte of the header */

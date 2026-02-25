@@ -259,6 +259,7 @@ int vectorInRowPlaceholderRender(const VectorInRow *pVectorInRow, char *pBuf, in
   return 0;
 }
 
+
 // [koreauniv TODO] 수정 필요. sqlite4_value_type, UnpackedRecord 구현 필요
 int vectorInRowAlloc(sqlite4 *db, const UnpackedRecord *pRecord, VectorInRow *pVectorInRow, char **pzErrMsg) {
   int rc = SQLITE4_OK;
@@ -822,23 +823,23 @@ int vectorIndexGetParameters(
 
 
 // [koreauniv TODO] 아래 두 함수 추후 구현
-int vectorIndexDrop(sqlite4 *db, const char *zDbSName, const char *zIdxName) {
-  // we want to try delete all traces of index on every attempt
-  // this is done to prevent unrecoverable situations where index were dropped but index parameters deletion failed and second attempt will fail on first step
-  int rcIdx, rcParams;
+// int vectorIndexDrop(sqlite4 *db, const char *zDbSName, const char *zIdxName) {
+//   // we want to try delete all traces of index on every attempt
+//   // this is done to prevent unrecoverable situations where index were dropped but index parameters deletion failed and second attempt will fail on first step
+//   int rcIdx, rcParams;
 
-  assert( zDbSName != NULL );
+//   assert( zDbSName != NULL );
 
-  rcIdx = diskAnnDropIndex(db, zDbSName, zIdxName);
-  rcParams = removeIndexParameters(db, zIdxName);
-  return rcIdx != SQLITE4_OK ? rcIdx : rcParams;
-}
+//   rcIdx = diskAnnDropIndex(db, zDbSName, zIdxName);
+//   rcParams = removeIndexParameters(db, zIdxName);
+//   return rcIdx != SQLITE4_OK ? rcIdx : rcParams;
+// }
 
-int vectorIndexClear(sqlite4 *db, const char *zDbSName, const char *zIdxName) {
-  assert( zDbSName != NULL );
+// int vectorIndexClear(sqlite4 *db, const char *zDbSName, const char *zIdxName) {
+//   assert( zDbSName != NULL );
 
-  return diskAnnClearIndex(db, zDbSName, zIdxName);
-}
+//   return diskAnnClearIndex(db, zDbSName, zIdxName);
+// }
 
 /*
  * vectorIndexCreate analyzes any index creation expression and create vector index if needed
@@ -990,7 +991,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
   // [koreauniv TODO] diskAnnCreateIndex 수정하기
   printf("vectorIndexCreate: calling diskAnnCreateIndex\n");
   rc = diskAnnCreateIndex(db, zDbSName, pIdx->zName, &idxKey, &idxParams, &pzErrMsg);
-  printf("diskAnnCreateIndex rc=%d errmsg=%s\n", rc, sqlite4_errmsg(db));
+  printf("diskAnnCreateIndex rc=%d\n", rc);
   // rc = 0; // 임시
   if( rc != SQLITE4_OK ){
     if( pzErrMsg != NULL ){
@@ -1001,7 +1002,6 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
     return CREATE_FAIL;
   }
   rc = insertIndexParameters(db, zDbSName, pIdx->zName, &idxParams);
-  printf("insertIndexParameters rc=%d errmsg=%s\n", rc, sqlite4_errmsg(db));
 
   // we must consider only lower bits because with sqlite3_extended_result_codes on
   // we can recieve different subtypes of CONSTRAINT error
@@ -1197,12 +1197,6 @@ int vectorIndexInsert(
   if( rc != SQLITE4_OK ){
     return rc;
   }
-  printf("nField=%d aMem0.type=%d aMem1.type=%d\n",
-       pRecord->nField,
-       sqlite4_value_type(&pRecord->aMem[0]),
-       sqlite4_value_type(&pRecord->aMem[1]));
-  printf("vectorIndexInsert: vectorInRowAlloc rc=%d, vectorInRow.pVector=%p, vectorInRow.nKeys=%d, vectorInRow.pKeyValues=%p\n", rc, vectorInRow.pVector, vectorInRow.nKeys, vectorInRow.pKeyValues);
-  printf("vectorIndexInsert: vectorInRow.pVector->type=%d, vectorInRow.pKeyValues->type=%d\n", vectorInRow.pVector->type, vectorInRow.pKeyValues->type);
   if( vectorInRow.pVector == NULL ){
     return SQLITE4_OK;
   }
@@ -1225,81 +1219,42 @@ int vectorIndexInsert(
 //   return diskAnnDelete(pCur->pIndex, &payload, pzErrMsg);
 // }
 
-int vectorIndexCursorInit(
-  sqlite4 *db,
-  const char *zDbSName,
-  const char *zIndexName,
-  VectorIdxCursor **ppCursor
-){
-  int rc;
-  VectorIdxCursor* pCursor;
-  VectorIdxParams params;
-  vectorIdxParamsInit(&params, NULL, 0);
+// int vectorIndexCursorInit(
+//   sqlite4 *db,
+//   const char *zDbSName,
+//   const char *zIndexName,
+//   VectorIdxCursor **ppCursor
+// ){
+//   int rc;
+//   VectorIdxCursor* pCursor;
+//   VectorIdxParams params;
+//   vectorIdxParamsInit(&params, NULL, 0);
 
-  assert( zDbSName != NULL );
+//   assert( zDbSName != NULL );
 
-  if( vectorIndexGetParameters(db, zDbSName, zIndexName, &params) != 0 ){
-    return SQLITE4_ERROR;
-  }
-  pCursor = sqlite4DbMallocZero(db, sizeof(VectorIdxCursor));
-  if( pCursor == 0 ){
-    return SQLITE4_NOMEM;
-  }
-  rc = diskAnnOpenIndex(db, zDbSName, zIndexName, &params, &pCursor->pIndex);
-  if( rc != SQLITE4_OK ){
-    sqlite4DbFree(db, pCursor);
-    return rc;
-  }
-  pCursor->db = db;
-  *ppCursor = pCursor;
-  return SQLITE4_OK;
-}
+//   if( vectorIndexGetParameters(db, zDbSName, zIndexName, &params) != 0 ){
+//     return SQLITE4_ERROR;
+//   }
+//   pCursor = sqlite4DbMallocZero(db, sizeof(VectorIdxCursor));
+//   if( pCursor == 0 ){
+//     return SQLITE4_NOMEM;
+//   }
+//   rc = diskAnnOpenIndex(db, zDbSName, zIndexName, &params, &pCursor->pIndex);
+//   if( rc != SQLITE4_OK ){
+//     sqlite4DbFree(db, pCursor);
+//     return rc;
+//   }
+//   pCursor->db = db;
+//   *ppCursor = pCursor;
+//   return SQLITE4_OK;
+// }
 
-void vectorIndexCursorClose(sqlite4 *db, VectorIdxCursor *pCursor, int *nReads, int *nWrites){
-  *nReads = pCursor->pIndex->nReads;
-  *nWrites = pCursor->pIndex->nWrites;
+// void vectorIndexCursorClose(sqlite4 *db, VectorIdxCursor *pCursor, int *nReads, int *nWrites){
+//   *nReads = pCursor->pIndex->nReads;
+//   *nWrites = pCursor->pIndex->nWrites;
 
-  diskAnnCloseIndex(pCursor->pIndex);
-  sqlite4DbFree(db, pCursor);
-}
-
-
-int vectorIndexCursorInitFromIndex(
-  sqlite4 *db,
-  const char *zDbSName,
-  Index *pIdx,
-  VectorIdxCursor **ppCursor
-){
-  int rc;
-  VectorIdxCursor* pCursor;
-  VectorIdxParams params;
-
-  assert( zDbSName!=0 );
-  assert( pIdx!=0 );
-  assert( pIdx->zName!=0 );
-
-  /* IMPORTANT: No SQL here. Use cached params. */
-  if( pIdx->pVecParamsCached==0 ){
-    return SQLITE4_ERROR;  /* params not cached => avoid re-entrant SQL */
-  }
-
-  params = *(pIdx->pVecParamsCached);  /* shallow copy (see note) */
-
-  pCursor = sqlite4DbMallocZero(db, sizeof(VectorIdxCursor));
-  if( pCursor==0 ){
-    return SQLITE4_NOMEM;
-  }
-
-  rc = diskAnnOpenIndex(db, zDbSName, pIdx->zName, &params, &pCursor->pIndex);
-  if( rc!=SQLITE4_OK ){
-    sqlite4DbFree(db, pCursor);
-    return rc;
-  }
-
-  pCursor->db = db;
-  *ppCursor = pCursor;
-  return SQLITE4_OK;
-}
-
+//   diskAnnCloseIndex(pCursor->pIndex);
+//   sqlite4DbFree(db, pCursor);
+// }
 
 #endif /* !defined(SQLITE_OMIT_VECTOR) */

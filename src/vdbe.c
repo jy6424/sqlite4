@@ -45,7 +45,6 @@
 */
 #include "sqliteInt.h"
 #include "vdbeInt.h"
-#include "vectorIndexInt.h"
 
 /*
 ** Invoke this macro on memory cells just prior to changing the
@@ -3706,15 +3705,6 @@ case OP_Insert: {
   
 
   pC = p->apCsr[pOp->p1];
-
-#ifndef SQLITE4_OMIT_VECTOR
-  if( pC->eCurtype == CURTYPE_VECTOR_IDX || pC->pVecIdx ){
-    printf("ERROR: OP_Insert called on vector index cursor\n");
-    rc = SQLITE4_ERROR;
-    goto abort_due_to_error;
-  }
-#endif
-
   pKey = &aMem[pOp->p3];
   pData = pOp->p2 ? &aMem[pOp->p2] : 0;
 
@@ -3733,6 +3723,7 @@ case OP_Insert: {
     pKVKey = pKey->z;
   }
 
+
   rc = sqlite4KVStoreReplace(
      pC->pKVCur->pStore,
      (u8 *)pKVKey, nKVKey,
@@ -3744,88 +3735,6 @@ case OP_Insert: {
   printf("OP_Insert: p1=%d, p2=%d, p3=%d, p5=%d\n", pOp->p1, pOp->p2, pOp->p3, pOp->p5);
   break;
 }
-
-// [koreauniv] VECTOR INDEX opcode
-/* Opcode: VectorInsert P1 P2 P3 * *
-** P1: Cursor number for the vector index.
-** P2: First register containing index key fields.
-** P3: Number of fields in the key.
-**
-** This opcode inserts a new entry into a vector index.
-*/
-case OP_VectorInsert: {
-#ifndef SQLITE4_OMIT_VECTOR
-  VdbeCursor *pC = p->apCsr[pOp->p1];
-  UnpackedRecord idxKeyStatic;
-
-  assert(pC && pC->pVecIdx);               
-  assert(pOp->p2>0 && pOp->p3>0);
-  assert(pOp->p2 + pOp->p3 - 1 <= p->nMem);
-
-  idxKeyStatic.nField = (u16)pOp->p3;
-  idxKeyStatic.aMem   = &aMem[pOp->p2];
-  idxKeyStatic.pKeyInfo = pC->pKeyInfo;    /* optional */
-  idxKeyStatic.default_rc = 0;
-  idxKeyStatic.errCode = 0;
-  idxKeyStatic.eqSeen = 0;
-
-  rc = vectorIndexInsert(pC->pVecIdx, &idxKeyStatic, &p->zErrMsg);
-  if (rc) goto abort_due_to_error;
-
-  pC->rowChnged = 1;
-  break;
-#else
-  rc = SQLITE4_ERROR;
-  goto abort_due_to_error;
-#endif
-}
-
-// [koreauniv] VECTOR INDEX opcode
-/* Opcode: OpenVectorIdx P1 P2 P3 P4 P5
-** Synopsis: cursor=P1 root=P2 iDb=P3 pIdx=P4
-*/
-#ifndef SQLITE4_OMIT_VECTOR
-case OP_OpenVectorIdx: {
-#ifndef SQLITE4_OMIT_VECTOR
-  VectorIdxCursor *cursor = 0;
-  VdbeCursor *pCur;
-  KeyInfo *pKeyInfo;
-
-  /* iDb is in P3 */
-  assert( pOp->p3>=0 && pOp->p3<db->nDb );
-
-  /* KeyInfo comes via P4 */
-  assert( pOp->p4type==P4_KEYINFO );
-  pKeyInfo = pOp->p4.pKeyInfo;
-
-  assert( pKeyInfo );
-  assert( pKeyInfo->zDbSName );
-  assert( pKeyInfo->zIndexName );
-
-  if( pOp->p5 & OPFLAG_FORDELETE ){
-    rc = vectorIndexClear(db, pKeyInfo->zDbSName, pKeyInfo->zIndexName);
-    if( rc ) goto abort_due_to_error;
-  }
-
-  rc = vectorIndexCursorInit(db, pKeyInfo->zDbSName, pKeyInfo->zIndexName, &cursor);
-  if( rc ) goto abort_due_to_error;
-
-  pCur = allocateCursor(p, pOp->p1, 0, 0, 0);
-  if( pCur==0 ) goto no_mem;
-
-  pCur->eCurtype = CURTYPE_VECTOR_IDX;
-  pCur->iDb = pOp->p3;
-  pCur->nullRow = 1;
-  pCur->pVecIdx = cursor;
-  pCur->pgnoRoot = pOp->p2;
-
-  break;
-#else
-  rc = SQLITE4_ERROR;
-  goto abort_due_to_error;
-#endif
-}
-#endif /* SQLITE4_OMIT_VECTOR */
 
 /* Opcode: IdxDelete P1 * P3 * *
 **

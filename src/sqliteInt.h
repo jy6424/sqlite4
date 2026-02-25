@@ -1340,12 +1340,6 @@ struct KeyInfo {
   u16 nData;          /* Number of columns of data in KV entry value */
   u8 *aSortOrder;     /* Sort order for each column.  May be NULL */
   CollSeq *aColl[1];  /* Collating sequence for each term of the key */
-
-  // [koreauniv] added for vector index
-  char *zIndexName;   /* Name of the index (might be NULL) */
-  char *zDbSName;     /* Name of the database schema (might be NULL) */
-  Index *pIdx;        /* back-pointer to Index */
-  u8 idxIsVector;
 };
 
 
@@ -1453,7 +1447,6 @@ struct Index {
 #ifndef SQLITE4_OMIT_VECTOR
   ExprList *aColExpr;   /* Expression list for index columns (if any) */
   unsigned idxIsVector:1;  /* 0:Normal 1:VECTOR INDEX */
-  struct VectorIdxParams *pVecParamsCached; /* cached vector params */
 #endif
 
   Fts5Index *pFts; /* Fts5 data (or NULL if this is not an fts index) */
@@ -2336,10 +2329,6 @@ struct AuthContext {
 #define OPFLAG_SEQCOUNT      0x08    /* Append sequence number to key */
 #define OPFLAG_CLEARCACHE    0x10    /* Clear pseudo-table cache in OP_Column */
 
-//[koreauniv] added for OP_OpenVectorIndex
-/* For OP_OpenRead/OP_OpenWrite P5 flags */
-#define OPFLAG_FORDELETE 0x08  /* OP_Open should use BTREE_FORDELETE (or delete-only hint) */
-
 /*
  * Each trigger present in the database schema is stored as an instance of
  * struct Trigger. 
@@ -2881,7 +2870,7 @@ void sqlite4EncodeIndexKey(Parse *, Index *, int, Index *, int, int, int);
 void sqlite4EncodeIndexValue(Parse*, int, Index*, int);
 void sqlite4GenerateConstraintChecks(Parse*,Table*,int,int,
                                      int*,int,int,int,int,int*);
-void sqlite4CompleteInsertion(Parse*, Table*, int, int, int*, int, int, int, int);
+void sqlite4CompleteInsertion(Parse*, Table*, int, int, int*, int, int, int);
 int sqlite4OpenTableAndIndices(Parse*, Table*, int, int);
 void sqlite4BeginWriteOperation(Parse*, int, int);
 void sqlite4MultiWrite(Parse*);
@@ -3405,21 +3394,3 @@ void sqlite4_result_value(sqlite4_context *pCtx, sqlite4_value *pValue);
 #define SQLITE4_CHECKPOINT_FULL     1  /* Wait for writers, then checkpoint */
 #define SQLITE4_CHECKPOINT_RESTART  2  /* Like FULL but wait for readers */
 #define SQLITE4_CHECKPOINT_TRUNCATE 3  /* Like RESTART but also truncate WAL */
-
-
-/*
-** Round up a number to the next larger multiple of 8.  This is used
-** to force 8-byte alignment on 64-bit architectures.
-**
-** ROUND8() always does the rounding, for any argument.
-**
-** ROUND8P() assumes that the argument is already an integer number of
-** pointers in size, and so it is a no-op on systems where the pointer
-** size is 8.
-*/
-#define ROUND8(x)     (((x)+7)&~7)
-#if SQLITE_PTRSIZE==8
-# define ROUND8P(x)   (x)
-#else
-# define ROUND8P(x)   (((x)+7)&~7)
-#endif
