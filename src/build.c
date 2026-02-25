@@ -2810,16 +2810,12 @@ Index *sqlite4CreateIndex(
       /* 일반 컬럼 인덱스 (shadow 포함) */
       pIndex->aiColumn[i] = (i16)pCExpr->iColumn;
 
-    }else if( pCExpr
-              && pCExpr->op == TK_FUNCTION
-              && pCExpr->u.zToken
-              && sqlite4_stricmp(pCExpr->u.zToken, "libsql_vector_idx")==0 ){
-
+    }else if( pCExpr && pCExpr->op == TK_FUNCTION && pCExpr->u.zToken && sqlite4_stricmp(pCExpr->u.zToken, "libsql_vector_idx")==0 ){
       /* vector expression index */
       pIndex->aiColumn[i] = XN_EXPR;
+      pIndex->idxIsVector = 1;
       hasExpr = 1;
       isVectorIndex = 1;
-
     }else{
       /* 일반 expression index */
       pIndex->aiColumn[i] = XN_EXPR;
