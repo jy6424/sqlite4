@@ -2551,7 +2551,9 @@ static void createIndexWriteSchema(
     ** to invalidate all pre-compiled statements.
     */
     if( pIdx->eIndexType!=SQLITE4_INDEX_UNIQUE ){
-      sqlite4RefillIndex(pParse, pIdx, 1);
+      if( !pIdx->idxIsVector){
+        sqlite4RefillIndex(pParse, pIdx, 1);
+      }
       sqlite4ChangeCookie(pParse, iDb);
       sqlite4VdbeAddParseSchemaOp(v, iDb,
           sqlite4MPrintf(db, "name='%q' AND type='index'", pIdx->zName));
@@ -2870,70 +2872,6 @@ Index *sqlite4CreateIndex(
     }
   }
 
-  // /* AFTER: */
-  // pListItem = pList->a;
-  // int hasExpr = 0;
-  // pListItem = pList->a;
-  // for(i = 0; i < pIndex->nColumn; i++, pListItem++){
-  //   Expr *pExpr = pListItem->pExpr;
-  //   Expr *pCExpr = pExpr;
-
-  //   /* COLLATE 제거 */
-  //   while( pCExpr && pCExpr->op == TK_COLLATE ){
-  //     pCExpr = pCExpr->pLeft;
-  //   }
-  //   if( pExpr == NULL ){
-  //     return 0;
-  //   }
-
-  //   if( pCExpr && pCExpr->op == TK_COLUMN ){
-  //     /* 단순 컬럼 */
-  //     pIndex->aiColumn[i] = (i16)pCExpr->iColumn;
-  //   }else{
-  //     /* 표현식 인덱스 (함수 포함) */
-  //     pIndex->aiColumn[i] = XN_EXPR;
-  //     hasExpr = 1;
-  //   }
-
-  //   pIndex->aSortOrder[i] = (u8)pListItem->sortOrder;
-  // }
-
-  // /* sqlite3와 동일한 핵심 동작 */
-  // if( hasExpr ){
-  //   pIndex->aColExpr = pList;
-  //   pList = 0;   /* ownership 이동 */
-  // }
-
-  // if( pIndex->aColExpr ){
-  //   SrcList sSrc;
-  //   NameContext sNC;
-  //   int ii;
-
-  //   memset(&sSrc, 0, sizeof(sSrc));
-  //   memset(&sNC, 0, sizeof(sNC));
-
-  //   sSrc.nSrc = 1;
-  //   sSrc.a[0].zName = pTab->zName;
-  //   sSrc.a[0].pTab = pTab;
-  //   sSrc.a[0].iCursor = -1;
-
-  //   sNC.pParse = pParse;
-  //   sNC.pSrcList = &sSrc;
-  //   sNC.isCheck = 0;
-  //   sNC.nDepth = 1;
-
-  //   for(ii = 0; ii < pIndex->aColExpr->nExpr; ii++){
-  //     Expr *pE = pIndex->aColExpr->a[ii].pExpr;
-  //     if( pE ){
-  //       if( sqlite4ResolveExprNames(&sNC, pE) ){
-  //         goto exit_create_index;
-  //       }
-  //     }
-  //   }
-  // }
-
-  // sqlite4DefaultRowEst(pIndex);
-
 
   printf("Creating vector index entering\n");
   // [koreauniv] place to add vector index support 
@@ -2947,7 +2885,7 @@ Index *sqlite4CreateIndex(
 
     Expr *pE = pIndex->aColExpr->a[0].pExpr;
 
-    if( pE && pE->op == TK_FUNCTION && pE->u.zToken && sqlite4_stricmp(pE->u.zToken, "libsql_vector_idx") == 0 && pIndex->idxIsVector == 0 && pParse->nested==0 ){
+    if( pE && pE->op == TK_FUNCTION && pE->u.zToken && sqlite4_stricmp(pE->u.zToken, "libsql_vector_idx") == 0 && pIndex->idxIsVector == 0){
       vectorIdxRc = vectorIndexCreate(pParse, pIndex, db->aDb[iDb].zName);
     }
   }
