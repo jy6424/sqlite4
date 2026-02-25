@@ -2778,7 +2778,6 @@ Index *sqlite4CreateIndex(
       pParse, pTab, zName, pList->nExpr, nCover, onError, nExtra, &zExtra
   );
   if( !pIndex ) goto exit_create_index;
-  printf("newIndex: created index %s\n", pIndex->zName);
 
   assert( pIndex->eIndexType==SQLITE4_INDEX_USER );
   if( pName==0 ){
