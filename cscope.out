@@ -1,4 +1,4 @@
-cscope 15 $HOME/DBS/sqlite4               0003566413
+cscope 15 $HOME/DBS/sqlite4               0003566513
 	@benchmark/anntest.c
 
 1 
@@ -309721,10 +309721,20 @@ zName
 ));
 
 59 
+	`´štf
+("sql™e4O³nIndex: o³Ãd index %s, idxIsVeùÜ %d\n", 
+pIdx
+->
+zName
+,…Idx->
+idxIsVeùÜ
+);
+
+60 
 	}
 }
 
-64 
+65 
 KeyInfo
  *
 	$sql™e4TabËPrim¬yKeyšfo
@@ -309738,7 +309748,7 @@ TabË
 pTab
 ){
 
-65 
+66 
 sql™e4
  *
 db
@@ -309746,17 +309756,17 @@ db
 pP¬£
 ->db;
 
-66 
+67 
 i
 , 
 j
 ;
 
-67 
+68 
 nPk
  = 0;
 
-70 
+71 
 i
 =0; i<
 pTab
@@ -309764,7 +309774,7 @@ pTab
 nCÞ
 ; i++){
 
-71 ifÐ
+72 ifÐ
 pTab
 ->
 aCÞ
@@ -309776,11 +309786,11 @@ iPrimKey
 nPk
 ++;
 
-73 ifÐ
+74 ifÐ
 nPk
 ==0 ){
 
-78 
+79 
 nBy‹
  = (
 KeyInfo
@@ -309792,7 +309802,7 @@ CÞlSeq
 u8
 );
 
-79 
+80 
 KeyInfo
  *
 pKey
@@ -309804,11 +309814,11 @@ db
 nBy‹
 );
 
-80 ifÐ
+81 ifÐ
 pKey
 ==0 )  0;
 
-82 
+83 
 pKey
 ->
 nF›ld
@@ -309818,7 +309828,7 @@ u16
 nPk
 ;
 
-83 
+84 
 pKey
 ->
 nPK
@@ -309828,7 +309838,7 @@ u16
 nPk
 ;
 
-84 
+85 
 pKey
 ->
 nD©a
@@ -309840,7 +309850,7 @@ pTab
 nCÞ
 ;
 
-86 
+87 
 pKey
 ->
 aSÜtOrd”
@@ -309852,7 +309862,7 @@ aCÞl
 nPk
 ];
 
-87 
+88 
 	`mem£t
 (
 pKey
@@ -309862,19 +309872,19 @@ aSÜtOrd”
 nPk
 );
 
-90 
+91 
 j
 =1; j<=
 nPk
 ; j++){
 
-91 
+92 
 CÞlSeq
  *
 pCÞl
  = 0;
 
-92 
+93 
 i
 =0; i<
 pTab
@@ -309882,7 +309892,7 @@ pTab
 nCÞ
 ; i++){
 
-93 ifÐ
+94 ifÐ
 pTab
 ->
 aCÞ
@@ -309894,7 +309904,7 @@ iPrimKey
 j
  ){
 
-94 cÚ¡ *
+95 cÚ¡ *
 zCÞl
  = 
 pTab
@@ -309904,11 +309914,11 @@ aCÞ
 i
 ].zColl;
 
-95 ifÐ
+96 ifÐ
 zCÞl
  && zColl[0] ){
 
-96 
+97 
 pCÞl
  = 
 	`sql™e4Loÿ‹CÞlSeq
@@ -309918,11 +309928,11 @@ pP¬£
 zCÞl
 );
 
-98 ifÐ
+99 ifÐ
 pCÞl
 ==0 ){
 
-99 
+100 
 pCÞl
  = 
 	`sql™e4Loÿ‹CÞlSeq
@@ -309930,11 +309940,11 @@ pCÞl
 pP¬£
 , "binary");
 
-104 ifÐ
+105 ifÐ
 pCÞl
 ==0 ){
 
-105 
+106 
 	`sql™e4DbF»e
 (
 db
@@ -309942,7 +309952,7 @@ db
 pKey
 );
 
-108 
+109 
 pKey
 ->
 aCÞl
@@ -309952,43 +309962,43 @@ j
 pCÞl
 ;
 
-111  
+112  
 pKey
 ;
 
-112 
+113 
 	}
 }
 
-119 
+120 
 	$sql™e4O³nPrim¬yKey
 (
 
-120 
+121 
 P¬£
  *
 p
 ,
 
-121 
+122 
 iCur
 ,
 
-122 
+123 
 iDb
 ,
 
-123 
+124 
 TabË
  *
 pTab
 ,
 
-124 
+125 
 Ýcode
 
 
-126 
+127 
 	`as£¹
 Ð
 Ýcode
@@ -309998,19 +310008,19 @@ OP_O³nWr™e
 OP_O³nR—d
  );
 
-127 ifÐ
+128 ifÐ
 	`IsVœtu®
 (
 pTab
 )==0 ){
 
-128 
+129 
 Index
  *
 pIdx
 ;
 
-130 
+131 
 pIdx
  = 
 	`sql™e4FšdPrim¬yKey
@@ -310018,11 +310028,11 @@ pIdx
 pTab
 , 0);
 
-131 ifÐ
+132 ifÐ
 pIdx
  ){
 
-132 
+133 
 	`sql™e4O³nIndex
 (
 p
@@ -310036,7 +310046,7 @@ pIdx
 Ýcode
 );
 
-133 
+134 
 	`as£¹
 Ð
 pIdx
@@ -310046,7 +310056,7 @@ eIndexTy³
 SQLITE4_INDEX_PRIMARYKEY
  );
 
-135 
+136 
 Vdbe
  *
 v
@@ -310056,31 +310066,31 @@ v
 p
 );
 
-136 
+137 
 KeyInfo
  *
 pKey
 ;
 
-137 
+138 
 Šum
 ;
 
-138 ifÐ
+139 ifÐ
 v
 ==0 ){
 
-139 
+140 
 	`´štf
 ("Error: could‚ot get Vdbe\n");
 
-142 
+143 
 Šum
  = 
 pTab
 ->tnum;
 
-143 
+144 
 pKey
  = 
 	`sql™e4TabËPrim¬yKeyšfo
@@ -310090,15 +310100,15 @@ p
 pTab
 );
 
-144 ià(
+145 ià(
 pKey
  == 0) {
 
-145 
+146 
 	`´štf
 ("Error: could‚ot get KeyInfo forable…rimary key\n");
 
-148 
+149 
 	`sql™e4VdbeAddOp3
 (
 v
@@ -310112,7 +310122,7 @@ iCur
 iDb
 );
 
-149 
+150 
 	`sql™e4VdbeChªgeP4
 (
 v
@@ -310122,7 +310132,7 @@ pKey
 P4_KEYINFO_HANDOFF
 );
 
-150 
+151 
 	`VdbeComm’t
 ((
 v
@@ -310132,11 +310142,11 @@ pTab
 zName
 ));
 
-153 
+154 
 	}
 }
 
-176 cÚ¡ *
+177 cÚ¡ *
 	$sql™e4IndexAffš™ySŒ
 (
 Vdbe
@@ -310148,13 +310158,13 @@ Index
 pIdx
 ){
 
-182 ifÐ!
+183 ifÐ!
 pIdx
 ->
 zCÞAff
  ){
 
-183 
+184 
 sql™e4
  *
 db
@@ -310164,7 +310174,7 @@ db
 v
 );
 
-184 
+185 
 TabË
  *
 pTab
@@ -310174,31 +310184,31 @@ pIdx
 pTabË
 ;
 
-185 
+186 
 n
-;
-
-186 
-Index
- *
-pPk
 ;
 
 187 
 Index
  *
+pPk
+;
+
+188 
+Index
+ *
 p
 ;
 
-188 *
+189 *
 zAff
 ;
 
-189 
+190 
 nAff
 ;
 
-195 
+196 
 nAff
  = 
 pIdx
@@ -310206,7 +310216,7 @@ pIdx
 nCÞumn
 ;
 
-196 
+197 
 pPk
  = 
 	`sql™e4FšdPrim¬yKey
@@ -310214,13 +310224,13 @@ pPk
 pTab
 , 0);
 
-197 ifÐ
+198 ifÐ
 pPk
  && 
 pIdx
 !=pPk ){
 
-198 
+199 
 nAff
  +ð
 pPk
@@ -310228,7 +310238,7 @@ pPk
 nCÞumn
 ;
 
-202 
+203 
 zAff
  = 
 pIdx
@@ -310240,17 +310250,17 @@ zCÞAff
 nAff
 +1);
 
-203 ifÐ!
+204 ifÐ!
 zAff
  ){
 
-204 
+205 
 db
 ->
 m®locFažed
  = 1;
 
-213 
+214 
 n
 =0, 
 p
@@ -310262,11 +310272,11 @@ pPk
 Index
 *)0 :…Pk)){
 
-214 
+215 
 i
 ;
 
-215 
+216 
 i
 =0; i<
 p
@@ -310274,7 +310284,7 @@ p
 nCÞumn
 ; i++){
 
-216 
+217 
 iCÞ
  = 
 p
@@ -310284,7 +310294,7 @@ aiCÞumn
 i
 ];
 
-217 
+218 
 zAff
 [
 n
@@ -310300,23 +310310,23 @@ aCÞ
 affš™y
 ;
 
-220 
+221 
 zAff
 [
 n
 ] = 0;
 
-223  
+224  
 pIdx
 ->
 zCÞAff
 ;
 
-224 
+225 
 	}
 }
 
-240 
+241 
 	$sql™e4TabËAffš™ySŒ
 (
 Vdbe
@@ -310328,21 +310338,21 @@ TabË
 pTab
 ){
 
-248 ifÐ!
+249 ifÐ!
 pTab
 ->
 zCÞAff
  ){
 
-249 *
+250 *
 zCÞAff
 ;
 
-250 
+251 
 i
 ;
 
-251 
+252 
 sql™e4
  *
 db
@@ -310352,7 +310362,7 @@ db
 v
 );
 
-253 
+254 
 zCÞAff
  = (*)
 	`sql™e4DbM®locRaw
@@ -310362,17 +310372,17 @@ pTab
 nCÞ
 +1);
 
-254 ifÐ!
+255 ifÐ!
 zCÞAff
  ){
 
-255 
+256 
 db
 ->
 m®locFažed
  = 1;
 
-259 
+260 
 i
 =0; i<
 pTab
@@ -310380,7 +310390,7 @@ pTab
 nCÞ
 ; i++){
 
-260 
+261 
 zCÞAff
 [
 i
@@ -310392,7 +310402,7 @@ aCÞ
 affš™y
 ;
 
-262 
+263 
 zCÞAff
 [
 pTab
@@ -310400,13 +310410,13 @@ pTab
 nCÞ
 ] = '\0';
 
-264 
+265 
 pTab
 ->
 zCÞAff
  = zColAff;
 
-267 
+268 
 	`sql™e4VdbeChªgeP4
 (
 v
@@ -310418,11 +310428,11 @@ zCÞAff
 P4_TRANSIENT
 );
 
-268 
+269 
 	}
 }
 
-279 
+280 
 	$»adsTabË
 (
 P¬£
@@ -310438,7 +310448,7 @@ TabË
 pTab
 ){
 
-280 
+281 
 Vdbe
  *
 v
@@ -310448,11 +310458,11 @@ v
 p
 );
 
-281 
+282 
 i
 ;
 
-282 
+283 
 iEnd
  = 
 	`sql™e4VdbeCu¼’tAddr
@@ -310460,11 +310470,11 @@ iEnd
 v
 );
 
-283 #iâdeà
+284 #iâdeà
 SQLITE4_OMIT_VIRTUALTABLE
 
 
-284 
+285 
 VTabË
  *
 pVTab
@@ -310480,7 +310490,7 @@ p
 db
 ,…Tab) : 0;
 
-287 
+288 
 i
 =
 iS¹Addr
@@ -310488,7 +310498,7 @@ iS¹Addr
 iEnd
 ; i++){
 
-288 
+289 
 VdbeOp
  *
 pOp
@@ -310500,13 +310510,13 @@ v
 i
 );
 
-289 
+290 
 	`as£¹
 Ð
 pOp
 !=0 );
 
-290 ifÐ
+291 ifÐ
 pOp
 ->
 Ýcode
@@ -310518,13 +310528,13 @@ p3
 iDb
  ){
 
-291 
+292 
 Index
  *
 pIndex
 ;
 
-292 
+293 
 Šum
  = 
 pOp
@@ -310532,13 +310542,13 @@ pOp
 p2
 ;
 
-293 ifÐ
+294 ifÐ
 Šum
 ==
 KVSTORE_ROOT
  )  1;
 
-294 
+295 
 pIndex
 =
 pTab
@@ -310546,17 +310556,17 @@ pTab
 pNext
 ){
 
-295 ifÐ
+296 ifÐ
 Šum
 ==
 pIndex
 ->tnum ){
 
-300 #iâdeà
+301 #iâdeà
 SQLITE4_OMIT_VIRTUALTABLE
 
 
-301 ifÐ
+302 ifÐ
 pOp
 ->
 Ýcode
@@ -310570,7 +310580,7 @@ pVb
 pVTab
  ){
 
-302 
+303 
 	`as£¹
 Ð
 pOp
@@ -310580,7 +310590,7 @@ p4
 pVb
 !=0 );
 
-303 
+304 
 	`as£¹
 Ð
 pOp
@@ -310590,39 +310600,39 @@ p4ty³
 P4_VTAB
  );
 
-309 
+310 
 	}
 }
 
-311 #iâdeà
+312 #iâdeà
 SQLITE4_OMIT_AUTOINCREMENT
 
 
-332 
+333 
 	$autoIncBegš
 (
 
-333 
+334 
 P¬£
  *
 pP¬£
 ,
 
-334 
+335 
 iDb
 ,
 
-335 
+336 
 TabË
  *
 pTab
 
 
-337 
+338 
 memId
  = 0;
 
-338 ifÐ
+339 ifÐ
 pTab
 ->
 bFÏgs
@@ -310630,7 +310640,7 @@ pTab
 TF_Autošüem’t
  ){
 
-339 
+340 
 P¬£
  *
 pTÝËv–
@@ -310640,13 +310650,13 @@ pTÝËv–
 pP¬£
 );
 
-340 
+341 
 AutošcInfo
  *
 pInfo
 ;
 
-342 
+343 
 pInfo
  = 
 pTÝËv–
@@ -310654,7 +310664,7 @@ pTÝËv–
 pAšc
 ;
 
-343  
+344  
 pInfo
  &&…Info->
 pTab
@@ -310662,11 +310672,11 @@ pTab
 pNext
 ; }
 
-344 ifÐ
+345 ifÐ
 pInfo
 ==0 ){
 
-345 
+346 
 pInfo
  = 
 	`sql™e4DbM®locRaw
@@ -310676,11 +310686,11 @@ pP¬£
 db
 , (*pInfo));
 
-346 ifÐ
+347 ifÐ
 pInfo
 ==0 )  0;
 
-347 
+348 
 pInfo
 ->
 pNext
@@ -310690,7 +310700,7 @@ pTÝËv–
 pAšc
 ;
 
-348 
+349 
 pTÝËv–
 ->
 pAšc
@@ -310698,25 +310708,25 @@ pAšc
 pInfo
 ;
 
-349 
+350 
 pInfo
 ->
 pTab
  =…Tab;
 
-350 
+351 
 pInfo
 ->
 iDb
  = iDb;
 
-351 
+352 
 pTÝËv–
 ->
 nMem
 ++;
 
-352 
+353 
 pInfo
 ->
 »gCŒ
@@ -310726,13 +310736,13 @@ pTÝËv–
 nMem
 ;
 
-353 
+354 
 pTÝËv–
 ->
 nMem
 ++;
 
-355 
+356 
 memId
  = 
 pInfo
@@ -310740,15 +310750,15 @@ pInfo
 »gCŒ
 ;
 
-357  
+358  
 memId
 ;
 
-358 
+359 
 	}
 }
 
-364 
+365 
 	$sql™e4Autošüem’tBegš
 (
 P¬£
@@ -310756,13 +310766,13 @@ P¬£
 pP¬£
 ){
 
-365 
+366 
 AutošcInfo
  *
 p
 ;
 
-366 
+367 
 sql™e4
  *
 db
@@ -310770,21 +310780,21 @@ db
 pP¬£
 ->db;
 
-367 
+368 
 Db
  *
 pDb
 ;
 
-368 
+369 
 memId
 ;
 
-369 
+370 
 addr
 ;
 
-370 
+371 
 Vdbe
  *
 v
@@ -310794,7 +310804,7 @@ pP¬£
 pVdbe
 ;
 
-374 
+375 
 	`as£¹
 Ð
 pP¬£
@@ -310802,7 +310812,7 @@ pP¬£
 pTrigg”Tab
 ==0 );
 
-375 
+376 
 	`as£¹
 Ð
 pP¬£
@@ -310810,13 +310820,13 @@ pP¬£
 	`sql™e4P¬£TÝËv–
 (pParse) );
 
-377 
+378 
 	`as£¹
 Ð
 v
  );
 
-378 
+379 
 p
  = 
 pP¬£
@@ -310826,7 +310836,7 @@ pAšc
 pNext
 ){
 
-379 
+380 
 pDb
  = &
 db
@@ -310838,7 +310848,7 @@ p
 iDb
 ];
 
-380 
+381 
 memId
  = 
 p
@@ -310846,7 +310856,7 @@ p
 »gCŒ
 ;
 
-381 
+382 
 	`sql™e4O³nTabË
 (
 pP¬£
@@ -310864,7 +310874,7 @@ pSeqTab
 OP_O³nR—d
 );
 
-382 
+383 
 	`sql™e4VdbeAddOp3
 (
 v
@@ -310874,7 +310884,7 @@ OP_NuÎ
 memId
 , memId+1);
 
-383 
+384 
 addr
  = 
 	`sql™e4VdbeCu¼’tAddr
@@ -310882,7 +310892,7 @@ addr
 v
 );
 
-384 
+385 
 	`sql™e4VdbeAddOp4
 (
 v
@@ -310898,7 +310908,7 @@ pTab
 zName
 , 0);
 
-385 
+386 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -310908,7 +310918,7 @@ OP_Rewšd
 addr
 +9);
 
-386 
+387 
 	`sql™e4VdbeAddOp3
 (
 v
@@ -310918,7 +310928,7 @@ OP_CÞumn
 memId
 );
 
-387 
+388 
 	`sql™e4VdbeAddOp3
 (
 v
@@ -310930,7 +310940,7 @@ memId
 addr
 +7, memId);
 
-388 
+389 
 	`sql™e4VdbeChªgeP5
 (
 v
@@ -310938,7 +310948,7 @@ v
 SQLITE4_JUMPIFNULL
 );
 
-389 
+390 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -310948,7 +310958,7 @@ OP_Rowid
 memId
 +1);
 
-390 
+391 
 	`sql™e4VdbeAddOp3
 (
 v
@@ -310958,7 +310968,7 @@ OP_CÞumn
 memId
 );
 
-391 
+392 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -310968,7 +310978,7 @@ OP_GÙo
 addr
 +9);
 
-392 
+393 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -310978,7 +310988,7 @@ OP_Next
 addr
 +2);
 
-393 
+394 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -310988,7 +310998,7 @@ OP_IÁeg”
 memId
 );
 
-394 
+395 
 	`sql™e4VdbeAddOp0
 (
 v
@@ -310996,11 +311006,11 @@ v
 OP_Clo£
 );
 
-396 
+397 
 	}
 }
 
-406 
+407 
 	$autoIncS‹p
 (
 P¬£
@@ -311012,11 +311022,11 @@ memId
 »gRowid
 ){
 
-407 ifÐ
+408 ifÐ
 memId
 >0 ){
 
-408 
+409 
 	`sql™e4VdbeAddOp2
 (
 pP¬£
@@ -311030,11 +311040,11 @@ memId
 »gRowid
 );
 
-410 
+411 
 	}
 }
 
-419 
+420 
 	$sql™e4Autošüem’tEnd
 (
 P¬£
@@ -311042,13 +311052,13 @@ P¬£
 pP¬£
 ){
 
-420 
+421 
 AutošcInfo
  *
 p
 ;
 
-421 
+422 
 Vdbe
  *
 v
@@ -311058,7 +311068,7 @@ pP¬£
 pVdbe
 ;
 
-422 
+423 
 sql™e4
  *
 db
@@ -311066,13 +311076,13 @@ db
 pP¬£
 ->db;
 
-424 
+425 
 	`as£¹
 Ð
 v
  );
 
-425 
+426 
 p
  = 
 pP¬£
@@ -311082,7 +311092,7 @@ pAšc
 pNext
 ){
 
-426 
+427 
 Db
  *
 pDb
@@ -311096,7 +311106,7 @@ p
 iDb
 ];
 
-427 
+428 
 j1
 , 
 j2
@@ -311108,11 +311118,11 @@ j4
 j5
 ;
 
-428 
+429 
 iRec
 ;
 
-429 
+430 
 memId
  = 
 p
@@ -311120,7 +311130,7 @@ p
 »gCŒ
 ;
 
-431 
+432 
 iRec
  = 
 	`sql™e4G‘TempReg
@@ -311128,7 +311138,7 @@ iRec
 pP¬£
 );
 
-432 
+433 
 	`sql™e4O³nTabË
 (
 pP¬£
@@ -311146,7 +311156,7 @@ pSeqTab
 OP_O³nWr™e
 );
 
-433 
+434 
 j1
  = 
 	`sql™e4VdbeAddOp1
@@ -311158,7 +311168,7 @@ OP_NÙNuÎ
 memId
 +1);
 
-434 
+435 
 j2
  = 
 	`sql™e4VdbeAddOp0
@@ -311168,7 +311178,7 @@ v
 OP_Rewšd
 );
 
-435 
+436 
 j3
  = 
 	`sql™e4VdbeAddOp3
@@ -311180,7 +311190,7 @@ OP_CÞumn
 iRec
 );
 
-436 
+437 
 j4
  = 
 	`sql™e4VdbeAddOp3
@@ -311194,7 +311204,7 @@ memId
 iRec
 );
 
-437 
+438 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -311204,7 +311214,7 @@ OP_Next
 j3
 );
 
-438 
+439 
 	`sql™e4VdbeJumpH”e
 (
 v
@@ -311212,7 +311222,7 @@ v
 j2
 );
 
-439 
+440 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -311222,7 +311232,7 @@ OP_NewRowid
 memId
 +1);
 
-440 
+441 
 j5
  = 
 	`sql™e4VdbeAddOp0
@@ -311232,7 +311242,7 @@ v
 OP_GÙo
 );
 
-441 
+442 
 	`sql™e4VdbeJumpH”e
 (
 v
@@ -311240,7 +311250,7 @@ v
 j4
 );
 
-442 
+443 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -311250,7 +311260,7 @@ OP_Rowid
 memId
 +1);
 
-443 
+444 
 	`sql™e4VdbeJumpH”e
 (
 v
@@ -311258,7 +311268,7 @@ v
 j1
 );
 
-444 
+445 
 	`sql™e4VdbeJumpH”e
 (
 v
@@ -311266,7 +311276,7 @@ v
 j5
 );
 
-445 
+446 
 	`sql™e4VdbeAddOp3
 (
 v
@@ -311278,7 +311288,7 @@ memId
 iRec
 );
 
-446 
+447 
 	`sql™e4VdbeAddOp3
 (
 v
@@ -311290,7 +311300,7 @@ iRec
 memId
 +1);
 
-447 
+448 
 	`sql™e4VdbeAddOp0
 (
 v
@@ -311298,7 +311308,7 @@ v
 OP_Clo£
 );
 
-448 
+449 
 	`sql™e4R–—£TempReg
 (
 pP¬£
@@ -311306,11 +311316,11 @@ pP¬£
 iRec
 );
 
-450 
+451 
 	}
 }
 
-456 
+457 
 	#autoIncBegš
 (
 A
@@ -311322,7 +311332,7 @@ C
 
 	)
 
-457 
+458 
 	#autoIncS‹p
 (
 A
@@ -311334,95 +311344,95 @@ C
 
 	)
 
-462  
+463  
 xãrO±imiz©iÚ
 (
 
-463 
+464 
 P¬£
  *
 pP¬£
 ,
 
-464 
+465 
 TabË
  *
 pDe¡
 ,
 
-465 
+466 
 S–eù
  *
 pS–eù
 ,
 
-466 
+467 
 ÚE¼Ü
 ,
 
-467 
+468 
 iDbDe¡
 
 
-572 
+573 
 	$sql™e4In£¹
 (
 
-573 
+574 
 P¬£
  *
 pP¬£
 ,
 
-574 
+575 
 SrcLi¡
  *
 pTabLi¡
 ,
 
-575 
+576 
 Ex´Li¡
  *
 pLi¡
 ,
 
-576 
+577 
 S–eù
  *
 pS–eù
 ,
 
-577 
+578 
 IdLi¡
  *
 pCÞumn
 ,
 
-578 
+579 
 ÚE¼Ü
 
 
-580 
+581 
 sql™e4
  *
 db
 ;
 
-581 
+582 
 TabË
  *
 pTab
 ;
 
-582 *
+583 *
 zTab
 ;
 
-583 cÚ¡ *
+584 cÚ¡ *
 zDb
 ;
 
-584 
+585 
 i
 , 
 j
@@ -311430,147 +311440,147 @@ j
 idx
 ;
 
-585 
+586 
 Vdbe
  *
 v
 ;
 
-586 
+587 
 Index
  *
 pIdx
 ;
 
-587 
+588 
 nCÞumn
 ;
 
-588 
+589 
 nHidd’
  = 0;
 
-589 
+590 
 ba£Cur
  = 0;
 
-590 
+591 
 ’dOfLoÝ
 ;
 
-591 
+592 
 u£TempTabË
  = 0;
 
-592 
+593 
 ¤cTab
  = 0;
 
-593 
+594 
 addrInsTÝ
  = 0;
 
-594 
+595 
 addrCÚt
  = 0;
 
-595 
+596 
 addrS–eù
  = 0;
 
-596 
+597 
 S–eùDe¡
  
 de¡
 ;
 
-597 
+598 
 iDb
 ;
 
-598 
+599 
 Db
  *
 pDb
 ;
 
-599 
+600 
 ­³ndFÏg
  = 0;
 
-600 
+601 
 iPk
 ;
 
-601 
+602 
 Index
  *
 pPk
 ;
 
-602 
+603 
 iIÁPKCÞ
  = -1;
 
-603 
+604 
 bIm¶ic™PK
 ;
 
-606 
+607 
 »gFromS–eù
  = 0;
 
-607 
+608 
 »gEof
  = 0;
 
-608 *
+609 *
 aRegIdx
  = 0;
 
-609 
+610 
 »gCÚ‹Á
 ;
 
-610 
+611 
 »gRowid
 ;
 
-611 
+612 
 »gAutošc
 ;
 
-613 #iâdeà
+614 #iâdeà
 SQLITE4_OMIT_TRIGGER
 
 
-614 
+615 
 isV›w
 ;
 
-615 
+616 
 Trigg”
  *
 pTrigg”
 ;
 
-616 
+617 
 tmask
 ;
 
-619 
+620 
 db
  = 
 pP¬£
 ->db;
 
-620 
+621 
 	`mem£t
 (&
 de¡
 , 0, (dest));
 
-621 ifÐ
+622 ifÐ
 pP¬£
 ->
 nE¼
@@ -311580,11 +311590,11 @@ db
 m®locFažed
  ){
 
-622 
+623 
 š£¹_þ—nup
 ;
 
-626 
+627 
 	`as£¹
 Ð
 pTabLi¡
@@ -311592,7 +311602,7 @@ pTabLi¡
 nSrc
 ==1 );
 
-627 
+628 
 zTab
  = 
 pTabLi¡
@@ -311602,7 +311612,7 @@ a
 zName
 ;
 
-628 ifÐ
+629 ifÐ
 	`NEVER
 (
 zTab
@@ -311610,7 +311620,7 @@ zTab
 š£¹_þ—nup
 ;
 
-629 
+630 
 pTab
  = 
 	`sql™e4SrcLi¡Lookup
@@ -311620,15 +311630,15 @@ pP¬£
 pTabLi¡
 );
 
-630 ifÐ
+631 ifÐ
 pTab
 ==0 ){
 
-631 
+632 
 š£¹_þ—nup
 ;
 
-633 
+634 
 iDb
  = 
 	`sql™e4SchemaToIndex
@@ -311640,7 +311650,7 @@ pTab
 pSchema
 );
 
-634 
+635 
 	`as£¹
 Ð
 iDb
@@ -311650,7 +311660,7 @@ db
 nDb
  );
 
-635 
+636 
 pDb
  = &
 db
@@ -311660,7 +311670,7 @@ aDb
 iDb
 ];
 
-636 
+637 
 zDb
  = 
 pDb
@@ -311668,7 +311678,7 @@ pDb
 zName
 ;
 
-637 ifÐ
+638 ifÐ
 	`sql™e4AuthCheck
 (
 pP¬£
@@ -311682,11 +311692,11 @@ zName
 zDb
 ) ){
 
-638 
+639 
 š£¹_þ—nup
 ;
 
-645 
+646 
 pPk
  = 
 	`sql™e4FšdPrim¬yKey
@@ -311696,7 +311706,7 @@ pTab
 iPk
 );
 
-646 
+647 
 	`as£¹
 Ð(
 pPk
@@ -311706,11 +311716,11 @@ pPk
 pTab
 ) );
 
-647 ifÐ
+648 ifÐ
 pPk
  ){
 
-648 
+649 
 bIm¶ic™PK
  = 
 pPk
@@ -311718,7 +311728,7 @@ pPk
 aiCÞumn
 [0]==(-1);
 
-649 ifÐ
+650 ifÐ
 pPk
 ->
 fIndex
@@ -311726,7 +311736,7 @@ fIndex
 IDX_IÁPK
  ){
 
-650 
+651 
 	`as£¹
 Ð
 pPk
@@ -311734,7 +311744,7 @@ pPk
 nCÞumn
 ==1 );
 
-651 
+652 
 iIÁPKCÞ
  = 
 pPk
@@ -311742,15 +311752,15 @@ pPk
 aiCÞumn
 [0];
 
-654 
+655 
 bIm¶ic™PK
  = 0;
 
-660 #iâdeà
+661 #iâdeà
 SQLITE4_OMIT_TRIGGER
 
 
-661 
+662 
 pTrigg”
  = 
 	`sql™e4Trigg”sExi¡
@@ -311764,7 +311774,7 @@ TK_INSERT
 tmask
 );
 
-662 
+663 
 isV›w
  = 
 pTab
@@ -311772,39 +311782,39 @@ pTab
 pS–eù
 !=0;
 
-664 
+665 
 	#pTrigg”
  0
 
 	)
 
-665 
+666 
 	#tmask
  0
 
 	)
 
-666 
+667 
 	#isV›w
  0
 
 	)
 
-668 #ifdeà
+669 #ifdeà
 SQLITE4_OMIT_VIEW
 
 
-669 #undeà
+670 #undeà
 isV›w
 
 
-670 
+671 
 	#isV›w
  0
 
 	)
 
-672 
+673 
 	`as£¹
 Ð(
 pTrigg”
@@ -311812,7 +311822,7 @@ pTrigg”
 tmask
 ) || (pTrigger==0 &&mask==0) );
 
-677 ifÐ
+678 ifÐ
 	`sql™e4V›wG‘CÞumnNames
 (
 pP¬£
@@ -311820,11 +311830,11 @@ pP¬£
 pTab
 ) ){
 
-678 
+679 
 š£¹_þ—nup
 ;
 
-685 ifÐ
+686 ifÐ
 	`sql™e4IsR—dOÆy
 (
 pP¬£
@@ -311834,11 +311844,11 @@ pTab
 tmask
 ) ){
 
-686 
+687 
 š£¹_þ—nup
 ;
 
-690 
+691 
 v
  = 
 	`sql™e4G‘Vdbe
@@ -311846,13 +311856,13 @@ v
 pP¬£
 );
 
-691 ifÐ
+692 ifÐ
 v
 ==0 ) 
 š£¹_þ—nup
 ;
 
-692 ifÐ
+693 ifÐ
 pP¬£
 ->
 Ã¡ed
@@ -311862,7 +311872,7 @@ pP¬£
 v
 );
 
-693 
+694 
 	`sql™e4BegšWr™eO³¿tiÚ
 (
 pP¬£
@@ -311874,7 +311884,7 @@ pTrigg”
 iDb
 );
 
-698 
+699 
 »gAutošc
  = 
 	`autoIncBegš
@@ -311886,17 +311896,17 @@ iDb
 pTab
 );
 
-705 ifÐ
+706 ifÐ
 pS–eù
  ){
 
-728 
+729 
 rc
 , 
 j1
 ;
 
-730 
+731 
 »gEof
  = ++
 pP¬£
@@ -311904,7 +311914,7 @@ pP¬£
 nMem
 ;
 
-731 
+732 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -311914,13 +311924,13 @@ OP_IÁeg”
 »gEof
 );
 
-732 
+733 
 	`VdbeComm’t
 ((
 v
 , "SELECTƒof flag"));
 
-733 
+734 
 	`sql™e4S–eùDe¡In™
 (&
 de¡
@@ -311932,7 +311942,7 @@ pP¬£
 nMem
 );
 
-734 
+735 
 addrS–eù
  = 
 	`sql™e4VdbeCu¼’tAddr
@@ -311940,7 +311950,7 @@ addrS–eù
 v
 )+2;
 
-735 
+736 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -311954,7 +311964,7 @@ de¡
 iP¬m
 );
 
-736 
+737 
 j1
  = 
 	`sql™e4VdbeAddOp2
@@ -311964,13 +311974,13 @@ v
 OP_GÙo
 , 0, 0);
 
-737 
+738 
 	`VdbeComm’t
 ((
 v
 , "Jump over SELECT coroutine"));
 
-740 
+741 
 rc
  = 
 	`sql™e4S–eù
@@ -311982,7 +311992,7 @@ pS–eù
 de¡
 );
 
-741 
+742 
 	`as£¹
 Ð
 pP¬£
@@ -311992,7 +312002,7 @@ nE¼
 rc
  );
 
-742 ifÐ
+743 ifÐ
 rc
  || 
 	`NEVER
@@ -312006,11 +312016,11 @@ db
 m®locFažed
  ){
 
-743 
+744 
 š£¹_þ—nup
 ;
 
-745 
+746 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -312020,7 +312030,7 @@ OP_IÁeg”
 »gEof
 );
 
-746 
+747 
 	`sql™e4VdbeAddOp1
 (
 v
@@ -312032,7 +312042,7 @@ de¡
 iP¬m
 );
 
-747 
+748 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -312044,13 +312054,13 @@ SQLITE4_INTERNAL
 OE_AbÜt
 );
 
-748 
+749 
 	`VdbeComm’t
 ((
 v
 , "End of SELECT coroutine"));
 
-749 
+750 
 	`sql™e4VdbeJumpH”e
 (
 v
@@ -312058,7 +312068,7 @@ v
 j1
 );
 
-751 
+752 
 »gFromS–eù
  = 
 de¡
@@ -312066,7 +312076,7 @@ de¡
 iMem
 ;
 
-752 
+753 
 	`as£¹
 Ð
 pS–eù
@@ -312074,7 +312084,7 @@ pS–eù
 pELi¡
  );
 
-753 
+754 
 nCÞumn
  = 
 pS–eù
@@ -312084,7 +312094,7 @@ pELi¡
 nEx´
 ;
 
-754 
+755 
 	`as£¹
 Ð
 de¡
@@ -312094,17 +312104,17 @@ nMem
 nCÞumn
  );
 
-765 ifÐ
+766 ifÐ
 pTrigg”
 
 
-766 || 
+767 || 
 	`IsKv¡Üe
 (
 pTab
 )
 
-767 || 
+768 || 
 	`»adsTabË
 (
 pP¬£
@@ -312116,31 +312126,31 @@ iDb
 pTab
 )
 
-769 
+770 
 u£TempTabË
  = 1;
 
-772 ifÐ
+773 ifÐ
 u£TempTabË
  ){
 
-784 
+785 
 »gRec
 ;
 
-785 
+786 
 »gTempRowid
 ;
 
-786 
+787 
 addrTÝ
 ;
 
-787 
+788 
 addrIf
 ;
 
-789 
+790 
 ¤cTab
  = 
 pP¬£
@@ -312148,7 +312158,7 @@ pP¬£
 nTab
 ++;
 
-790 
+791 
 »gRec
  = 
 	`sql™e4G‘TempReg
@@ -312156,7 +312166,7 @@ nTab
 pP¬£
 );
 
-791 
+792 
 »gTempRowid
  = 
 	`sql™e4G‘TempReg
@@ -312164,7 +312174,7 @@ pP¬£
 pP¬£
 );
 
-792 
+793 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -312176,7 +312186,7 @@ OP_O³nEphem”®
 nCÞumn
 );
 
-793 
+794 
 addrTÝ
  = 
 	`sql™e4VdbeAddOp1
@@ -312190,7 +312200,7 @@ de¡
 iP¬m
 );
 
-794 
+795 
 addrIf
  = 
 	`sql™e4VdbeAddOp1
@@ -312202,7 +312212,7 @@ OP_If
 »gEof
 );
 
-795 
+796 
 	`sql™e4VdbeAddOp3
 (
 v
@@ -312216,7 +312226,7 @@ nCÞumn
 »gRec
 );
 
-796 
+797 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -312228,7 +312238,7 @@ OP_NewRowid
 »gTempRowid
 );
 
-797 
+798 
 	`sql™e4VdbeAddOp3
 (
 v
@@ -312242,7 +312252,7 @@ OP_In£¹
 »gTempRowid
 );
 
-798 
+799 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -312252,7 +312262,7 @@ OP_GÙo
 addrTÝ
 );
 
-799 
+800 
 	`sql™e4VdbeJumpH”e
 (
 v
@@ -312260,7 +312270,7 @@ v
 addrIf
 );
 
-800 
+801 
 	`sql™e4R–—£TempReg
 (
 pP¬£
@@ -312268,7 +312278,7 @@ pP¬£
 »gRec
 );
 
-801 
+802 
 	`sql™e4R–—£TempReg
 (
 pP¬£
@@ -312276,35 +312286,35 @@ pP¬£
 »gTempRowid
 );
 
-807 
+808 
 NameCÚ‹xt
  
 sNC
 ;
 
-808 
+809 
 	`mem£t
 (&
 sNC
 , 0, (sNC));
 
-809 
+810 
 sNC
 .
 pP¬£
  =…Parse;
 
-810 
+811 
 ¤cTab
  = -1;
 
-811 
+812 
 	`as£¹
 Ð
 u£TempTabË
 ==0 );
 
-812 
+813 
 nCÞumn
  = 
 pLi¡
@@ -312312,13 +312322,13 @@ pLi¡
 nEx´
  : 0;
 
-813 
+814 
 i
 =0; i<
 nCÞumn
 ; i++){
 
-814 ifÐ
+815 ifÐ
 	`sql™e4ResÞveEx´Names
 (&
 sNC
@@ -312332,17 +312342,17 @@ i
 pEx´
 ) ){
 
-815 
+816 
 š£¹_þ—nup
 ;
 
-823 ifÐ
+824 ifÐ
 	`IsVœtu®
 (
 pTab
 ) ){
 
-824 
+825 
 i
 =0; i<
 pTab
@@ -312350,7 +312360,7 @@ pTab
 nCÞ
 ; i++){
 
-825 
+826 
 nHidd’
  +ð(
 	`IsHidd’CÞumn
@@ -312362,7 +312372,7 @@ aCÞ
 i
 ]) ? 1 : 0);
 
-828 ifÐ
+829 ifÐ
 pCÞumn
 ==0 && 
 nCÞumn
@@ -312374,13 +312384,13 @@ nCÞ
 nHidd’
 ) ){
 
-829 
+830 
 	`sql™e4E¼ÜMsg
 (
 pP¬£
 ,
 
-831 
+832 
 pTabLi¡
 , 0, 
 pTab
@@ -312392,11 +312402,11 @@ nHidd’
 nCÞumn
 );
 
-832 
+833 
 š£¹_þ—nup
 ;
 
-834 ifÐ
+835 ifÐ
 pCÞumn
 !=0 && 
 nCÞumn
@@ -312404,7 +312414,7 @@ nCÞumn
 nId
  ){
 
-835 
+836 
 	`sql™e4E¼ÜMsg
 (
 pP¬£
@@ -312416,15 +312426,15 @@ pCÞumn
 nId
 );
 
-836 
+837 
 š£¹_þ—nup
 ;
 
-844 ifÐ
+845 ifÐ
 pCÞumn
  ){
 
-845 
+846 
 i
 =0; i<
 pCÞumn
@@ -312432,7 +312442,7 @@ pCÞumn
 nId
 ; i++){
 
-846 
+847 
 pCÞumn
 ->
 a
@@ -312442,7 +312452,7 @@ i
 idx
  = -1;
 
-848 
+849 
 i
 =0; i<
 pCÞumn
@@ -312450,7 +312460,7 @@ pCÞumn
 nId
 ; i++){
 
-849 *
+850 *
 zTe¡
  = 
 pCÞumn
@@ -312462,7 +312472,7 @@ i
 zName
 ;
 
-850 
+851 
 j
 =0; j<
 pTab
@@ -312470,7 +312480,7 @@ pTab
 nCÞ
 ; j++){
 
-851 ifÐ
+852 ifÐ
 	`sql™e4_¡ricmp
 (
 zTe¡
@@ -312484,7 +312494,7 @@ j
 zName
 )==0 ){
 
-852 
+853 
 pCÞumn
 ->
 a
@@ -312496,7 +312506,7 @@ idx
 j
 ;
 
-856 ifÐ
+857 ifÐ
 j
 ==
 pTab
@@ -312504,13 +312514,13 @@ pTab
 nCÞ
  ){
 
-857 
+858 
 	`sql™e4E¼ÜMsg
 (
 pP¬£
 , "table %S has‚o column‚amed %s",
 
-858 
+859 
 pTabLi¡
 , 0, 
 pCÞumn
@@ -312522,25 +312532,25 @@ i
 zName
 );
 
-859 
+860 
 pP¬£
 ->
 checkSchema
  = 1;
 
-860 
+861 
 š£¹_þ—nup
 ;
 
-873 ifÐ!
+874 ifÐ!
 isV›w
  ){
 
-874 
+875 
 nIdx
 ;
 
-876 
+877 
 ba£Cur
  = 
 pP¬£
@@ -312548,7 +312558,7 @@ pP¬£
 nTab
 ;
 
-877 
+878 
 nIdx
  = 
 	`sql™e4O³nAÎIndexes
@@ -312562,7 +312572,7 @@ ba£Cur
 OP_O³nWr™e
 );
 
-878 
+879 
 aRegIdx
  = 
 	`sql™e4DbM®locRaw
@@ -312572,21 +312582,21 @@ db
 nIdx
 +1));
 
-879 ifÐ
+880 ifÐ
 aRegIdx
 ==0 ){
 
-880 
+881 
 š£¹_þ—nup
 ;
 
-882 
+883 
 i
 =0; i<
 nIdx
 ; i++){
 
-883 
+884 
 aRegIdx
 [
 i
@@ -312596,17 +312606,17 @@ pP¬£
 nMem
 ;
 
-884 
+885 
 pP¬£
 ->
 nMem
 ++;
 
-889 ifÐ
+890 ifÐ
 u£TempTabË
  ){
 
-899 
+900 
 addrInsTÝ
  = 
 	`sql™e4VdbeAddOp1
@@ -312618,7 +312628,7 @@ OP_Rewšd
 ¤cTab
 );
 
-900 
+901 
 addrCÚt
  = 
 	`sql™e4VdbeCu¼’tAddr
@@ -312626,11 +312636,11 @@ addrCÚt
 v
 );
 
-901 }ifÐ
+902 }ifÐ
 pS–eù
  ){
 
-911 
+912 
 addrCÚt
  = 
 	`sql™e4VdbeAddOp1
@@ -312644,7 +312654,7 @@ de¡
 iP¬m
 );
 
-912 
+913 
 addrInsTÝ
  = 
 	`sql™e4VdbeAddOp1
@@ -312656,7 +312666,7 @@ OP_If
 »gEof
 );
 
-919 
+920 
 »gRowid
  = ++
 pP¬£
@@ -312664,7 +312674,7 @@ pP¬£
 nMem
 ;
 
-920 
+921 
 »gCÚ‹Á
  = 
 pP¬£
@@ -312672,7 +312682,7 @@ pP¬£
 nMem
 +1;
 
-921 
+922 
 pP¬£
 ->
 nMem
@@ -312682,27 +312692,27 @@ pTab
 nCÞ
 ;
 
-923 ifÐ
+924 ifÐ
 	`IsVœtu®
 (
 pTab
 ) ){
 
-925 
+926 
 »gCÚ‹Á
 ++;
 
-926 
+927 
 »gRowid
 ++;
 
-927 
+928 
 pP¬£
 ->
 nMem
 ++;
 
-930 
+931 
 ’dOfLoÝ
  = 
 	`sql™e4VdbeMakeLab–
@@ -312710,7 +312720,7 @@ nMem
 v
 );
 
-932 
+933 
 i
 =0; i<
 pTab
@@ -312718,7 +312728,7 @@ pTab
 nCÞ
 ; i++){
 
-933 
+934 
 »gDe¡
  = 
 »gCÚ‹Á
@@ -312726,17 +312736,17 @@ nCÞ
 i
 ;
 
-934 
+935 
 j
  = 
 i
 ;
 
-935 ifÐ
+936 ifÐ
 pCÞumn
  ){
 
-936 
+937 
 j
 =0; j<
 pCÞumn
@@ -312744,7 +312754,7 @@ pCÞumn
 nId
 ; j++){
 
-937 ifÐ
+938 ifÐ
 pCÞumn
 ->
 a
@@ -312756,7 +312766,7 @@ idx
 i
  ) ;
 
-941 ifÐ
+942 ifÐ
 nCÞumn
 ==0 || (
 pCÞumn
@@ -312766,7 +312776,7 @@ j
 nId
 ) ){
 
-942 
+943 
 	`sql™e4Ex´Code
 (
 pP¬£
@@ -312782,11 +312792,11 @@ pDæt
 »gDe¡
 );
 
-943 }ifÐ
+944 }ifÐ
 u£TempTabË
  ){
 
-944 
+945 
 	`sql™e4VdbeAddOp3
 (
 v
@@ -312800,11 +312810,11 @@ j
 »gDe¡
 );
 
-945 }ifÐ
+946 }ifÐ
 pS–eù
  ){
 
-946 
+947 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -312818,13 +312828,13 @@ j
 »gDe¡
 );
 
-948 
+949 
 	`as£¹
 Ð
 pS–eù
 ==0 );
 
-949 
+950 
 	`sql™e4Ex´CodeAndCache
 (
 pP¬£
@@ -312840,11 +312850,11 @@ pEx´
 »gDe¡
 );
 
-953 ifÐ!
+954 ifÐ!
 isV›w
  ){
 
-954 
+955 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -312858,7 +312868,7 @@ pTab
 nCÞ
 );
 
-955 
+956 
 	`sql™e4TabËAffš™ySŒ
 (
 v
@@ -312866,11 +312876,11 @@ v
 pTab
 );
 
-959 ifÐ
+960 ifÐ
 pTrigg”
  ){
 
-960 
+961 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -312880,17 +312890,17 @@ OP_IÁeg”
 »gRowid
 );
 
-961 
+962 
 	`VdbeComm’t
 ((
 v
 , "new.rowid value for BEFOREriggers"));
 
-962 
+963 
 	`sql™e4CodeRowTrigg”
 (
 
-963 
+964 
 pP¬£
 , 
 pTrigg”
@@ -312900,7 +312910,7 @@ TK_INSERT
 TRIGGER_BEFORE
 ,
 
-964 
+965 
 pTab
 , (
 »gRowid
@@ -312912,11 +312922,11 @@ nCÞ
 ’dOfLoÝ
 
 
-968 ifÐ
+969 ifÐ
 iIÁPKCÞ
 >=0 ){
 
-969 
+970 
 »gDe¡
  = 
 »gCÚ‹Á
@@ -312924,11 +312934,11 @@ iIÁPKCÞ
 iIÁPKCÞ
 ;
 
-970 
+971 
 a1
 ;
 
-971 
+972 
 a1
  = 
 	`sql™e4VdbeAddOp1
@@ -312940,7 +312950,7 @@ OP_NÙNuÎ
 »gDe¡
 );
 
-972 
+973 
 	`sql™e4VdbeAddOp3
 (
 v
@@ -312954,7 +312964,7 @@ ba£Cur
 »gAutošc
 );
 
-973 
+974 
 	`sql™e4VdbeJumpH”e
 (
 v
@@ -312962,7 +312972,7 @@ v
 a1
 );
 
-974 
+975 
 	`autoIncS‹p
 (
 pP¬£
@@ -312972,17 +312982,17 @@ pP¬£
 »gDe¡
 );
 
-977 ifÐ
+978 ifÐ
 bIm¶ic™PK
  ){
 
-978 
+979 
 	`as£¹
 Ð!
 isV›w
  );
 
-979 
+980 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -312996,21 +313006,21 @@ iPk
 »gRowid
 );
 
-982 ifÐ!
+983 ifÐ!
 isV›w
  ){
 
-983 #iâdeà
+984 #iâdeà
 SQLITE4_OMIT_VIRTUALTABLE
 
 
-984 ifÐ
+985 ifÐ
 	`IsVœtu®
 (
 pTab
 ) ){
 
-985 cÚ¡ *
+986 cÚ¡ *
 pVTab
  = (cÚ¡ *)
 	`sql™e4G‘VTabË
@@ -313020,7 +313030,7 @@ db
 pTab
 );
 
-986 
+987 
 	`sql™e4VbMakeWr™abË
 (
 pP¬£
@@ -313028,7 +313038,7 @@ pP¬£
 pTab
 );
 
-987 
+988 
 	`sql™e4VdbeAddOp4
 (
 v
@@ -313046,7 +313056,7 @@ pVTab
 P4_VTAB
 );
 
-988 
+989 
 	`sql™e4VdbeChªgeP5
 (
 v
@@ -313058,17 +313068,17 @@ OE_DeçuÉ
 OE_AbÜt
  : onError);
 
-989 
+990 
 	`sql™e4MayAbÜt
 (
 pP¬£
 );
 
-995 
+996 
 isR•Ïû
 ;
 
-996 
+997 
 	`sql™e4G’”©eCÚ¡¿štChecks
 (
 pP¬£
@@ -313078,7 +313088,7 @@ pTab
 ba£Cur
 ,
 
-997 
+998 
 »gCÚ‹Á
 , 
 aRegIdx
@@ -313090,7 +313100,7 @@ aRegIdx
 isR•Ïû
 
 
-999 
+1000 
 	`sql™e4FkCheck
 (
 pP¬£
@@ -313100,7 +313110,7 @@ pTab
 »gCÚ‹Á
 );
 
-1000 
+1001 
 	`sql™e4Com¶‘eIn£¹iÚ
 (
 pP¬£
@@ -313110,7 +313120,7 @@ pTab
 ba£Cur
 ,
 
-1001 
+1002 
 »gCÚ‹Á
 , 
 aRegIdx
@@ -313120,11 +313130,11 @@ aRegIdx
 isR•Ïû
 ==0
 
-1007 
+1008 
 	`sql™e4CodeRowTrigg”
 (
 
-1008 
+1009 
 pP¬£
 , 
 pTrigg”
@@ -313134,7 +313144,7 @@ TK_INSERT
 TRIGGER_AFTER
 ,
 
-1009 
+1010 
 pTab
 , 
 »gRowid
@@ -313146,7 +313156,7 @@ nCÞ
 ’dOfLoÝ
 
 
-1015 
+1016 
 	`sql™e4VdbeResÞveLab–
 (
 v
@@ -313154,11 +313164,11 @@ v
 ’dOfLoÝ
 );
 
-1016 ifÐ
+1017 ifÐ
 u£TempTabË
  ){
 
-1017 
+1018 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -313170,7 +313180,7 @@ OP_Next
 addrCÚt
 );
 
-1018 
+1019 
 	`sql™e4VdbeJumpH”e
 (
 v
@@ -313178,7 +313188,7 @@ v
 addrInsTÝ
 );
 
-1019 
+1020 
 	`sql™e4VdbeAddOp1
 (
 v
@@ -313188,11 +313198,11 @@ OP_Clo£
 ¤cTab
 );
 
-1020 }ifÐ
+1021 }ifÐ
 pS–eù
  ){
 
-1021 
+1022 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -313202,7 +313212,7 @@ OP_GÙo
 addrCÚt
 );
 
-1022 
+1023 
 	`sql™e4VdbeJumpH”e
 (
 v
@@ -313210,7 +313220,7 @@ v
 addrInsTÝ
 );
 
-1025 ifÐ!
+1026 ifÐ!
 	`IsVœtu®
 (
 pTab
@@ -313218,7 +313228,7 @@ pTab
 isV›w
  ){
 
-1027 
+1028 
 idx
 =0, 
 pIdx
@@ -313230,7 +313240,7 @@ pIndex
 pNext
 , idx++){
 
-1028 
+1029 
 	`sql™e4VdbeAddOp1
 (
 v
@@ -313242,7 +313252,7 @@ idx
 ba£Cur
 );
 
-1036 ifÐ
+1037 ifÐ
 pP¬£
 ->
 Ã¡ed
@@ -313250,17 +313260,17 @@ pP¬£
 pTrigg”Tab
 ==0 ){
 
-1037 
+1038 
 	`sql™e4Autošüem’tEnd
 (
 pP¬£
 );
 
-1040 
+1041 
 š£¹_þ—nup
 :
 
-1041 
+1042 
 	`sql™e4SrcLi¡D–‘e
 (
 db
@@ -313268,7 +313278,7 @@ db
 pTabLi¡
 );
 
-1042 
+1043 
 	`sql™e4Ex´Li¡D–‘e
 (
 db
@@ -313276,7 +313286,7 @@ db
 pLi¡
 );
 
-1043 
+1044 
 	`sql™e4S–eùD–‘e
 (
 db
@@ -313284,7 +313294,7 @@ db
 pS–eù
 );
 
-1044 
+1045 
 	`sql™e4IdLi¡D–‘e
 (
 db
@@ -313292,7 +313302,7 @@ db
 pCÞumn
 );
 
-1045 
+1046 
 	`sql™e4DbF»e
 (
 db
@@ -313300,35 +313310,35 @@ db
 aRegIdx
 );
 
-1046 
+1047 
 	}
 }
 
-1051 #ifdeà
+1052 #ifdeà
 isV›w
 
 
-1052 #undeà
+1053 #undeà
 isV›w
 
 
-1054 #ifdeà
+1055 #ifdeà
 pTrigg”
 
 
-1055 #undeà
+1056 #undeà
 pTrigg”
 
 
-1057 #ifdeà
+1058 #ifdeà
 tmask
 
 
-1058 #undeà
+1059 #undeà
 tmask
 
 
-1064 cÚ¡ *
+1065 cÚ¡ *
 	$šdexCÞumnName
 (
 Index
@@ -313338,7 +313348,7 @@ pIdx
 iCÞ
 ){
 
-1065 
+1066 
 iTbl
  = 
 pIdx
@@ -313348,7 +313358,7 @@ aiCÞumn
 iCÞ
 ];
 
-1066 
+1067 
 	`as£¹
 Ð
 iTbl
@@ -313360,11 +313370,11 @@ pTabË
 nCÞ
  );
 
-1067 ifÐ
+1068 ifÐ
 iTbl
 <0 ){
 
-1068 
+1069 
 	`as£¹
 Ð
 pIdx
@@ -313376,7 +313386,7 @@ SQLITE4_INDEX_PRIMARYKEY
 nCÞumn
 ==1 );
 
-1071  
+1072  
 pIdx
 ->
 pTabË
@@ -313388,39 +313398,39 @@ iTbl
 zName
 ;
 
-1072 
+1073 
 	}
 }
 
-1074 
+1075 
 	$g’”©eNÙNuÎChecks
 (
 
-1075 
+1076 
 P¬£
  *
 pP¬£
 ,
 
-1076 
+1077 
 TabË
  *
 pTab
 ,
 
-1077 
+1078 
 »gCÚ‹Á
 ,
 
-1078 
+1079 
 ov”rideE¼Ü
 ,
 
-1079 
+1080 
 ignÜeDe¡
 
 
-1081 
+1082 
 Vdbe
  *
 v
@@ -313430,11 +313440,11 @@ pP¬£
 pVdbe
 ;
 
-1082 
+1083 
 i
 ;
 
-1084 
+1085 
 i
 =0; i<
 pTab
@@ -313442,7 +313452,7 @@ pTab
 nCÞ
 ; i++){
 
-1085 
+1086 
 ÚE¼Ü
  = 
 pTab
@@ -313454,35 +313464,35 @@ i
 nÙNuÎ
 ;
 
-1086 ifÐ
+1087 ifÐ
 ÚE¼Ü
  ){
 
-1087 ifÐ
+1088 ifÐ
 ov”rideE¼Ü
 !=
 OE_DeçuÉ
  ){
 
-1088 
+1089 
 ÚE¼Ü
  = 
 ov”rideE¼Ü
 ;
 
-1089 }ifÐ
+1090 }ifÐ
 ÚE¼Ü
 ==
 OE_DeçuÉ
  ){
 
-1090 
+1091 
 ÚE¼Ü
  = 
 OE_AbÜt
 ;
 
-1092 ifÐ
+1093 ifÐ
 ÚE¼Ü
 ==
 OE_R•Ïû
@@ -313496,35 +313506,35 @@ i
 pDæt
 ==0 ){
 
-1093 
+1094 
 ÚE¼Ü
  = 
 OE_AbÜt
 ;
 
-1096  
+1097  
 ÚE¼Ü
  ){
 
-1097 
+1098 
 OE_AbÜt
 :
 
-1098 
+1099 
 	`sql™e4MayAbÜt
 (
 pP¬£
 );
 
-1099 
+1100 
 OE_RÞlback
 :
 
-1100 
+1101 
 OE_Faž
 : {
 
-1101 *
+1102 *
 zMsg
  = 
 	`sql™e4MPrštf
@@ -313534,7 +313544,7 @@ pP¬£
 db
 , "%s.%s may‚ot be NULL",
 
-1102 
+1103 
 pTab
 ->
 zName
@@ -313544,7 +313554,7 @@ aCÞ
 i
 ].zName
 
-1104 
+1105 
 	`sql™e4VdbeAddOp4
 (
 v
@@ -313552,7 +313562,7 @@ v
 OP_H®tIfNuÎ
 ,
 
-1105 
+1106 
 SQLITE4_CONSTRAINT
 , 
 ÚE¼Ü
@@ -313566,11 +313576,11 @@ zMsg
 P4_DYNAMIC
 
 
-1110 
+1111 
 OE_IgnÜe
 :
 
-1111 
+1112 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -313584,7 +313594,7 @@ i
 ignÜeDe¡
 );
 
-1115 
+1116 
 j1
  = 
 	`sql™e4VdbeAddOp1
@@ -313598,7 +313608,7 @@ OP_NÙNuÎ
 i
 );
 
-1116 
+1117 
 	`sql™e4Ex´Code
 (
 pP¬£
@@ -313614,7 +313624,7 @@ pDæt
 »gCÚ‹Á
 +i);
 
-1117 
+1118 
 	`sql™e4VdbeJumpH”e
 (
 v
@@ -313622,7 +313632,7 @@ v
 j1
 );
 
-1118 
+1119 
 	`as£¹
 Ð
 ÚE¼Ü
@@ -313630,43 +313640,43 @@ j1
 OE_R•Ïû
  );
 
-1124 
+1125 
 	}
 }
 
-1126 #iâdeà
+1127 #iâdeà
 SQLITE4_OMIT_CHECK
 
 
-1127 
+1128 
 	$g’”©eCheckChecks
 (
 
-1128 
+1129 
 P¬£
  *
 pP¬£
 ,
 
-1129 
+1130 
 TabË
  *
 pTab
 ,
 
-1130 
+1131 
 »gCÚ‹Á
 ,
 
-1131 
+1132 
 ov”rideE¼Ü
 ,
 
-1132 
+1133 
 ignÜeDe¡
 
 
-1134 
+1135 
 Vdbe
  *
 v
@@ -313676,7 +313686,7 @@ pP¬£
 pVdbe
 ;
 
-1136 ifÐ
+1137 ifÐ
 pTab
 ->
 pCheck
@@ -313690,11 +313700,11 @@ db
 SQLITE4_IgnÜeChecks
 )==0 ){
 
-1137 
+1138 
 ÚE¼Ü
 ;
 
-1138 
+1139 
 ®lOk
  = 
 	`sql™e4VdbeMakeLab–
@@ -313702,7 +313712,7 @@ SQLITE4_IgnÜeChecks
 v
 );
 
-1139 
+1140 
 pP¬£
 ->
 ckBa£
@@ -313710,7 +313720,7 @@ ckBa£
 »gCÚ‹Á
 ;
 
-1140 
+1141 
 	`sql™e4Ex´IfTrue
 (
 pP¬£
@@ -313724,7 +313734,7 @@ pCheck
 SQLITE4_JUMPIFNULL
 );
 
-1141 
+1142 
 ÚE¼Ü
  = 
 ov”rideE¼Ü
@@ -313734,13 +313744,13 @@ OE_DeçuÉ
 OE_AbÜt
 ;
 
-1142 ifÐ
+1143 ifÐ
 ÚE¼Ü
 ==
 OE_IgnÜe
  ){
 
-1143 
+1144 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -313750,7 +313760,7 @@ OP_GÙo
 ignÜeDe¡
 );
 
-1145 ifÐ
+1146 ifÐ
 ÚE¼Ü
 ==
 OE_R•Ïû
@@ -313758,7 +313768,7 @@ OE_R•Ïû
 OE_AbÜt
 ;
 
-1146 
+1147 
 	`sql™e4H®tCÚ¡¿št
 (
 pP¬£
@@ -313766,7 +313776,7 @@ pP¬£
 ÚE¼Ü
 , 0, 0);
 
-1148 
+1149 
 	`sql™e4VdbeResÞveLab–
 (
 v
@@ -313774,11 +313784,11 @@ v
 ®lOk
 );
 
-1150 
+1151 
 	}
 }
 
-1152 
+1153 
 	#g’”©eCheckChecks
 (
 a
@@ -313794,37 +313804,37 @@ e
 
 	)
 
-1158 
+1159 
 Index
  *
 	$sql™e4FšdPrim¬yKey
 (
 
-1159 
+1160 
 TabË
  *
 pTab
 ,
 
-1160 *
+1161 *
 piPk
 
 
-1162 
+1163 
 Index
  *
 p
 ;
 
-1163 
+1164 
 iPk
  = 0;
 
-1164 
+1165 
 iPkroÙ
  = 0;
 
-1165 
+1166 
 p
 =
 pTab
@@ -313838,21 +313848,21 @@ SQLITE4_INDEX_PRIMARYKEY
 pNext
 ){
 
-1166 
+1167 
 iPk
 ++;
 
-1168 ifÐ
+1169 ifÐ
 piPk
  ) {
 
-1169 *
+1170 *
 piPk
  = 
 iPk
 ;
 
-1171 
+1172 
 iPkroÙ
  = 
 pTab
@@ -313860,37 +313870,37 @@ pTab
 Šum
 ;
 
-1172 
+1173 
 	`as£¹
 Ð
 iPkroÙ
 >0 );
 
-1174  
+1175  
 p
 ;
 
-1175 
+1176 
 	}
 }
 
-1184 *
+1185 *
 	$nÙUniqueMes§ge
 (
 
-1185 
+1186 
 P¬£
  *
 pP¬£
 ,
 
-1186 
+1187 
 Index
  *
 pIdx
 
 
-1188 cÚ¡ 
+1189 cÚ¡ 
 nCÞ
  = 
 pIdx
@@ -313898,23 +313908,23 @@ pIdx
 nCÞumn
 ;
 
-1189 
+1190 
 SŒAccum
  
 ”rMsg
 ;
 
-1190 
+1191 
 iCÞ
 ;
 
-1192 
+1193 
 	`sql™e4SŒAccumIn™
 (&
 ”rMsg
 , 0, 0, 200);
 
-1193 
+1194 
 ”rMsg
 .
 db
@@ -313922,7 +313932,7 @@ db
 pP¬£
 ->db;
 
-1194 
+1195 
 ”rMsg
 .
 pEnv
@@ -313930,7 +313940,7 @@ pEnv
 db
 ->pEnv;
 
-1195 ifÐ
+1196 ifÐ
 pIdx
 ->
 eIndexTy³
@@ -313938,13 +313948,13 @@ eIndexTy³
 SQLITE4_INDEX_PRIMARYKEY
  ){
 
-1196 
+1197 
 	`sql™e4SŒAccumAµ’d
 (&
 ”rMsg
 , "PRIMARY KEY must be unique", -1);
 
-1198 
+1199 
 	`sql™e4SŒAccumAµ’d
 (&
 ”rMsg
@@ -313952,7 +313962,7 @@ SQLITE4_INDEX_PRIMARYKEY
 nCÞ
 >1 ? "columns " : "column "), -1);
 
-1199 
+1200 
 iCÞ
 =0; iCÞ<
 pIdx
@@ -313960,7 +313970,7 @@ pIdx
 nCÞumn
 ; iCol++){
 
-1200 cÚ¡ *
+1201 cÚ¡ *
 zCÞ
  = 
 	`šdexCÞumnName
@@ -313970,7 +313980,7 @@ pIdx
 iCÞ
 );
 
-1201 
+1202 
 	`sql™e4SŒAccumAµ’d
 (&
 ”rMsg
@@ -313978,7 +313988,7 @@ iCÞ
 iCÞ
 ==0 ? "" : ", "), -1);
 
-1202 
+1203 
 	`sql™e4SŒAccumAµ’d
 (&
 ”rMsg
@@ -313986,7 +313996,7 @@ iCÞ
 zCÞ
 , -1);
 
-1204 
+1205 
 	`sql™e4SŒAccumAµ’d
 (&
 ”rMsg
@@ -313994,115 +314004,115 @@ zCÞ
 nCÞ
 >1 ? "‡re" : " is"), -1);
 
-1205 
+1206 
 	`sql™e4SŒAccumAµ’d
 (&
 ”rMsg
 , "‚ot unique", -1);
 
-1207  
+1208  
 	`sql™e4SŒAccumFšish
 (&
 ”rMsg
 );
 
-1208 
+1209 
 	}
 }
 
-1325 
+1326 
 	$sql™e4G’”©eCÚ¡¿štChecks
 (
 
-1326 
+1327 
 P¬£
  *
 pP¬£
 ,
 
-1327 
+1328 
 TabË
  *
 pTab
 ,
 
-1328 
+1329 
 ba£Cur
 ,
 
-1329 
+1330 
 »gCÚ‹Á
 ,
 
-1330 *
+1331 *
 aRegIdx
 ,
 
-1331 
+1332 
 »gOldKey
 ,
 
-1332 
+1333 
 isUpd©e
 ,
 
-1333 
+1334 
 ov”rideE¼Ü
 ,
 
-1334 
+1335 
 ignÜeDe¡
 ,
 
-1335 *
+1336 *
 pbMayR•Ïû
 
 
-1337 
+1338 
 u8
  
 aPkRoÙ
 [10];
 
-1338 
+1339 
 nPkRoÙ
 ;
 
-1339 
+1340 
 Index
  *
 pPk
 ;
 
-1340 
+1341 
 i
 ;
 
-1341 
+1342 
 Vdbe
  *
 v
 ;
 
-1342 
+1343 
 ÚE¼Ü
 ;
 
-1343 
+1344 
 iCur
 ;
 
-1344 
+1345 
 Index
  *
 pIdx
 ;
 
-1345 
+1346 
 £’R•Ïû
  = 0;
 
-1347 
+1348 
 v
  = 
 	`sql™e4G‘Vdbe
@@ -314110,13 +314120,13 @@ v
 pP¬£
 );
 
-1348 
+1349 
 	`as£¹
 Ð
 v
 !=0 );
 
-1349 
+1350 
 	`as£¹
 Ð
 pTab
@@ -314124,7 +314134,7 @@ pTab
 pS–eù
 ==0 );
 
-1350 
+1351 
 pPk
  = 
 	`sql™e4FšdPrim¬yKey
@@ -314132,7 +314142,7 @@ pPk
 pTab
 , 0);
 
-1351 
+1352 
 nPkRoÙ
  = 
 	`sql™e4PutV¬št64
@@ -314144,7 +314154,7 @@ pPk
 Šum
 );
 
-1353 
+1354 
 	`as£¹
 Ð
 pPk
@@ -314154,7 +314164,7 @@ eIndexTy³
 SQLITE4_INDEX_PRIMARYKEY
  );
 
-1356 
+1357 
 	`g’”©eNÙNuÎChecks
 (
 pP¬£
@@ -314168,7 +314178,7 @@ ov”rideE¼Ü
 ignÜeDe¡
 );
 
-1359 
+1360 
 	`g’”©eCheckChecks
 (
 pP¬£
@@ -314182,7 +314192,7 @@ ov”rideE¼Ü
 ignÜeDe¡
 );
 
-1365 
+1366 
 iCur
 =0, 
 pIdx
@@ -314194,19 +314204,19 @@ pIndex
 pNext
 , iCur++){
 
-1366 
+1367 
 nTmpReg
 ;
 
-1367 
+1368 
 »gTmp
 ;
 
-1368 
+1369 
 »gPk
 ;
 
-1369 
+1370 
 »gKey
  = 
 aRegIdx
@@ -314214,7 +314224,7 @@ aRegIdx
 iCur
 ];
 
-1370 
+1371 
 iIdx
  = 
 ba£Cur
@@ -314222,11 +314232,11 @@ ba£Cur
 iCur
 ;
 
-1373 ifÐ
+1374 ifÐ
 »gKey
 ==0 ) ;
 
-1378 ifÐ
+1379 ifÐ
 pIdx
 ->
 Šum
@@ -314234,7 +314244,7 @@ pIdx
 KVSTORE_ROOT
  ){
 
-1381 
+1382 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -314246,7 +314256,7 @@ OP_SCÝy
 »gKey
 );
 
-1382 
+1383 
 	`sql™e4VdbeAddOp1
 (
 v
@@ -314256,13 +314266,13 @@ OP_ToBlob
 »gKey
 );
 
-1383 
+1384 
 »gPk
  = 
 »gKey
 ;
 
-1385 
+1386 
 nTmpReg
  = 1 + 
 pIdx
@@ -314272,7 +314282,7 @@ nCÞumn
 pPk
  ? 0 :…Pk->nColumn);
 
-1386 
+1387 
 »gTmp
  = 
 	`sql™e4G‘TempRªge
@@ -314282,7 +314292,7 @@ pP¬£
 nTmpReg
 );
 
-1387 
+1388 
 »gPk
  = 
 »gTmp
@@ -314290,7 +314300,7 @@ nTmpReg
 nTmpReg
  - 1;
 
-1389 
+1390 
 i
 =0; i<
 pIdx
@@ -314298,7 +314308,7 @@ pIdx
 nCÞumn
 ; i++){
 
-1390 
+1391 
 idx
  = 
 pIdx
@@ -314308,7 +314318,7 @@ aiCÞumn
 i
 ];
 
-1391 
+1392 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -314324,13 +314334,13 @@ idx
 i
 );
 
-1393 ifÐ
+1394 ifÐ
 pIdx
 !=
 pPk
  ){
 
-1394 
+1395 
 i
 =0; i<
 pPk
@@ -314338,7 +314348,7 @@ pPk
 nCÞumn
 ; i++){
 
-1395 
+1396 
 idx
  = 
 pPk
@@ -314348,7 +314358,7 @@ aiCÞumn
 i
 ];
 
-1396 
+1397 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -314368,7 +314378,7 @@ pIdx
 nCÞumn
 );
 
-1399 
+1400 
 	`sql™e4VdbeAddOp4IÁ
 (
 v
@@ -314384,7 +314394,7 @@ nTmpReg
 iIdx
 );
 
-1401 
+1402 
 	`VdbeComm’t
 ((
 v
@@ -314394,51 +314404,51 @@ pIdx
 zName
 ));
 
-1407 
+1408 
 ÚE¼Ü
  = 
 pIdx
 ->onError;
 
-1408 ifÐ
+1409 ifÐ
 ÚE¼Ü
 !=
 OE_NÚe
  ){
 
-1409 
+1410 
 iLab–
 ;
 
-1415 ifÐ
+1416 ifÐ
 ov”rideE¼Ü
 !=
 OE_DeçuÉ
  ){
 
-1416 
+1417 
 ÚE¼Ü
  = 
 ov”rideE¼Ü
 ;
 
-1417 }ifÐ
+1418 }ifÐ
 ÚE¼Ü
 ==
 OE_DeçuÉ
  ){
 
-1418 
+1419 
 ÚE¼Ü
  = 
 OE_AbÜt
 ;
 
-1420 ifÐ
+1421 ifÐ
 £’R•Ïû
  ){
 
-1421 ifÐ
+1422 ifÐ
 ÚE¼Ü
 ==
 OE_IgnÜe
@@ -314446,7 +314456,7 @@ OE_IgnÜe
 OE_R•Ïû
 ;
 
-1422 ifÐ
+1423 ifÐ
 ÚE¼Ü
 ==
 OE_Faž
@@ -314454,7 +314464,7 @@ OE_Faž
 OE_AbÜt
 ;
 
-1425 
+1426 
 iLab–
  = 
 	`sql™e4VdbeMakeLab–
@@ -314462,13 +314472,13 @@ iLab–
 v
 );
 
-1426 ifÐ
+1427 ifÐ
 pIdx
 !=
 pPk
  ){
 
-1427 
+1428 
 	`sql™e4VdbeAddOp3
 (
 v
@@ -314484,7 +314494,7 @@ pIdx
 nCÞumn
 );
 
-1428 
+1429 
 	`sql™e4VdbeAddOp4
 (
 v
@@ -314498,7 +314508,7 @@ nPkRoÙ
 aPkRoÙ
 ,nPkRoot);
 
-1430 ifÐ
+1431 ifÐ
 »gOldKey
  && 
 pIdx
@@ -314506,7 +314516,7 @@ pIdx
 pPk
  ){
 
-1431 
+1432 
 	`sql™e4VdbeAddOp3
 (
 v
@@ -314520,7 +314530,7 @@ iLab–
 »gKey
 );
 
-1433 
+1434 
 	`sql™e4VdbeAddOp4IÁ
 (
 v
@@ -314536,7 +314546,7 @@ iLab–
 »gPk
 );
 
-1434 ifÐ
+1435 ifÐ
 »gOldKey
  && 
 pIdx
@@ -314544,7 +314554,7 @@ pIdx
 pPk
  ){
 
-1435 
+1436 
 	`sql™e4VdbeAddOp3
 (
 v
@@ -314558,23 +314568,23 @@ iLab–
 »gPk
 );
 
-1438  
+1439  
 ÚE¼Ü
  ){
 
-1439 
+1440 
 OE_RÞlback
 :
 
-1440 
+1441 
 OE_AbÜt
 :
 
-1441 
+1442 
 OE_Faž
 : {
 
-1442 *
+1443 *
 zE¼
  = 
 	`nÙUniqueMes§ge
@@ -314584,7 +314594,7 @@ pP¬£
 pIdx
 );
 
-1443 
+1444 
 	`sql™e4H®tCÚ¡¿št
 (
 pP¬£
@@ -314594,7 +314604,7 @@ pP¬£
 zE¼
 , 0);
 
-1444 
+1445 
 	`sql™e4DbF»e
 (
 pP¬£
@@ -314604,17 +314614,17 @@ db
 zE¼
 );
 
-1448 
+1449 
 OE_IgnÜe
 : {
 
-1449 
+1450 
 	`as£¹
 Ð
 £’R•Ïû
 ==0 );
 
-1450 
+1451 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -314624,13 +314634,13 @@ OP_GÙo
 ignÜeDe¡
 );
 
-1454 
+1455 
 Trigg”
  *
 pTrigg”
 ;
 
-1455 
+1456 
 	`as£¹
 Ð
 ÚE¼Ü
@@ -314638,13 +314648,13 @@ pTrigg”
 OE_R•Ïû
  );
 
-1456 
+1457 
 	`sql™e4MuÉiWr™e
 (
 pP¬£
 );
 
-1457 
+1458 
 pTrigg”
  = 
 	`sql™e4Trigg”sExi¡
@@ -314656,11 +314666,11 @@ pTab
 TK_DELETE
 , 0, 0);
 
-1458 
+1459 
 	`sql™e4G’”©eRowD–‘e
 (
 
-1459 
+1460 
 pP¬£
 , 
 pTab
@@ -314674,11 +314684,11 @@ pTrigg”
 OE_R•Ïû
 
 
-1461 
+1462 
 £’R•Ïû
  = 1;
 
-1466 
+1467 
 	`sql™e4VdbeResÞveLab–
 (
 v
@@ -314686,7 +314696,7 @@ v
 iLab–
 );
 
-1469 
+1470 
 	`sql™e4R–—£TempRªge
 (
 pP¬£
@@ -314696,91 +314706,91 @@ pP¬£
 nTmpReg
 );
 
-1472 ifÐ
+1473 ifÐ
 pbMayR•Ïû
  ){
 
-1473 *
+1474 *
 pbMayR•Ïû
  = 
 £’R•Ïû
 ;
 
-1475 
+1476 
 	}
 }
 
-1494 
+1495 
 	$sql™e4Com¶‘eIn£¹iÚ
 (
 
-1495 
+1496 
 P¬£
  *
 pP¬£
 ,
 
-1496 
+1497 
 TabË
  *
 pTab
 ,
 
-1497 
+1498 
 ba£Cur
 ,
 
-1498 
+1499 
 »gCÚ‹Á
 ,
 
-1499 *
+1500 *
 aRegIdx
 ,
 
-1500 
+1501 
 isUpd©e
 ,
 
-1501 
+1502 
 ­³ndBŸs
 ,
 
-1502 
+1503 
 u£S“kResuÉ
 
 
-1504 
+1505 
 i
 ;
 
-1505 
+1506 
 Vdbe
  *
 v
 ;
 
-1506 
+1507 
 Index
  *
 pIdx
 ;
 
-1507 
+1508 
 u8
  
 pik_æags
 ;
 
-1508 
+1509 
 »gRec
 ;
 
-1509 
+1510 
 »gCov”
 ;
 
-1511 
+1512 
 v
  = 
 	`sql™e4G‘Vdbe
@@ -314788,13 +314798,13 @@ v
 pP¬£
 );
 
-1512 
+1513 
 	`as£¹
 Ð
 v
 !=0 );
 
-1513 
+1514 
 	`as£¹
 Ð
 pTab
@@ -314802,17 +314812,17 @@ pTab
 pS–eù
 ==0 );
 
-1515 ifÐ
+1516 ifÐ
 pP¬£
 ->
 Ã¡ed
  ){
 
-1516 
+1517 
 pik_æags
  = 0;
 
-1518 
+1519 
 pik_æags
  = 
 OPFLAG_NCHANGE
@@ -314822,7 +314832,7 @@ isUpd©e
 OPFLAG_ISUPDATE
 :0);
 
-1526 
+1527 
 »gRec
  = 
 	`sql™e4G‘TempReg
@@ -314830,13 +314840,13 @@ OPFLAG_ISUPDATE
 pP¬£
 );
 
-1527 ifÐ
+1528 ifÐ
 	`IsKv¡Üe
 (
 pTab
 ) ){
 
-1528 
+1529 
 	`sql™e4VdbeAddOp2
 (
 v
@@ -314848,7 +314858,7 @@ OP_SCÝy
 »gRec
 );
 
-1529 
+1530 
 	`sql™e4VdbeAddOp1
 (
 v
@@ -314858,7 +314868,7 @@ OP_ToBlob
 »gRec
 );
 
-1531 
+1532 
 	`sql™e4VdbeAddOp3
 (
 v
@@ -314874,7 +314884,7 @@ nCÞ
 »gRec
 );
 
-1532 
+1533 
 	`sql™e4TabËAffš™ySŒ
 (
 v
@@ -314882,7 +314892,7 @@ v
 pTab
 );
 
-1533 
+1534 
 	`sql™e4Ex´CacheAffš™yChªge
 (
 pP¬£
@@ -314894,7 +314904,7 @@ pTab
 nCÞ
 );
 
-1535 
+1536 
 »gCov”
  = 
 	`sql™e4G‘TempReg
@@ -314902,7 +314912,7 @@ nCÞ
 pP¬£
 );
 
-1538 
+1539 
 i
 =0, 
 pIdx
@@ -314914,7 +314924,7 @@ pIndex
 pNext
 ){
 
-1539 
+1540 
 	`as£¹
 Ð
 pIdx
@@ -314928,7 +314938,7 @@ aRegIdx
 i
 ] );
 
-1540 ifÐ
+1541 ifÐ
 pIdx
 ->
 eIndexTy³
@@ -314936,11 +314946,11 @@ eIndexTy³
 SQLITE4_INDEX_FTS5
  ){
 
-1541 
+1542 
 iPK
 ;
 
-1542 
+1543 
 	`sql™e4FšdPrim¬yKey
 (
 pTab
@@ -314948,7 +314958,7 @@ pTab
 iPK
 );
 
-1543 
+1544 
 	`sql™e4Fts5CodeUpd©e
 (
 pP¬£
@@ -314962,21 +314972,21 @@ iPK
 »gCÚ‹Á
 , 0);
 
-1545 ifÐ
+1546 ifÐ
 aRegIdx
 [
 i
 ] ){
 
-1546 
+1547 
 »gD©a
  = 0;
 
-1547 
+1548 
 æags
  = 0;
 
-1548 ifÐ
+1549 ifÐ
 pIdx
 ->
 eIndexTy³
@@ -314984,25 +314994,25 @@ eIndexTy³
 SQLITE4_INDEX_PRIMARYKEY
  ){
 
-1549 
+1550 
 »gD©a
  = 
 »gRec
 ;
 
-1550 
+1551 
 æags
  = 
 pik_æags
 ;
 
-1551 }ifÐ
+1552 }ifÐ
 pIdx
 ->
 nCov”
 >0 ){
 
-1552 
+1553 
 nBy‹
  = ()*
 pIdx
@@ -315010,7 +315020,7 @@ pIdx
 nCov”
 ;
 
-1553 *
+1554 *
 aiP”mu‹
  = (*)
 	`sql™e4DbM®locRaw
@@ -315022,11 +315032,11 @@ db
 nBy‹
 );
 
-1555 ifÐ
+1556 ifÐ
 aiP”mu‹
  ){
 
-1556 
+1557 
 	`memýy
 (
 aiP”mu‹
@@ -315038,11 +315048,11 @@ aiCov”
 nBy‹
 );
 
-1557 
+1558 
 	`sql™e4VdbeAddOp4
 (
 
-1558 
+1559 
 v
 , 
 OP_P”mutiÚ
@@ -315052,19 +315062,19 @@ pIdx
 nCov”
 , 0, 0,
 
-1559 (*)
+1560 (*)
 aiP”mu‹
 , 
 P4_INTARRAY
 
 
-1562 
+1563 
 »gD©a
  = 
 »gCov”
 ;
 
-1563 
+1564 
 	`sql™e4VdbeAddOp3
 (
 v
@@ -315080,7 +315090,7 @@ nCov”
 »gD©a
 );
 
-1565 
+1566 
 	`sql™e4VdbeAddOp3
 (
 v
@@ -315096,7 +315106,7 @@ i
 aRegIdx
 [i]);
 
-1566 
+1567 
 	`sql™e4VdbeChªgeP5
 (
 v
@@ -315104,55 +315114,55 @@ v
 æags
 );
 
-1569 
+1570 
 	}
 }
 
-1578 
+1579 
 	$sql™e4O³nAÎIndexes
 (
 
-1579 
+1580 
 P¬£
  *
 pP¬£
 ,
 
-1580 
+1581 
 TabË
  *
 pTab
 ,
 
-1581 
+1582 
 ba£Cur
 ,
 
-1582 
+1583 
 Ý
 
 
-1584 
+1585 
 i
  = 0;
 
-1585 ifÐ
+1586 ifÐ
 	`IsVœtu®
 (
 pTab
 )==0 ){
 
-1586 
+1587 
 iDb
 ;
 
-1587 
+1588 
 Index
  *
 pIdx
 ;
 
-1589 
+1590 
 iDb
  = 
 	`sql™e4SchemaToIndex
@@ -315166,7 +315176,7 @@ pTab
 pSchema
 );
 
-1590 
+1591 
 pIdx
 =
 pTab
@@ -315176,7 +315186,7 @@ pIndex
 pNext
 ){
 
-1591 
+1592 
 	`sql™e4O³nIndex
 (
 pP¬£
@@ -315192,11 +315202,11 @@ pIdx
 Ý
 );
 
-1592 
+1593 
 i
 ++;
 
-1594 ifÐ
+1595 ifÐ
 pP¬£
 ->
 nTab
@@ -315206,7 +315216,7 @@ ba£Cur
 i
  ){
 
-1595 
+1596 
 pP¬£
 ->
 nTab
@@ -315216,51 +315226,51 @@ ba£Cur
 i
 ;
 
-1598  
+1599  
 i
 ;
 
-1599 
+1600 
 	}
 }
 
-1601 
+1602 
 	$sql™e4Clo£AÎIndexes
 (
 
-1602 
+1603 
 P¬£
  *
 pP¬£
 ,
 
-1603 
+1604 
 TabË
  *
 pTab
 ,
 
-1604 
+1605 
 ba£Cur
 
 
-1606 
+1607 
 i
 ;
 
-1607 
+1608 
 Index
  *
 pIdx
 ;
 
-1608 
+1609 
 Vdbe
  *
 v
 ;
 
-1610 
+1611 
 	`as£¹
 Ð
 pTab
@@ -315270,7 +315280,7 @@ pIndex
 	`IsVœtu®
 (pTab)==0 );
 
-1611 
+1612 
 	`as£¹
 Ð
 pTab
@@ -315280,7 +315290,7 @@ pIndex
 	`IsV›w
 (pTab)==0 );
 
-1613 
+1614 
 v
  = 
 	`sql™e4G‘Vdbe
@@ -315288,7 +315298,7 @@ v
 pP¬£
 );
 
-1614 
+1615 
 i
 =0, 
 pIdx
@@ -315300,7 +315310,7 @@ pIndex
 pNext
 , i++){
 
-1615 
+1616 
 	`sql™e4VdbeAddOp1
 (
 v
@@ -315312,15 +315322,15 @@ ba£Cur
 i
 );
 
-1617 
+1618 
 	}
 }
 
-1620 #ifdeà
+1621 #ifdeà
 SQLITE4_TEST
 
 
-1627 
+1628 
 	gsql™e4_xãrÝt_couÁ
 ;
 
