@@ -896,6 +896,11 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
   // if( db->init.busy == 1){
   //   return CREATE_OK;
   // }
+
+  //[koreauniv] pIdx->tnum == 0 인 경우는 CREATE INDEX 구문이지만 테이블이 없는 경우로, 이 경우에는 인덱스 생성을 무시해야 함
+  if( pIdx->tnum == 0 ){
+    return CREATE_IGNORE;
+  }
   if( db->init.busy ){
       if( pIdx->aColExpr != NULL ){
           return CREATE_OK_SKIP_REFILL;
