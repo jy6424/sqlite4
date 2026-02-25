@@ -2791,70 +2791,99 @@ Index *sqlite4CreateIndex(
 
   // [koreauniv] allow libsql_vector_idx to create vector index
   /* BEFORE: for(i=0, pListItem=pList->a; ... findTableColumn ... ) */
+  for(i=0, pListItem=pList->a; i<pList->nExpr; i++, pListItem++){
+    char *zColl;                   /* Collation sequence name */
 
-  /* AFTER: */
-  pListItem = pList->a;
-  int hasExpr = 0;
-  pListItem = pList->a;
-  for(i = 0; i < pIndex->nColumn; i++, pListItem++){
-    Expr *pExpr = pListItem->pExpr;
-    Expr *pCExpr = pExpr;
+    j = findTableColumn(pParse, pTab, pListItem->zName);
+    if( j<0 ) goto exit_create_index;
 
-    /* COLLATE 제거 */
-    while( pCExpr && pCExpr->op == TK_COLLATE ){
-      pCExpr = pCExpr->pLeft;
-    }
-    if( pExpr == NULL ){
-      return 0;
-    }
-
-    if( pCExpr && pCExpr->op == TK_COLUMN ){
-      /* 단순 컬럼 */
-      pIndex->aiColumn[i] = (i16)pCExpr->iColumn;
+    pIndex->aiColumn[i] = j;
+    if( pListItem->pExpr && pListItem->pExpr->pColl ){
+      int nColl;
+      zColl = pListItem->pExpr->pColl->zName;
+      nColl = sqlite4Strlen30(zColl) + 1;
+      assert( nExtra>=nColl );
+      memcpy(zExtra, zColl, nColl);
+      zColl = zExtra;
+      zExtra += nColl;
+      nExtra -= nColl;
     }else{
-      /* 표현식 인덱스 (함수 포함) */
-      pIndex->aiColumn[i] = XN_EXPR;
-      hasExpr = 1;
-    }
-
-    pIndex->aSortOrder[i] = (u8)pListItem->sortOrder;
-  }
-
-  /* sqlite3와 동일한 핵심 동작 */
-  if( hasExpr ){
-    pIndex->aColExpr = pList;
-    pList = 0;   /* ownership 이동 */
-  }
-
-  if( pIndex->aColExpr ){
-    SrcList sSrc;
-    NameContext sNC;
-    int ii;
-
-    memset(&sSrc, 0, sizeof(sSrc));
-    memset(&sNC, 0, sizeof(sNC));
-
-    sSrc.nSrc = 1;
-    sSrc.a[0].zName = pTab->zName;
-    sSrc.a[0].pTab = pTab;
-    sSrc.a[0].iCursor = -1;
-
-    sNC.pParse = pParse;
-    sNC.pSrcList = &sSrc;
-    sNC.isCheck = 0;
-    sNC.nDepth = 1;
-
-    for(ii = 0; ii < pIndex->aColExpr->nExpr; ii++){
-      Expr *pE = pIndex->aColExpr->a[ii].pExpr;
-      if( pE ){
-        if( sqlite4ResolveExprNames(&sNC, pE) ){
-          goto exit_create_index;
-        }
+      zColl = pTab->aCol[j].zColl;
+      if( !zColl ){
+        zColl = db->pDfltColl->zName;
       }
     }
+    if( !db->init.busy && !sqlite4LocateCollSeq(pParse, zColl) ){
+      goto exit_create_index;
+    }
+    pIndex->azColl[i] = zColl;
+    pIndex->aSortOrder[i] = (u8)pListItem->sortOrder;
   }
-
   sqlite4DefaultRowEst(pIndex);
+
+  // /* AFTER: */
+  // pListItem = pList->a;
+  // int hasExpr = 0;
+  // pListItem = pList->a;
+  // for(i = 0; i < pIndex->nColumn; i++, pListItem++){
+  //   Expr *pExpr = pListItem->pExpr;
+  //   Expr *pCExpr = pExpr;
+
+  //   /* COLLATE 제거 */
+  //   while( pCExpr && pCExpr->op == TK_COLLATE ){
+  //     pCExpr = pCExpr->pLeft;
+  //   }
+  //   if( pExpr == NULL ){
+  //     return 0;
+  //   }
+
+  //   if( pCExpr && pCExpr->op == TK_COLUMN ){
+  //     /* 단순 컬럼 */
+  //     pIndex->aiColumn[i] = (i16)pCExpr->iColumn;
+  //   }else{
+  //     /* 표현식 인덱스 (함수 포함) */
+  //     pIndex->aiColumn[i] = XN_EXPR;
+  //     hasExpr = 1;
+  //   }
+
+  //   pIndex->aSortOrder[i] = (u8)pListItem->sortOrder;
+  // }
+
+  // /* sqlite3와 동일한 핵심 동작 */
+  // if( hasExpr ){
+  //   pIndex->aColExpr = pList;
+  //   pList = 0;   /* ownership 이동 */
+  // }
+
+  // if( pIndex->aColExpr ){
+  //   SrcList sSrc;
+  //   NameContext sNC;
+  //   int ii;
+
+  //   memset(&sSrc, 0, sizeof(sSrc));
+  //   memset(&sNC, 0, sizeof(sNC));
+
+  //   sSrc.nSrc = 1;
+  //   sSrc.a[0].zName = pTab->zName;
+  //   sSrc.a[0].pTab = pTab;
+  //   sSrc.a[0].iCursor = -1;
+
+  //   sNC.pParse = pParse;
+  //   sNC.pSrcList = &sSrc;
+  //   sNC.isCheck = 0;
+  //   sNC.nDepth = 1;
+
+  //   for(ii = 0; ii < pIndex->aColExpr->nExpr; ii++){
+  //     Expr *pE = pIndex->aColExpr->a[ii].pExpr;
+  //     if( pE ){
+  //       if( sqlite4ResolveExprNames(&sNC, pE) ){
+  //         goto exit_create_index;
+  //       }
+  //     }
+  //   }
+  // }
+
+  // sqlite4DefaultRowEst(pIndex);
 
 
   printf("Creating vector index entering\n");
