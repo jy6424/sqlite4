@@ -3732,7 +3732,7 @@ case OP_Insert: {
   pC->rowChnged = 1;
 
   // [koreauniv] debug message
-  printf("OP_Insert: p1=%d, p2=%d, p3=%d, p5=%d\n", pOp->p1, pOp->p2, pOp->p3, pOp->p5);
+  // printf("OP_Insert: p1=%d, p2=%d, p3=%d, p5=%d\n", pOp->p1, pOp->p2, pOp->p3, pOp->p5);
   break;
 }
 
