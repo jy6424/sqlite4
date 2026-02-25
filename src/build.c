@@ -2947,7 +2947,7 @@ Index *sqlite4CreateIndex(
 
     Expr *pE = pIndex->aColExpr->a[0].pExpr;
 
-    if( pE && pE->op == TK_FUNCTION && pE->u.zToken && sqlite4_stricmp(pE->u.zToken, "libsql_vector_idx") == 0 ){
+    if( pE && pE->op == TK_FUNCTION && pE->u.zToken && sqlite4_stricmp(pE->u.zToken, "libsql_vector_idx") == 0 && pIndex->idxIsVector == 0 ){
       vectorIdxRc = vectorIndexCreate(pParse, pIndex, db->aDb[iDb].zName);
     }
   }
