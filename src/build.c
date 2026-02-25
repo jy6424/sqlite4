@@ -2986,6 +2986,7 @@ Index *sqlite4CreateIndex(
   ** step can be skipped.
   */
   else{
+    printf("createIndex: writing index %c\n", pName->z);
     createIndexWriteSchema(pParse, pIndex, pName, pEnd);
   }
 
