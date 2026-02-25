@@ -2791,39 +2791,44 @@ Index *sqlite4CreateIndex(
 
   // [koreauniv] allow libsql_vector_idx to create vector index
   /* BEFORE: for(i=0, pListItem=pList->a; ... findTableColumn ... ) */
+  int hasExpr = 0;
   int isVectorIndex = 0;
 
-  for(i=0, pListItem=pList->a; i<pList->nExpr; i++, pListItem++){
+  for(i = 0, pListItem = pList->a; i < pList->nExpr; i++, pListItem++){
     char *zColl = 0;
     Expr *pExpr = pListItem->pExpr;
+    Expr *pCExpr = pExpr;
 
-    if( pExpr
-        && pExpr->op == TK_FUNCTION
-        && pExpr->u.zToken
-        && sqlite4_stricmp(pExpr->u.zToken, "libsql_vector_idx")==0 ){
+    /* COLLATE 제거 */
+    while( pCExpr && pCExpr->op == TK_COLLATE ){
+      pCExpr = pCExpr->pLeft;
+    }
 
-      /* 🔥 vector expression index */
+    if( pCExpr && pCExpr->op == TK_COLUMN ){
+      /* 일반 컬럼 인덱스 (shadow 포함) */
+      pIndex->aiColumn[i] = (i16)pCExpr->iColumn;
+
+    }else if( pCExpr
+              && pCExpr->op == TK_FUNCTION
+              && pCExpr->u.zToken
+              && sqlite4_stricmp(pCExpr->u.zToken, "libsql_vector_idx")==0 ){
+
+      /* vector expression index */
       pIndex->aiColumn[i] = XN_EXPR;
+      hasExpr = 1;
       isVectorIndex = 1;
 
-      zColl = db->pDfltColl->zName;
-
     }else{
-      int j = findTableColumn(pParse, pTab, pListItem->zName);
-      if( j<0 ) goto exit_create_index;
+      /* 일반 expression index */
+      pIndex->aiColumn[i] = XN_EXPR;
+      hasExpr = 1;
+    }
 
-      pIndex->aiColumn[i] = j;
-
-      if( pListItem->pExpr && pListItem->pExpr->pColl ){
-        int nColl = sqlite4Strlen30(pListItem->pExpr->pColl->zName) + 1;
-        memcpy(zExtra, pListItem->pExpr->pColl->zName, nColl);
-        zColl = zExtra;
-        zExtra += nColl;
-        nExtra -= nColl;
-      }else{
-        zColl = pTab->aCol[j].zColl;
-        if( !zColl ) zColl = db->pDfltColl->zName;
-      }
+    /* Collation 처리 */
+    if( pExpr && pExpr->pColl ){
+      zColl = pExpr->pColl->zName;
+    }else{
+      zColl = db->pDfltColl->zName;
     }
 
     if( !db->init.busy && !sqlite4LocateCollSeq(pParse, zColl) ){
@@ -2836,10 +2841,12 @@ Index *sqlite4CreateIndex(
 
   sqlite4DefaultRowEst(pIndex);
 
-  if( isVectorIndex ){
+  /* expression index면 ownership 이동 */
+  if( hasExpr ){
     pIndex->aColExpr = pList;
+    pList = 0;
 
-    /* 🔥 반드시 resolve 해줘야 함 */
+    /* resolve 반드시 수행 */
     SrcList sSrc;
     NameContext sNC;
 
@@ -2855,8 +2862,11 @@ Index *sqlite4CreateIndex(
     sNC.pSrcList = &sSrc;
     sNC.nDepth = 1;
 
-    if( sqlite4ResolveExprNames(&sNC, pIndex->aColExpr->a[0].pExpr) ){
-      goto exit_create_index;
+    for(i = 0; i < pIndex->aColExpr->nExpr; i++){
+      if( sqlite4ResolveExprNames(&sNC,
+          pIndex->aColExpr->a[i].pExpr) ){
+        goto exit_create_index;
+      }
     }
   }
 
