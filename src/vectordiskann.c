@@ -626,7 +626,7 @@ int diskAnnCreateIndex(
         );
     zRowidColumnName = "rowid";
   }
-  // printf("diskAnnCreateIndex: creating shadow table with SQL: %s\n", zSql);
+  printf("diskAnnCreateIndex: creating shadow table with SQL: %s\n", zSql);
   rc = sqlite4_exec(db, zSql, 0, 0);
   // printf("diskAnnCreateIndex: shadow table creation rc=%d\n", rc);
   sqlite4DbFree(db, zSql);
@@ -654,7 +654,7 @@ int diskAnnCreateIndex(
       zIdxName,
       zRowidColumnName
   );
-  // printf("diskAnnCreateIndex: creating index with SQL: %s\n", zSql);
+  printf("diskAnnCreateIndex: creating index with SQL: %s\n", zSql);
   rc = sqlite4_exec(db, zSql, 0, 0);
   // printf("diskAnnCreateIndex: index creation rc=%d\n", rc);
   sqlite4DbFree(db, zSql);
