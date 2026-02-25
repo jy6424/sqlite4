@@ -2555,9 +2555,12 @@ static void createIndexWriteSchema(
         sqlite4RefillIndex(pParse, pIdx, 1);
       }
       sqlite4ChangeCookie(pParse, iDb);
+      int saved = db->init.busy;
+      db->init.busy = 1;
       sqlite4VdbeAddParseSchemaOp(v, iDb,
           sqlite4MPrintf(db, "name='%q' AND type='index'", pIdx->zName));
       sqlite4VdbeAddOp1(v, OP_Expire, 0);
+      db->init.busy = saved;
     }
   }
 }
