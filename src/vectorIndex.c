@@ -944,7 +944,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
   pListItem = pArgsList->a;
 
   if( pArgsList->nExpr < 1 ){
-    printf("vector idnex: " VECTOR_INDEX_MARKER_FUNCTION " must contain at least one argument");
+    printf("vector index: " VECTOR_INDEX_MARKER_FUNCTION " must contain at least one argument");
     return CREATE_FAIL;
   }
   if( pListItem[0].pExpr->op != TK_COLUMN ) {
@@ -1015,6 +1015,7 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
     printf("vector index: unable to update global metadata table");
     return CREATE_FAIL;
   }
+  printf("vectorIndexCreate: index %s created successfully\n", pIdx->zName);
   return CREATE_OK;
 }
 

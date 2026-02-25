@@ -2877,7 +2877,7 @@ Index *sqlite4CreateIndex(
       skipRefill = 1;
     }
     if( vectorIdxRc == 0 ){
-      printf("vector index must not be created (vectorIdxRc = %d)\n", vectorIdxRc);
+      printf("vector index must not be created for %s (vectorIdxRc = %d)\n", pIndex->zName, vectorIdxRc);
     }
   #endif
 
