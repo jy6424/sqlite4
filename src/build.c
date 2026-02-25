@@ -2937,27 +2937,36 @@ Index *sqlite4CreateIndex(
 
   printf("Creating vector index entering\n");
   // [koreauniv] place to add vector index support 
-  #ifndef SQLITE_OMIT_VECTOR
-    // we want to have complete information about index columns before invocation of vectorIndexCreate method
-    printf("Creating vector index\n");
-    vectorIdxRc = vectorIndexCreate(pParse, pIndex, db->aDb[iDb].zName);
-    printf("vectorIdxRc = %d\n", vectorIdxRc);
-    if( vectorIdxRc < 0 ){
-      printf("Failed to create vector index\n");
-      goto exit_create_index;
+#ifndef SQLITE_OMIT_VECTOR
+  // we want to have complete information about index columns before invocation of vectorIndexCreate method
+  printf("Creating vector index\n");
+  
+  vectorIdxRc = 0;
+
+  if( pIndex->aColExpr && pIndex->aColExpr->nExpr == 1 ){
+
+    Expr *pE = pIndex->aColExpr->a[0].pExpr;
+
+    if( pE && pE->op == TK_FUNCTION && pE->u.zToken && sqlite4_stricmp(pE->u.zToken, "libsql_vector_idx") == 0 ){
+      vectorIdxRc = vectorIndexCreate(pParse, pIndex, db->aDb[iDb].zName);
     }
-    if( vectorIdxRc >= 1 ){
-      printf("Created vector index %s with vectorIdxRc = %d\n", pIndex->zName, vectorIdxRc);
-      pIndex->idxIsVector = 1;
-    }
-    if( vectorIdxRc == 1 ){
-      printf("Skip index refill for vector index\n");
-      skipRefill = 1;
-    }
-    if( vectorIdxRc == 0 ){
-      printf("vector index must not be created for %s (vectorIdxRc = %d)\n", pIndex->zName, vectorIdxRc);
-    }
-  #endif
+  }
+  if( vectorIdxRc < 0 ){
+    printf("Failed to create vector index\n");
+    goto exit_create_index;
+  }
+  if( vectorIdxRc >= 1 ){
+    printf("Created vector index %s with vectorIdxRc = %d\n", pIndex->zName, vectorIdxRc);
+    pIndex->idxIsVector = 1;
+  }
+  if( vectorIdxRc == 1 ){
+    printf("Skip index refill for vector index(vectorIdxRc = %d)\n", vectorIdxRc);
+    skipRefill = 1;
+  }
+  if( vectorIdxRc == 0 ){
+    printf("vector index must not be created for %s (vectorIdxRc = %d)\n", pIndex->zName, vectorIdxRc);
+  }
+#endif
 
   /* Scan the names of any covered columns. */
   for(i=0; i<nCover; i++){
