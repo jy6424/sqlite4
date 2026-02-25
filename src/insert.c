@@ -25,6 +25,7 @@ void sqlite4OpenTable(
   int opcode      /* OP_OpenRead or OP_OpenWrite */
 ){
   Index *pPk = sqlite4FindPrimaryKey(pTab, 0);
+  printf("sqlite4OpenTable: opening table %s with opcode %d\n", pTab->zName, opcode);
   sqlite4OpenIndex(p, iCur, iDb, pPk, opcode);
 }
 
@@ -1164,9 +1165,12 @@ Index *sqlite4FindPrimaryKey(
   for(p=pTab->pIndex; p && p->eIndexType!=SQLITE4_INDEX_PRIMARYKEY; p=p->pNext){
     iPk++;
   }
-  if( piPk ) *piPk = iPk;
-  else {
+  if( piPk ) {
+    *piPk = iPk;
+    printf("primary key for table %s is index %d\n", pTab->zName, iPk);
+  }else{
     iPkroot = pTab->tnum;
+    printf("primary key for table %s is root page %d\n", pTab->zName, iPkroot);
     assert( iPkroot>0 );
   }
   return p;
