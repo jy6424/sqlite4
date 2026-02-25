@@ -2959,7 +2959,7 @@ Index *sqlite4CreateIndex(
     printf("Created vector index %s with vectorIdxRc = %d\n", pIndex->zName, vectorIdxRc);
     pIndex->idxIsVector = 1;
     skipRefill = (vectorIdxRc == 1);
-    goto exit_create_index;   // 🔥 핵심
+    // goto exit_create_index;   // 🔥 핵심
   }
   if( vectorIdxRc == 1 ){
     printf("Skip index refill for vector index(vectorIdxRc = %d)\n", vectorIdxRc);
