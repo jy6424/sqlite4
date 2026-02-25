@@ -3913,6 +3913,9 @@ case OP_ParseSchema: {
   char *zSql;
   InitData initData;
 
+  int saved = db->init.busy;
+  db->init.busy = 1; 
+
   iDb = pOp->p1;
   assert( iDb>=0 && iDb<db->nDb );
   assert( DbHasProperty(db, iDb, DB_SchemaLoaded) );
@@ -3927,16 +3930,17 @@ case OP_ParseSchema: {
     if( zSql==0 ){
       rc = SQLITE4_NOMEM;
     }else{
-      assert( db->init.busy==0 );
-      db->init.busy = 1;
+      // assert( db->init.busy==0 );
+      // db->init.busy = 1;
       initData.rc = SQLITE4_OK;
       assert( !db->mallocFailed );
       rc = sqlite4_exec(db, zSql, sqlite4InitCallback, &initData);
       if( rc==SQLITE4_OK ) rc = initData.rc;
       sqlite4DbFree(db, zSql);
-      db->init.busy = 0;
+      // db->init.busy = 0;
     }
   }
+  db->init.busy = saved;
   if( rc==SQLITE4_NOMEM ){
     goto no_mem;
   }
