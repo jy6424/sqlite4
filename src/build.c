@@ -2702,6 +2702,7 @@ Index *sqlite4CreateIndex(
   /* Find the table that is to be indexed.  Return early if not found. */
   if( pCI ){
     pTab = createIndexFindTable(pParse, pCI, &pName, &zName, &iDb);
+    printf("createIndexFindTable: found table %s\n", pTab ? pTab->zName : "null");
     if( !pTab ) goto exit_create_index;
   }else{
     assert( pName==0 );
@@ -2748,6 +2749,7 @@ Index *sqlite4CreateIndex(
   ** number of parameters passed to this function.
   */
   if( pList==0 ){
+    printf("createIndex: this is primary key or unique constraint\n");
     nullId.z = pTab->aCol[pTab->nCol-1].zName;
     nullId.n = sqlite4Strlen30((char*)nullId.z);
     pList = sqlite4ExprListAppend(pParse, 0, 0);
@@ -2776,6 +2778,7 @@ Index *sqlite4CreateIndex(
       pParse, pTab, zName, pList->nExpr, nCover, onError, nExtra, &zExtra
   );
   if( !pIndex ) goto exit_create_index;
+  printf("newIndex: created index %s\n", pIndex->zName);
 
   assert( pIndex->eIndexType==SQLITE4_INDEX_USER );
   if( pName==0 ){
@@ -2866,15 +2869,15 @@ Index *sqlite4CreateIndex(
       goto exit_create_index;
     }
     if( vectorIdxRc >= 1 ){
-      printf("Created vector index %s with vectorIdxRc = %d\n", db->aDb[iDb].zName, vectorIdxRc);
+      printf("Created vector index %s with vectorIdxRc = %d\n", pName, vectorIdxRc);
       pIndex->idxIsVector = 1;
     }
     if( vectorIdxRc == 1 ){
-      printf("Skip index refill for vector index %s\n", db->aDb[iDb].zName);
+      printf("Skip index refill for vector index\n");
       skipRefill = 1;
     }
     if( vectorIdxRc == 0 ){
-      printf("vector index %s must not be created (vectorIdxRc = %d)\n", db->aDb[iDb].zName, vectorIdxRc);
+      printf("vector index must not be created (vectorIdxRc = %d)\n", vectorIdxRc);
     }
   #endif
 
