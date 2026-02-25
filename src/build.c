@@ -2791,6 +2791,8 @@ Index *sqlite4CreateIndex(
 
   // [koreauniv] allow libsql_vector_idx to create vector index
   /* BEFORE: for(i=0, pListItem=pList->a; ... findTableColumn ... ) */
+  int isVectorIndex = 0;
+
   for(i=0, pListItem=pList->a; i<pList->nExpr; i++, pListItem++){
     char *zColl = 0;
     Expr *pExpr = pListItem->pExpr;
@@ -2802,10 +2804,8 @@ Index *sqlite4CreateIndex(
 
       /* 🔥 vector expression index */
       pIndex->aiColumn[i] = XN_EXPR;
-      pIndex->aColExpr = pList;
-      // pList = 0;
+      isVectorIndex = 1;
 
-      /* vector index는 기본 BINARY collation 사용 */
       zColl = db->pDfltColl->zName;
 
     }else{
@@ -2816,7 +2816,6 @@ Index *sqlite4CreateIndex(
 
       if( pListItem->pExpr && pListItem->pExpr->pColl ){
         int nColl = sqlite4Strlen30(pListItem->pExpr->pColl->zName) + 1;
-        assert( nExtra>=nColl );
         memcpy(zExtra, pListItem->pExpr->pColl->zName, nColl);
         zColl = zExtra;
         zExtra += nColl;
@@ -2834,7 +2833,32 @@ Index *sqlite4CreateIndex(
     pIndex->azColl[i] = zColl;
     pIndex->aSortOrder[i] = (u8)pListItem->sortOrder;
   }
+
   sqlite4DefaultRowEst(pIndex);
+
+  if( isVectorIndex ){
+    pIndex->aColExpr = pList;
+
+    /* 🔥 반드시 resolve 해줘야 함 */
+    SrcList sSrc;
+    NameContext sNC;
+
+    memset(&sSrc, 0, sizeof(sSrc));
+    memset(&sNC, 0, sizeof(sNC));
+
+    sSrc.nSrc = 1;
+    sSrc.a[0].zName = pTab->zName;
+    sSrc.a[0].pTab = pTab;
+    sSrc.a[0].iCursor = -1;
+
+    sNC.pParse = pParse;
+    sNC.pSrcList = &sSrc;
+    sNC.nDepth = 1;
+
+    if( sqlite4ResolveExprNames(&sNC, pIndex->aColExpr->a[0].pExpr) ){
+      goto exit_create_index;
+    }
+  }
 
   // /* AFTER: */
   // pListItem = pList->a;

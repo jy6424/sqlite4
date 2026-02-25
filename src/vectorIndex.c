@@ -896,8 +896,11 @@ int vectorIndexCreate(Parse *pParse, const Index *pIdx, const char *zDbSName) {
   // if( db->init.busy == 1){
   //   return CREATE_OK;
   // }
-  if (db->init.busy) {
-    return CREATE_OK;
+  if( db->init.busy ){
+      if( pIdx->aColExpr != NULL ){
+          return CREATE_OK_SKIP_REFILL;
+      }
+      return CREATE_IGNORE;
   }
   printf("vectorIndexCreate: entered\n");
   printf("vectorIndexCreate: db->init.busy = %d\n", db->init.busy);
