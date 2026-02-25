@@ -2550,7 +2550,7 @@ static void createIndexWriteSchema(
     /* Fill the index with data and reparse the schema. Code an OP_Expire
     ** to invalidate all pre-compiled statements.
     */
-    if( pIdx->eIndexType!=SQLITE4_INDEX_UNIQUE && pIdx->idxIsVector == 0 ){
+    if( pIdx->eIndexType!=SQLITE4_INDEX_UNIQUE ){
       sqlite4RefillIndex(pParse, pIdx, 1);
       sqlite4ChangeCookie(pParse, iDb);
       sqlite4VdbeAddParseSchemaOp(v, iDb,
@@ -2947,7 +2947,7 @@ Index *sqlite4CreateIndex(
 
     Expr *pE = pIndex->aColExpr->a[0].pExpr;
 
-    if( pE && pE->op == TK_FUNCTION && pE->u.zToken && sqlite4_stricmp(pE->u.zToken, "libsql_vector_idx") == 0 && pIndex->idxIsVector == 0 ){
+    if( pE && pE->op == TK_FUNCTION && pE->u.zToken && sqlite4_stricmp(pE->u.zToken, "libsql_vector_idx") == 0 && pIndex->idxIsVector == 0 && pParse->nested==0 ){
       vectorIdxRc = vectorIndexCreate(pParse, pIndex, db->aDb[iDb].zName);
     }
   }
