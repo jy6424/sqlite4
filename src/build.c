@@ -2869,7 +2869,7 @@ Index *sqlite4CreateIndex(
       goto exit_create_index;
     }
     if( vectorIdxRc >= 1 ){
-      printf("Created vector index %s with vectorIdxRc = %d\n", pName, vectorIdxRc);
+      printf("Created vector index %s with vectorIdxRc = %d\n", pIndex->zName, vectorIdxRc);
       pIndex->idxIsVector = 1;
     }
     if( vectorIdxRc == 1 ){
