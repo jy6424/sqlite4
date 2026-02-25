@@ -2792,30 +2792,45 @@ Index *sqlite4CreateIndex(
   // [koreauniv] allow libsql_vector_idx to create vector index
   /* BEFORE: for(i=0, pListItem=pList->a; ... findTableColumn ... ) */
   for(i=0, pListItem=pList->a; i<pList->nExpr; i++, pListItem++){
-    char *zColl;                   /* Collation sequence name */
+    char *zColl = 0;
+    Expr *pExpr = pListItem->pExpr;
 
-    j = findTableColumn(pParse, pTab, pListItem->zName);
-    if( j<0 ) goto exit_create_index;
+    if( pExpr
+        && pExpr->op == TK_FUNCTION
+        && pExpr->u.zToken
+        && sqlite4_stricmp(pExpr->u.zToken, "libsql_vector_idx")==0 ){
 
-    pIndex->aiColumn[i] = j;
-    if( pListItem->pExpr && pListItem->pExpr->pColl ){
-      int nColl;
-      zColl = pListItem->pExpr->pColl->zName;
-      nColl = sqlite4Strlen30(zColl) + 1;
-      assert( nExtra>=nColl );
-      memcpy(zExtra, zColl, nColl);
-      zColl = zExtra;
-      zExtra += nColl;
-      nExtra -= nColl;
+      /* 🔥 vector expression index */
+      pIndex->aiColumn[i] = XN_EXPR;
+      pIndex->aColExpr = pList;
+      pList = 0;
+
+      /* vector index는 기본 BINARY collation 사용 */
+      zColl = db->pDfltColl->zName;
+
     }else{
-      zColl = pTab->aCol[j].zColl;
-      if( !zColl ){
-        zColl = db->pDfltColl->zName;
+      int j = findTableColumn(pParse, pTab, pListItem->zName);
+      if( j<0 ) goto exit_create_index;
+
+      pIndex->aiColumn[i] = j;
+
+      if( pListItem->pExpr && pListItem->pExpr->pColl ){
+        int nColl = sqlite4Strlen30(pListItem->pExpr->pColl->zName) + 1;
+        assert( nExtra>=nColl );
+        memcpy(zExtra, pListItem->pExpr->pColl->zName, nColl);
+        zColl = zExtra;
+        zExtra += nColl;
+        nExtra -= nColl;
+      }else{
+        zColl = pTab->aCol[j].zColl;
+        if( !zColl ) zColl = db->pDfltColl->zName;
       }
     }
+
     if( !db->init.busy && !sqlite4LocateCollSeq(pParse, zColl) ){
       goto exit_create_index;
     }
+
     pIndex->azColl[i] = zColl;
     pIndex->aSortOrder[i] = (u8)pListItem->sortOrder;
   }
