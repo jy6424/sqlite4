@@ -2803,7 +2803,7 @@ Index *sqlite4CreateIndex(
       /* 🔥 vector expression index */
       pIndex->aiColumn[i] = XN_EXPR;
       pIndex->aColExpr = pList;
-      pList = 0;
+      // pList = 0;
 
       /* vector index는 기본 BINARY collation 사용 */
       zColl = db->pDfltColl->zName;
