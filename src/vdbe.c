@@ -2663,11 +2663,11 @@ case OP_OpenWrite: {
   pCur->pKeyInfo = pKeyInfo;
 
   // [koreauniv] debug message
-  printf(
-    "OP_OpenRead/OP_OpenWrite: op=%s p1=%d, p2=%d, p3=%d, nField=%d, keyinfo=%p\n",
-    (pOp->opcode==OP_OpenWrite ? "OpenWrite" : "OpenRead"),
-    pOp->p1, p2, pOp->p3, nField, (void*)pKeyInfo
-  );
+  // printf(
+  //   "OP_OpenRead/OP_OpenWrite: op=%s p1=%d, p2=%d, p3=%d, nField=%d, keyinfo=%p\n",
+  //   (pOp->opcode==OP_OpenWrite ? "OpenWrite" : "OpenRead"),
+  //   pOp->p1, p2, pOp->p3, nField, (void*)pKeyInfo
+  // );
   break;
 }
 

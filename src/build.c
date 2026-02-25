@@ -2862,13 +2862,19 @@ Index *sqlite4CreateIndex(
     vectorIdxRc = vectorIndexCreate(pParse, pIndex, db->aDb[iDb].zName);
     printf("vectorIdxRc = %d\n", vectorIdxRc);
     if( vectorIdxRc < 0 ){
+      printf("Failed to create vector index\n");
       goto exit_create_index;
     }
     if( vectorIdxRc >= 1 ){
+      printf("Created vector index %s with vectorIdxRc = %d\n", db->aDb[iDb].zName, vectorIdxRc);
       pIndex->idxIsVector = 1;
     }
     if( vectorIdxRc == 1 ){
+      printf("Skip index refill for vector index\n");
       skipRefill = 1;
+    }
+    if( vectorIdxRc == 0 ){
+      printf("vector index must not be created (vectorIdxRc = %d)\n", vectorIdxRc);
     }
   #endif
 
