@@ -2870,11 +2870,11 @@ Index *sqlite4CreateIndex(
       pIndex->idxIsVector = 1;
     }
     if( vectorIdxRc == 1 ){
-      printf("Skip index refill for vector index\n");
+      printf("Skip index refill for vector index %s\n", db->aDb[iDb].zName);
       skipRefill = 1;
     }
     if( vectorIdxRc == 0 ){
-      printf("vector index must not be created (vectorIdxRc = %d)\n", vectorIdxRc);
+      printf("vector index %s must not be created (vectorIdxRc = %d)\n", db->aDb[iDb].zName, vectorIdxRc);
     }
   #endif
 
