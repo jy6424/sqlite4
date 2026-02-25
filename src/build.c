@@ -2877,11 +2877,11 @@ Index *sqlite4CreateIndex(
   
   vectorIdxRc = 0;
 
-  if( pIndex->aColExpr && pIndex->aColExpr->nExpr == 1 ){
-
-    Expr *pE = pIndex->aColExpr->a[0].pExpr;
-
-    if( pE && pE->op == TK_FUNCTION && pE->u.zToken && sqlite4_stricmp(pE->u.zToken, "libsql_vector_idx") == 0 && pIndex->idxIsVector == 0){
+  if( isVectorIndex ){
+    if( pParse->nested || db->init.busy ){
+      vectorIdxRc = 1;         /* CREATE_OK_SKIP_REFILL 의미 */
+      skipRefill = 1;
+    }else{
       vectorIdxRc = vectorIndexCreate(pParse, pIndex, db->aDb[iDb].zName);
     }
   }
