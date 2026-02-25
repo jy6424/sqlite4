@@ -1167,10 +1167,8 @@ Index *sqlite4FindPrimaryKey(
   }
   if( piPk ) {
     *piPk = iPk;
-    printf("primary key for table %s is index %d\n", pTab->zName, iPk);
   }else{
     iPkroot = pTab->tnum;
-    printf("primary key for table %s is root page %d\n", pTab->zName, iPkroot);
     assert( iPkroot>0 );
   }
   return p;
