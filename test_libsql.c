@@ -52,17 +52,17 @@ int main(int argc, char **argv) {
   }
   printf("Table created successfully\n");
 
-  // printf("\n-- creating index --\n");
-  // rc = sqlite4_exec(
-  //   db,
-  //   "CREATE INDEX x_idx ON x (libsql_vector_idx(embedding));",
-  //   0, 0
-  // );
-  // if (rc) {
-  //   printf("sql error (create index): rc=%d\n with errmsg : %s\n", rc, sqlite4_errmsg(db));
-  //   sqlite4_close(db, 0);
-  //   return 1;
-  // }
+  printf("\n-- creating index --\n");
+  rc = sqlite4_exec(
+    db,
+    "CREATE INDEX x_idx ON x (libsql_vector_idx(embedding));",
+    0, 0
+  );
+  if (rc) {
+    printf("sql error (create index): rc=%d\n with errmsg : %s\n", rc, sqlite4_errmsg(db));
+    sqlite4_close(db, 0);
+    return 1;
+  }
 
   printf("\n-- created tables --\n");
   rc = sqlite4_exec(
@@ -141,5 +141,11 @@ int main(int argc, char **argv) {
   sqlite4_exec(db, "SELECT name, sql FROM sqlite_schema WHERE name LIKE 'x_idx%';", print_callback, 0);
   
   sqlite4_close(db, 0);
+
+  remove("test.db");
+  remove("test.db-journal");
+  remove("test.db-wal");
+  remove("test.db-shm");
+  
   return 0;
 }

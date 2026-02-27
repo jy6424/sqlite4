@@ -56,7 +56,7 @@ void sqlite4OpenIndex(
   sqlite4VdbeAddOp3(v, opcode, iCur, pIdx->tnum, iDb);
   sqlite4VdbeChangeP4(v, -1, (const char *)pKey, P4_KEYINFO_HANDOFF);
   VdbeComment((v, "%s", pIdx->zName));
-  printf("sqlite4OpenIndex: opened index %s, idxIsVector %d\n", pIdx->zName, pIdx->idxIsVector);
+  // printf("sqlite4OpenIndex: opened index %s, idxIsVector %d\n", pIdx->zName, pIdx->idxIsVector);
 }
 
 
