@@ -29,6 +29,11 @@ static int print_callback(
 int main(int argc, char **argv) {
   (void)argc; (void)argv;
 
+  remove("test.db");
+  remove("test.db-journal");
+  remove("test.db-wal");
+  remove("test.db-shm");
+
   sqlite4 *db = 0;
   int rc = 0;
 
@@ -142,10 +147,7 @@ int main(int argc, char **argv) {
   
   sqlite4_close(db, 0);
 
-  remove("test.db");
-  remove("test.db-journal");
-  remove("test.db-wal");
-  remove("test.db-shm");
-  
+
+
   return 0;
 }
