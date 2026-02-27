@@ -3776,38 +3776,38 @@ case OP_Insert: {
   assert( pC && pC->pKVCur && pC->pKVCur->pStore );
   assert( pData==0 || (pData->flags & MEM_Blob) );
 
-#ifndef SQLITE4_OMIT_VECTOR
-  /* ---- vector index insert path ----
-  ** Vector index cursor는 일반 KVStoreReplace로 쓰면 안됨.
-  ** 여기서 가로채서 vectorIndexInsert()로 보내야 shadow table에 row가 생김.
-  */
-  if( isVectorCursor(pC) ){
-    UnpackedRecord *pIdxKey = 0;
+// #ifndef SQLITE4_OMIT_VECTOR
+//   /* ---- vector index insert path ----
+//   ** Vector index cursor는 일반 KVStoreReplace로 쓰면 안됨.
+//   ** 여기서 가로채서 vectorIndexInsert()로 보내야 shadow table에 row가 생김.
+//   */
+//   if( isVectorCursor(pC) ){
+//     UnpackedRecord *pIdxKey = 0;
 
-    /* 인덱스 키는 보통 MakeRecord 결과(BLOB) */
-    rc = ExpandBlob(pKey);
-    if( rc ) goto abort_due_to_error;
+//     /* 인덱스 키는 보통 MakeRecord 결과(BLOB) */
+//     rc = ExpandBlob(pKey);
+//     if( rc ) goto abort_due_to_error;
 
-    /* UnpackedRecord 할당 (sqlite4에 없으면 추가해야 함) */
-    pIdxKey = sqlite4VdbeAllocUnpackedRecord(p->db, pC->pKeyInfo);
-    if( pIdxKey==0 ) goto no_mem;
+//     /* UnpackedRecord 할당 (sqlite4에 없으면 추가해야 함) */
+//     pIdxKey = sqlite4VdbeAllocUnpackedRecord(p->db, pC->pKeyInfo);
+//     if( pIdxKey==0 ) goto no_mem;
 
-    /* packed record -> unpacked record */
-    sqlite4VdbeRecordUnpack(pC->pKeyInfo, pKey->n, pKey->z, pIdxKey);
+//     /* packed record -> unpacked record */
+//     sqlite4VdbeRecordUnpack(pC->pKeyInfo, pKey->n, pKey->z, pIdxKey);
 
-    /* 실제 vector insert (내부에서 diskAnnInsert -> shadow table insert) */
-    rc = vectorIndexInsert(pC->uc.pVecIdx, pIdxKey, &p->zErrMsg);
+//     /* 실제 vector insert (내부에서 diskAnnInsert -> shadow table insert) */
+//     rc = vectorIndexInsert(pC->uc.pVecIdx, pIdxKey, &p->zErrMsg);
 
-    sqlite4VdbeFreeUnpackedRecord(p->db, pIdxKey);
-    if( rc ) goto abort_due_to_error;
+//     sqlite4VdbeFreeUnpackedRecord(p->db, pIdxKey);
+//     if( rc ) goto abort_due_to_error;
 
-    /* change-counter 처리: 일반 Insert처럼 반영 */
-    if( pOp->p5 & OPFLAG_NCHANGE ) p->nChange++;
+//     /* change-counter 처리: 일반 Insert처럼 반영 */
+//     if( pOp->p5 & OPFLAG_NCHANGE ) p->nChange++;
 
-    pC->rowChnged = 1;
-    break; /* KVStoreReplace 경로로 내려가지 않음 */
-  }
-#endif /* SQLITE4_OMIT_VECTOR */
+//     pC->rowChnged = 1;
+//     break; /* KVStoreReplace 경로로 내려가지 않음 */
+//   }
+// #endif /* SQLITE4_OMIT_VECTOR */
 
   /* ---- normal KVStore insert path ---- */
 
