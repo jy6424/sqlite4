@@ -3885,13 +3885,78 @@ void sqlite4Reindex(Parse *pParse, Token *pName1, Token *pName2){
 ** sequence), NULL is returned and the state of pParse updated to reflect
 ** the error.
 */
+// KeyInfo *sqlite4IndexKeyinfo(Parse *pParse, Index *pIdx){
+//   Index *pPk;                     /* Primary key index on same table */
+//   int i;
+//   int nCol;
+//   int nBytes;
+//   sqlite4 *db = pParse->db;
+//   KeyInfo *pKey;
+//   if( pIdx->eIndexType==SQLITE4_INDEX_PRIMARYKEY
+//    || pIdx->eIndexType==SQLITE4_INDEX_TEMP
+//   ){
+//     pPk = 0;
+//   }else{
+//     pPk = sqlite4FindPrimaryKey(pIdx->pTable, 0);
+//   }
+//   nCol = pIdx->nColumn + (pPk ? pPk->nColumn : 0);
+
+//   nBytes = sizeof(KeyInfo) + (nCol-1)*sizeof(CollSeq*) + nCol;
+//   pKey = (KeyInfo *)sqlite4DbMallocZero(db, nBytes);
+//   if( pKey ){
+//     pKey->aSortOrder = (u8 *)&(pKey->aColl[nCol]);
+//     assert( &pKey->aSortOrder[nCol]==&(((u8 *)pKey)[nBytes]) );
+
+//     for(i=0; i<pIdx->nColumn; i++){
+//       char *zColl = pIdx->azColl[i];
+//       assert( zColl );
+//       pKey->aColl[i] = sqlite4LocateCollSeq(pParse, zColl);
+//       pKey->aSortOrder[i] = pIdx->aSortOrder[i];
+//     }
+//     if( pPk ){
+//       for(i=0; i<pPk->nColumn; i++){
+//         char *zColl = pPk->azColl[i];
+//         assert( zColl );
+//         pKey->aColl[i+pIdx->nColumn] = sqlite4LocateCollSeq(pParse, zColl);
+//         pKey->aSortOrder[i+pIdx->nColumn] = pPk->aSortOrder[i];
+//       }
+//     }
+
+//     pKey->nField = (u16)nCol;
+//     if( pPk ){
+//       pKey->nPK = pPk->nColumn;
+//     }else{
+//       pKey->nData = pIdx->pTable->nCol;
+//     }
+//   }
+
+//   if( pParse->nErr ){
+//     sqlite4DbFree(db, pKey);
+//     pKey = 0;
+//   }
+//   return pKey;
+// }
+
+
+#include <stddef.h>   /* offsetof */
+
+/*
+** Return a dynamically allocated KeyInfo structure that can be used
+** with OP_OpenRead or OP_OpenWrite to access database index pIdx.
+*/
 KeyInfo *sqlite4IndexKeyinfo(Parse *pParse, Index *pIdx){
-  Index *pPk;                     /* Primary key index on same table */
+  Index *pPk;
   int i;
   int nCol;
   int nBytes;
+  int nStr = 0;
   sqlite4 *db = pParse->db;
   KeyInfo *pKey;
+  char *zTail;
+
+  const char *zIdxName = 0;
+  const char *zDbSName = 0;
+
   if( pIdx->eIndexType==SQLITE4_INDEX_PRIMARYKEY
    || pIdx->eIndexType==SQLITE4_INDEX_TEMP
   ){
@@ -3901,38 +3966,86 @@ KeyInfo *sqlite4IndexKeyinfo(Parse *pParse, Index *pIdx){
   }
   nCol = pIdx->nColumn + (pPk ? pPk->nColumn : 0);
 
-  nBytes = sizeof(KeyInfo) + (nCol-1)*sizeof(CollSeq*) + nCol;
+  /* ---- vector: capture names to embed into KeyInfo ---- */
+  zIdxName = pIdx->zName;
+
+  {
+    int iDb = sqlite4SchemaToIndex(db, pIdx->pTable->pSchema);
+    if( iDb>=0 && iDb<db->nDb ){
+      /* sqlite4의 Db schema name 필드가 뭐였는지에 따라 조정 */
+      zDbSName = db->aDb[iDb].zName;
+    }
+  }
+
+  if( zIdxName ) nStr += sqlite4Strlen30(zIdxName) + 1;
+  if( zDbSName ) nStr += sqlite4Strlen30(zDbSName) + 1;
+
+  /*
+  ** Layout:
+  **  [KeyInfo header up to aColl]
+  **  [aColl pointers x nCol]
+  **  [aSortOrder bytes x nCol]
+  **  [zIndexName '\0' | zDbSName '\0']  (optional)
+  */
+  nBytes = (int)offsetof(KeyInfo, aColl)
+         + (int)(sizeof(CollSeq*) * nCol)
+         + (int)(sizeof(u8) * nCol)
+         + nStr;
+
   pKey = (KeyInfo *)sqlite4DbMallocZero(db, nBytes);
-  if( pKey ){
-    pKey->aSortOrder = (u8 *)&(pKey->aColl[nCol]);
-    assert( &pKey->aSortOrder[nCol]==&(((u8 *)pKey)[nBytes]) );
+  if( pKey==0 ) return 0;
 
-    for(i=0; i<pIdx->nColumn; i++){
-      char *zColl = pIdx->azColl[i];
+  /* aSortOrder starts right after aColl[nCol] */
+  pKey->aSortOrder = (u8 *)&(pKey->aColl[nCol]);
+
+  /* tail starts right after aSortOrder[nCol] */
+  zTail = (char *)&pKey->aSortOrder[nCol];
+
+  /* copy strings into tail (so one sqlite4DbFree() is enough) */
+  if( zIdxName ){
+    int n = sqlite4Strlen30(zIdxName) + 1;
+    memcpy(zTail, zIdxName, n);
+    pKey->zIndexName = zTail;
+    zTail += n;
+  }else{
+    pKey->zIndexName = 0;
+  }
+
+  if( zDbSName ){
+    int n = sqlite4Strlen30(zDbSName) + 1;
+    memcpy(zTail, zDbSName, n);
+    pKey->zDbSName = zTail;
+    zTail += n;
+  }else{
+    pKey->zDbSName = 0;
+  }
+
+  /* original collation + sort order fill */
+  for(i=0; i<pIdx->nColumn; i++){
+    char *zColl = pIdx->azColl[i];
+    assert( zColl );
+    pKey->aColl[i] = sqlite4LocateCollSeq(pParse, zColl);
+    pKey->aSortOrder[i] = pIdx->aSortOrder[i];
+  }
+  if( pPk ){
+    for(i=0; i<pPk->nColumn; i++){
+      char *zColl = pPk->azColl[i];
       assert( zColl );
-      pKey->aColl[i] = sqlite4LocateCollSeq(pParse, zColl);
-      pKey->aSortOrder[i] = pIdx->aSortOrder[i];
+      pKey->aColl[i+pIdx->nColumn] = sqlite4LocateCollSeq(pParse, zColl);
+      pKey->aSortOrder[i+pIdx->nColumn] = pPk->aSortOrder[i];
     }
-    if( pPk ){
-      for(i=0; i<pPk->nColumn; i++){
-        char *zColl = pPk->azColl[i];
-        assert( zColl );
-        pKey->aColl[i+pIdx->nColumn] = sqlite4LocateCollSeq(pParse, zColl);
-        pKey->aSortOrder[i+pIdx->nColumn] = pPk->aSortOrder[i];
-      }
-    }
+  }
 
-    pKey->nField = (u16)nCol;
-    if( pPk ){
-      pKey->nPK = pPk->nColumn;
-    }else{
-      pKey->nData = pIdx->pTable->nCol;
-    }
+  pKey->nField = (u16)nCol;
+  if( pPk ){
+    pKey->nPK = pPk->nColumn;
+  }else{
+    pKey->nData = pIdx->pTable->nCol;
   }
 
   if( pParse->nErr ){
     sqlite4DbFree(db, pKey);
-    pKey = 0;
+    return 0;
   }
   return pKey;
 }

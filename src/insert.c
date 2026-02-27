@@ -53,10 +53,20 @@ void sqlite4OpenIndex(
   }
   testcase( pKey==0 );
 
+#ifndef SQLITE4_OMIT_VECTOR
+// [koreauniv] Vector Index인 경우 OP_OpenVectorIdx로 열기
+  if( (opcode==OP_OpenWrite) && pIdx->idxIsVector ){
+    printf("sqlite4OpenIndex in insert.c : Opening vector index %s with OP_OpenVectorIdx\n", pIdx->zName);
+    sqlite4VdbeAddOp3(v, OP_OpenVectorIdx, iCur, pIdx->tnum, iDb);
+    sqlite4VdbeChangeP4(v, -1, (const char *)pKey, P4_KEYINFO_HANDOFF);
+    VdbeComment((v, "%s", pIdx->zName));
+    return;
+  }
+#endif
+
   sqlite4VdbeAddOp3(v, opcode, iCur, pIdx->tnum, iDb);
   sqlite4VdbeChangeP4(v, -1, (const char *)pKey, P4_KEYINFO_HANDOFF);
   VdbeComment((v, "%s", pIdx->zName));
-  // printf("sqlite4OpenIndex: opened index %s, idxIsVector %d\n", pIdx->zName, pIdx->idxIsVector);
 }
 
 
@@ -1563,6 +1573,7 @@ void sqlite4CompleteInsertion(
         regData = regCover;
         sqlite4VdbeAddOp3(v, OP_MakeRecord, regContent, pIdx->nCover, regData);
       }
+      // [koreauniv] vector insert in OP_insert
       sqlite4VdbeAddOp3(v, OP_Insert, baseCur+i, regData, aRegIdx[i]);
       sqlite4VdbeChangeP5(v, flags);
     }
