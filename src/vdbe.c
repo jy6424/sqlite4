@@ -45,7 +45,7 @@
 */
 #include "sqliteInt.h"
 #include "vdbeInt.h"
-#include "vectorindexInt.h"
+#include "vectorIndexInt.h"
 
 /*
 ** Invoke this macro on memory cells just prior to changing the
