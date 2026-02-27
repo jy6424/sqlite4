@@ -50,6 +50,14 @@ typedef struct RowDecoder RowDecoder;
 #define CURTYPE_VECTOR_IDX  64
 #endif
 
+#include "vectorIndexInt.h"
+
+struct VectorIdxCursor {
+  sqlite4 *db;            /* Database connection */
+  DiskAnnIndex *pIndex;   /* DiskANN index */
+};
+
+
 /*
 ** A cursor is a pointer into a single database.
 ** The cursor can seek to an entry with a particular key, or
@@ -77,9 +85,9 @@ struct VdbeCursor {
   sqlite4_vtab_cursor *pVtabCursor;  /* The cursor for a virtual table */
   const sqlite4_module *pModule;     /* Module for cursor pVtabCursor */
   sqlite4_buffer sSeekKey;           /* Key for deferred seek */
-// #ifndef SQLITE_OMIT_VECTOR // [koreauniv] 추가
-//   VectorIdxCursor *pVecIdx;   /* CURTYPE_VECTOR_IDX.        Vector index cursor */
-// #endif
+#ifndef SQLITE_OMIT_VECTOR // [koreauniv] 추가
+  VectorIdxCursor *pVecIdx;   /* CURTYPE_VECTOR_IDX.        Vector index cursor */
+#endif
 // [koreauniv] 추가
   u8 eCurtype;            /* One of the CURTYPE_* values above */
   u32 iHdrOffset;         /* Offset to next unparsed byte of the header */

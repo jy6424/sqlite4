@@ -2505,7 +2505,8 @@ static void createIndexWriteSchema(
   Parse *pParse,                  /* Parser context */
   Index *pIdx,                    /* New index object */
   Token *pName,                   /* Token containing name of new index */
-  Token *pEnd                     /* Token for final closing paren of CREATE */
+  Token *pEnd,                     /* Token for final closing paren of CREATE */
+  int skipRefill                  /* [koreauniv] To skip refill */
 ){
   sqlite4 *db = pParse->db;
   int iDb;
@@ -2551,7 +2552,7 @@ static void createIndexWriteSchema(
     ** to invalidate all pre-compiled statements.
     */
     if( pIdx->eIndexType!=SQLITE4_INDEX_UNIQUE ){
-      if( !pIdx->idxIsVector){
+      if( !skipRefill ){
         sqlite4RefillIndex(pParse, pIdx, 1);
       }
       sqlite4ChangeCookie(pParse, iDb);
@@ -2602,7 +2603,7 @@ void sqlite4CreateUsingIndex(
         addIndexToHash(db, pIdx);
         pIdx = 0;
       }else{
-        createIndexWriteSchema(pParse, pIdx, pIdxName, pEnd);
+        createIndexWriteSchema(pParse, pIdx, pIdxName, pEnd, 0);
       }
     }
 
@@ -2894,7 +2895,6 @@ Index *sqlite4CreateIndex(
   if( vectorIdxRc >= 1 ){
     printf("Created vector index %s with vectorIdxRc = %d\n", pIndex->zName, vectorIdxRc);
     pIndex->idxIsVector = 1;
-    skipRefill = (vectorIdxRc == 1);
     // goto exit_create_index;   // 🔥 핵심
   }
   if( vectorIdxRc == 1 ){
@@ -3012,7 +3012,7 @@ Index *sqlite4CreateIndex(
   */
   else{
     // printf("createIndex: writing index %s\n", pName->z);
-    createIndexWriteSchema(pParse, pIndex, pName, pEnd);
+    createIndexWriteSchema(pParse, pIndex, pName, pEnd, skipRefill);
   }
 
   /* When adding an index to the list of indices for a table, make

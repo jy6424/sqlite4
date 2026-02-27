@@ -45,6 +45,7 @@
 */
 #include "sqliteInt.h"
 #include "vdbeInt.h"
+#include "vectorindexInt.h"
 
 /*
 ** Invoke this macro on memory cells just prior to changing the
@@ -488,6 +489,69 @@ static Mem *sqlite4RegisterInRootFrame(Vdbe *p, int i){
     return &p->aMem[i];
   }
 }
+
+//[koreauniv] unpackedrecord
+
+/*
+** Round up a number to the next larger multiple of 8.  This is used
+** to force 8-byte alignment on 64-bit architectures.
+**
+** ROUND8() always does the rounding, for any argument.
+**
+** ROUND8P() assumes that the argument is already an integer number of
+** pointers in size, and so it is a no-op on systems where the pointer
+** size is 8.
+*/
+#define ROUND8(x)     (((x)+7)&~7)
+#if SQLITE_PTRSIZE==8
+# define ROUND8P(x)   (x)
+#else
+# define ROUND8P(x)   (((x)+7)&~7)
+#endif
+
+/*
+** This routine is used to allocate sufficient space for an UnpackedRecord
+** structure large enough to be used with sqlite4VdbeRecordUnpack() if
+** the first argument is a pointer to KeyInfo structure pKeyInfo.
+**
+** The space is either allocated using sqlite4DbMallocRaw() or from within
+** the unaligned buffer passed via the second and third arguments (presumably
+** stack space). If the former, then *ppFree is set to a pointer that should
+** be eventually freed by the caller using sqlite4DbFree(). Or, if the
+** allocation comes from the pSpace/szSpace buffer, *ppFree is set to NULL
+** before returning.
+**
+** If an OOM error occurs, NULL is returned.
+*/
+UnpackedRecord *sqlite4VdbeAllocUnpackedRecord(sqlite4 *db, KeyInfo *pKeyInfo){
+  UnpackedRecord *p;
+  int nField = pKeyInfo->nField; /* sqlite4 KeyInfo */
+  int nByte = ROUND8P(sizeof(UnpackedRecord)) + sizeof(Mem)*nField;
+
+  p = (UnpackedRecord *)sqlite4DbMallocRaw(db, nByte);
+  if( !p ) return 0;
+  memset(p, 0, nByte);
+
+  p->aMem = (Mem*)&((char*)p)[ROUND8P(sizeof(UnpackedRecord))];
+  p->pKeyInfo = pKeyInfo;
+  p->nField = (u16)nField;
+  return p;
+}
+
+void sqlite4VdbeFreeUnpackedRecord(sqlite4 *db, UnpackedRecord *p){
+  int i;
+  if( !p ) return;
+  for(i=0; i<p->nField; i++){
+    sqlite4VdbeMemRelease(p->aMem + i);  /* 너 코드베이스의 Mem release 함수로 */
+  }
+  sqlite4DbFree(db, p);
+}
+
+#ifndef SQLITE4_OMIT_VECTOR
+static int isVectorCursor(VdbeCursor *pC){
+  return pC && pC->eCurtype==CURTYPE_VECTOR_IDX && pC->pVecIdx!=0;
+}
+#endif
 
 /*
 ** Execute as much of a VDBE program as we can then return.
@@ -3695,6 +3759,7 @@ case OP_Next: {        /* jump */
 ** If the OPFLAG_NCHANGE flag of P5 is set, then the row change count is
 ** incremented (otherwise not).
 */
+
 case OP_Insert: {
   VdbeCursor *pC;
   Mem *pKey;
@@ -3702,7 +3767,6 @@ case OP_Insert: {
   int nKVKey;
   KVByteArray *pKVKey;
   KVByteArray aKey[24];
-  
 
   pC = p->apCsr[pOp->p1];
   pKey = &aMem[pOp->p3];
@@ -3711,6 +3775,41 @@ case OP_Insert: {
   assert( pOp->p1>=0 && pOp->p1<p->nCursor );
   assert( pC && pC->pKVCur && pC->pKVCur->pStore );
   assert( pData==0 || (pData->flags & MEM_Blob) );
+
+#ifndef SQLITE4_OMIT_VECTOR
+  /* ---- vector index insert path ----
+  ** Vector index cursor는 일반 KVStoreReplace로 쓰면 안됨.
+  ** 여기서 가로채서 vectorIndexInsert()로 보내야 shadow table에 row가 생김.
+  */
+  if( isVectorCursor(pC) ){
+    UnpackedRecord *pIdxKey = 0;
+
+    /* 인덱스 키는 보통 MakeRecord 결과(BLOB) */
+    rc = ExpandBlob(pKey);
+    if( rc ) goto abort_due_to_error;
+
+    /* UnpackedRecord 할당 (sqlite4에 없으면 추가해야 함) */
+    pIdxKey = sqlite4VdbeAllocUnpackedRecord(p->db, pC->pKeyInfo);
+    if( pIdxKey==0 ) goto no_mem;
+
+    /* packed record -> unpacked record */
+    sqlite4VdbeRecordUnpack(pC->pKeyInfo, pKey->n, pKey->z, pIdxKey);
+
+    /* 실제 vector insert (내부에서 diskAnnInsert -> shadow table insert) */
+    rc = vectorIndexInsert(pC->uc.pVecIdx, pIdxKey, &p->zErrMsg);
+
+    sqlite4VdbeFreeUnpackedRecord(p->db, pIdxKey);
+    if( rc ) goto abort_due_to_error;
+
+    /* change-counter 처리: 일반 Insert처럼 반영 */
+    if( pOp->p5 & OPFLAG_NCHANGE ) p->nChange++;
+
+    pC->rowChnged = 1;
+    break; /* KVStoreReplace 경로로 내려가지 않음 */
+  }
+#endif /* SQLITE4_OMIT_VECTOR */
+
+  /* ---- normal KVStore insert path ---- */
 
   if( pOp->p5 & OPFLAG_NCHANGE ) p->nChange++;
 
@@ -3723,18 +3822,54 @@ case OP_Insert: {
     pKVKey = pKey->z;
   }
 
-
   rc = sqlite4KVStoreReplace(
      pC->pKVCur->pStore,
      (u8 *)pKVKey, nKVKey,
      (u8 *)(pData ? pData->z : 0), (pData ? pData->n : 0)
   );
   pC->rowChnged = 1;
-
-  // [koreauniv] debug message
-  // printf("OP_Insert: p1=%d, p2=%d, p3=%d, p5=%d\n", pOp->p1, pOp->p2, pOp->p3, pOp->p5);
   break;
 }
+// case OP_Insert: {
+//   VdbeCursor *pC;
+//   Mem *pKey;
+//   Mem *pData;
+//   int nKVKey;
+//   KVByteArray *pKVKey;
+//   KVByteArray aKey[24];
+  
+
+//   pC = p->apCsr[pOp->p1];
+//   pKey = &aMem[pOp->p3];
+//   pData = pOp->p2 ? &aMem[pOp->p2] : 0;
+
+//   assert( pOp->p1>=0 && pOp->p1<p->nCursor );
+//   assert( pC && pC->pKVCur && pC->pKVCur->pStore );
+//   assert( pData==0 || (pData->flags & MEM_Blob) );
+
+//   if( pOp->p5 & OPFLAG_NCHANGE ) p->nChange++;
+
+//   if( pKey->flags & MEM_Int ){
+//     nKVKey = sqlite4PutVarint64(aKey, pC->iRoot);
+//     nKVKey += sqlite4VdbeEncodeIntKey(aKey+nKVKey, sqlite4VdbeIntValue(pKey));
+//     pKVKey = aKey;
+//   }else{
+//     nKVKey = pKey->n;
+//     pKVKey = pKey->z;
+//   }
+
+
+//   rc = sqlite4KVStoreReplace(
+//      pC->pKVCur->pStore,
+//      (u8 *)pKVKey, nKVKey,
+//      (u8 *)(pData ? pData->z : 0), (pData ? pData->n : 0)
+//   );
+//   pC->rowChnged = 1;
+
+//   // [koreauniv] debug message
+//   // printf("OP_Insert: p1=%d, p2=%d, p3=%d, p5=%d\n", pOp->p1, pOp->p2, pOp->p3, pOp->p5);
+//   break;
+// }
 
 /* Opcode: IdxDelete P1 * P3 * *
 **
