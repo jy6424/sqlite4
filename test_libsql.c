@@ -29,11 +29,6 @@ static int print_callback(
 int main(int argc, char **argv) {
   (void)argc; (void)argv;
 
-  remove("test.db");
-  remove("test.db-journal");
-  remove("test.db-wal");
-  remove("test.db-shm");
-
   sqlite4 *db = 0;
   int rc = 0;
 
@@ -146,8 +141,6 @@ int main(int argc, char **argv) {
   sqlite4_exec(db, "SELECT name, sql FROM sqlite_schema WHERE name LIKE 'x_idx%';", print_callback, 0);
   
   sqlite4_close(db, 0);
-
-
 
   return 0;
 }
