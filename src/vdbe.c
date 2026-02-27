@@ -547,11 +547,11 @@ void sqlite4VdbeFreeUnpackedRecord(sqlite4 *db, UnpackedRecord *p){
   sqlite4DbFree(db, p);
 }
 
-#ifndef SQLITE4_OMIT_VECTOR
-static int isVectorCursor(VdbeCursor *pC){
-  return pC && pC->eCurtype==CURTYPE_VECTOR_IDX && pC->pVecIdx!=0;
-}
-#endif
+// #ifndef SQLITE4_OMIT_VECTOR
+// static int isVectorCursor(VdbeCursor *pC){
+//   return pC && pC->eCurtype==CURTYPE_VECTOR_IDX && pC->pVecIdx!=0;
+// }
+// #endif
 
 /*
 ** Execute as much of a VDBE program as we can then return.
