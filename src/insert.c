@@ -1105,7 +1105,6 @@ static void generateNotNullChecks(
   int i;
 
   for(i=0; i<pTab->nCol; i++){
-    if(i == pTab->iPKey) continue; /* [koreauniv] Skip the INTEGER PRIMARY KEY column */
     int onError = pTab->aCol[i].notNull;
     if( onError ){
       if( overrideError!=OE_Default ){
