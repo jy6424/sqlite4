@@ -1533,6 +1533,7 @@ int diskAnnSearch(
   int i;
 
   DiskAnnTrace(("diskAnnSearch started\n"));
+  printf("diskAnnSearch: searching for vector with dims=%d and type=%d\n", pVector->dims, pVector->type);
 
   if( k < 0 ){
     printf("vector index(search): k must be a non-negative integer");
@@ -1586,6 +1587,7 @@ int diskAnnSearch(
   rc = SQLITE4_OK;
 out:
   diskAnnSearchCtxDeinit(&ctx);
+  printf("diskAnnSearch successfully finished\n");
   return rc;
 }
 
@@ -1615,7 +1617,8 @@ int diskAnnInsert(
     return SQLITE4_ERROR;
   }
 
-  DiskAnnTrace(("diskAnnInset started\n"));
+  DiskAnnTrace(("diskAnnInsert started\n"));
+  printf("diskAnnInsert: inserting rowid=%lld\n", pVectorInRow->nRowid);
 
 
   // initialize search context
@@ -1757,6 +1760,7 @@ out:
     blobSpotFree(pBlobSpot);
   }
   diskAnnSearchCtxDeinit(&ctx);
+  printf("diskAnnInsert successfully finished\n");
   return rc;
 }
 
