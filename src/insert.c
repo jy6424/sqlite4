@@ -654,28 +654,16 @@ void sqlite4Insert(
   ** Also set pPk to point to the primary key, and iPk to the cursor offset
   ** of the primary key cursor (i.e. so that the cursor opened on the primary
   ** key index is VDBE cursor (baseCur+iPk).  */
-  // pPk = sqlite4FindPrimaryKey(pTab, &iPk);
-  // assert( (pPk==0)==IsView(pTab) );
-  // if( pPk ){
-  //   bImplicitPK = pPk->aiColumn[0]==(-1);
-  //   if( pPk->fIndex & IDX_IntPK ){
-  //     assert( pPk->nColumn==1 );
-  //     iIntPKCol = pPk->aiColumn[0];
-  //   }
-  // }else{
-  //   bImplicitPK = 0;
-  // }
-
   pPk = sqlite4FindPrimaryKey(pTab, &iPk);
   assert( (pPk==0)==IsView(pTab) );
   if( pPk ){
     bImplicitPK = pPk->aiColumn[0]==(-1);
-
-    /* INTEGER PRIMARY KEY column index */
-    iIntPKCol = pTab->iPKey;   // ✅ 이걸 사용
+    if( pPk->fIndex & IDX_IntPK ){
+      assert( pPk->nColumn==1 );
+      iIntPKCol = pPk->aiColumn[0];
+    }
   }else{
     bImplicitPK = 0;
-    iIntPKCol = -1;
   }
 
   /* Figure out if we have any triggers and if the table being
