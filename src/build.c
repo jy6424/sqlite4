@@ -2302,7 +2302,7 @@ static void sqlite4RefillIndex(Parse *pParse, Index *pIdx, int bCreate){
     ** - Do NOT OP_Clear(pIdx->tnum) here (vector index is not a plain KV btree).
     */
     sqlite4OpenIndex(pParse, iIdx, iDb, pIdx, OP_OpenWrite);
-    sqlite4VdbeChangeP5(v, (bCreate==0) ? OPFLAG_FORDELETE : 0);
+    sqlite4VdbeChangeP5(v, (bCreate==0) ? 1 : 0);
 
     /* Loop through PK/table and insert vector rows */
     addr1 = sqlite4VdbeAddOp2(v, OP_Rewind, iTab, 0);
