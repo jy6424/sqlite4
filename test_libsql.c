@@ -25,6 +25,14 @@ static int print_callback(
   return 0;
 }
 
+static int count_callback(void *pArg, int argc, sqlite4_value **argv, const char **colName){
+  (void)colName;
+  if(argc > 0 && argv[0]){
+    *(sqlite4_int64*)pArg = sqlite4_value_int64(argv[0]);
+  }
+  return 0;
+}
+
 
 int main(int argc, char **argv) {
   (void)argc; (void)argv;
@@ -134,9 +142,14 @@ int main(int argc, char **argv) {
   printf("Data selected successfully\n");
 
   printf("\n-- number of data from table (x) --\n");
-  sqlite4_exec(db, "SELECT count(*) AS n FROM x;", print_callback, 0);
+  sqlite4_int64 nx = -1;
+  sqlite4_exec(db, "SELECT count(*) FROM x;", count_callback, &nx);
+  printf("n=%lld\n", (long long)nx);
+
   printf("\n-- number of data from shadow table (x_idx_shadow) --\n");
-  sqlite4_exec(db, "SELECT count(*) AS n FROM x_idx_shadow;", print_callback, 0);
+  sqlite4_int64 ns = -1;
+  sqlite4_exec(db, "SELECT count(*) FROM x_idx_shadow;", count_callback, &ns);
+  printf("n=%lld\n", (long long)ns);
   
   sqlite4_close(db, 0);
 
