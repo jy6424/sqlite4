@@ -603,104 +603,314 @@ void sqlite4VdbeFreeUnpackedRecord(sqlite4 *db, UnpackedRecord *p){
 */
 
 // [koreauniv] unpackedrecord 수정필요
-void sqlite4UnpackRecord(
-  sqlite4 *db,                 /* Database handle used to init Mem objects */
-  KeyInfo *pKeyInfo,           /* Key collation/sort info for the record */
-  int nKey,                    /* Size of record blob in bytes */
-  const void *pKey,            /* Record blob */
-  UnpackedRecord *p            /* Output: populate this */
+/*
+** sqlite4VdbeEncodeData() 포맷 언팩 (sqlite4 record format)
+**
+** record = [varint nHdrSerialBytes][serial varints...][payload...]
+**  - 첫 varint 값은 "serial varints 영역 길이(바이트)" (총 헤더길이 아님)
+**  - payload 시작 오프셋 = (첫 varint 길이) + nHdrSerialBytes
+**
+** serial:
+**   0              : NULL, payload 0
+**   3..10          : INT,  payload = serial-2 bytes (big-endian, sign-extend)
+**   11..21         : REAL, payload = serial-9 bytes (varint e + varint m)  (최소 2바이트)
+**   22 + 4*n       : TEXT, payload = n bytes (맨앞 0/1/2 marker가 붙을 수 있음)
+**   23 + 4*n       : BLOB, payload = n bytes
+*/
+
+static i64 sqlite4ReadIntBE(const u8 *p, int n){
+  i64 v = 0;
+  int i;
+  for(i=0; i<n; i++){
+    v = (v<<8) | p[i];
+  }
+  if( n<8 && (p[0] & 0x80) ){
+    v |= ((i64)-1) << (n*8);
+  }
+  return v;
+}
+
+static int sqlite4DecodeSerialLen(
+  u64 t,
+  int *pnPayload,
+  int *pIsText,
+  int *pIsBlob,
+  int *pIsInt,
+  int *pIsReal
+){
+  *pIsText = *pIsBlob = *pIsInt = *pIsReal = 0;
+  *pnPayload = 0;
+
+  if( t==0 ){
+    *pnPayload = 0;
+    return SQLITE4_OK;
+  }
+
+  /* INT: t = n+2, n in [1..8] => t in [3..10] */
+  if( t>=3 && t<=10 ){
+    *pIsInt = 1;
+    *pnPayload = (int)(t - 2);
+    return SQLITE4_OK;
+  }
+
+  /* REAL: t = n+9, where n is bytes(varint e + varint m), 최소 2바이트 => t in [11..21] */
+  if( t>=11 && t<=21 ){
+    *pIsReal = 1;
+    *pnPayload = (int)(t - 9);
+    return SQLITE4_OK;
+  }
+
+  /* TEXT/BLOB */
+  if( t>=22 ){
+    if( (t-22)%4==0 ){
+      *pIsText = 1;
+      *pnPayload = (int)((t - 22) / 4);
+      return SQLITE4_OK;
+    }
+    if( t>=23 && (t-23)%4==0 ){
+      *pIsBlob = 1;
+      *pnPayload = (int)((t - 23) / 4);
+      return SQLITE4_OK;
+    }
+  }
+
+  return SQLITE4_CORRUPT;
+}
+
+int sqlite4UnpackRecord(
+  sqlite4 *db,
+  KeyInfo *pKeyInfo,
+  int nKey,
+  const void *pKey,
+  UnpackedRecord *p
 ){
   const u8 *aKey = (const u8 *)pKey;
-  u32 szHdr = 0;               /* Header size in bytes */
-  u32 idx = 0;                 /* Offset in aKey[] while reading header */
-  u32 d = 0;                   /* Offset in aKey[] while reading payload */
-  u32 serial_type = 0;
+  u64 nHdrSerialBytes = 0;   /* serial varints 영역 길이 */
+  int idx = 0;               /* 현재 header read offset */
+  int hdrEnd = 0;            /* header 끝(=payload 시작) */
+  int d = 0;                 /* payload offset */
   u16 u = 0;
   int nFieldMax;
 
-  if( p==0 ) return;
+  if( db==0 || pKeyInfo==0 || p==0 ) return SQLITE4_MISUSE;
+  if( aKey==0 || nKey<=0 ) return SQLITE4_CORRUPT;
+  if( p->aMem==0 ) return SQLITE4_MISUSE;
 
-  /* Treat incoming p->nField as capacity */
-  nFieldMax = (int)p->nField;
+  nFieldMax = pKeyInfo->nField;
+  if( nFieldMax<=0 ) return SQLITE4_MISUSE;
+
   p->pKeyInfo = pKeyInfo;
   p->default_rc = 0;
   p->errCode = 0;
   p->eqSeen = 0;
   p->nField = 0;
 
-  if( nFieldMax<=0 || p->aMem==0 ){
-    /* Nothing to write into */
-    return;
-  }
-  if( aKey==0 || nKey<=0 ){
-    return;
-  }
+  /* 첫 varint: nHdrSerialBytes */
+  idx = sqlite4GetVarint64(aKey, &nHdrSerialBytes);
+  if( idx<=0 ) return SQLITE4_CORRUPT;
+  if( nHdrSerialBytes > (u64)nKey ) return SQLITE4_CORRUPT;
 
-  /* ---- read header size varint ----
-  ** NOTE: getVarint32(A,B) expects B to be a u32 LVALUE (NOT a pointer).
-  */
-  idx = (u32)getVarint32(aKey, szHdr);
-  if( idx==0 ){
-    /* getVarint32 should never return 0 here, but be defensive */
-    p->errCode = SQLITE4_CORRUPT;
-    return;
-  }
-  if( szHdr > (u32)nKey ){
-    p->errCode = SQLITE4_CORRUPT;
-    return;
-  }
+  hdrEnd = idx + (int)nHdrSerialBytes;   /* payload 시작 */
+  if( hdrEnd<idx || hdrEnd>nKey ) return SQLITE4_CORRUPT;
 
-  d = szHdr;
+  d = hdrEnd;
 
-  /* Unpack serial types until we hit end-of-header or fill capacity */
-  while( idx < szHdr && d <= (u32)nKey && u < (u16)nFieldMax ){
+  /* serial varints를 hdrEnd까지 읽으면서 payload를 채움 */
+  while( idx < hdrEnd && d <= nKey && u < (u16)nFieldMax ){
+    u64 t = 0;
+    int nRead, nPayload;
+    int isText, isBlob, isInt, isReal;
     Mem *pMem = &p->aMem[u];
-    int nPayload;
 
-    /* Read next serial type varint */
-    idx += (u32)getVarint32(&aKey[idx], serial_type);
-    if( idx > szHdr ){
-      /* header ran out mid-varint */
-      p->errCode = SQLITE4_CORRUPT;
-      break;
-    }
+    nRead = sqlite4GetVarint64(&aKey[idx], &t);
+    if( nRead<=0 ) { p->errCode = SQLITE4_CORRUPT; break; }
+    idx += nRead;
+    if( idx > hdrEnd ) { p->errCode = SQLITE4_CORRUPT; break; }
 
-    /* Ensure this slot is clean */
-    if( pMem->flags & (MEM_Str|MEM_Blob) ){
-      sqlite4VdbeMemRelease(pMem);
-    }
+    /* release 전에 db를 반드시 세팅 (sqlite4VdbeMemRelease가 p->db를 사용) */
+    pMem->db = db;
+    sqlite4VdbeMemRelease(pMem);
     sqlite4VdbeMemSetNull(pMem);
-
-    /* Initialize Mem's db/enc safely (KeyInfo에 enc/db가 없을 수 있으니 db에서) */
     pMem->db  = db;
     pMem->enc = SQLITE4_UTF8;
 
-    /* Payload length for this serial type */
-    nPayload = sqlite4VdbeSerialTypeLen(serial_type);
-    if( nPayload < 0 ){
+    if( sqlite4DecodeSerialLen(t, &nPayload, &isText, &isBlob, &isInt, &isReal)!=SQLITE4_OK ){
       p->errCode = SQLITE4_CORRUPT;
       break;
     }
-    if( d + (u32)nPayload > (u32)nKey ){
-      /* payload would overrun */
+    if( nPayload<0 || d + nPayload > nKey ){
       p->errCode = SQLITE4_CORRUPT;
       break;
     }
 
-    /* Deserialize into Mem */
-    sqlite4VdbeSerialGet(&aKey[d], serial_type, pMem);
-    d += (u32)nPayload;
+    if( t==0 ){
+      /* already NULL */
+    }else if( isInt ){
+      i64 v = sqlite4ReadIntBE(&aKey[d], nPayload);
+      pMem->flags = MEM_Int;
+      pMem->type  = SQLITE4_INTEGER;
+      pMem->u.num = sqlite4_num_from_int64(v);
+    }else if( isReal ){
+      u64 e = 0, m = 0;
+      int n1 = sqlite4GetVarint64(&aKey[d], &e);
+      int n2 = (n1>0) ? sqlite4GetVarint64(&aKey[d+n1], &m) : 0;
+      if( n1<=0 || n2<=0 || (n1+n2) != nPayload ){
+        p->errCode = SQLITE4_CORRUPT;
+        break;
+      }
 
+      {
+        int sign = (int)(e & 1);
+        int neg  = (int)(e & 2);
+        int exp;
+        if( neg ){
+          exp = -(int)((e - 2 - sign)/4);
+        }else{
+          exp =  (int)((e - sign)/4);
+        }
+        pMem->flags = MEM_Real;
+        pMem->type  = SQLITE4_REAL;
+        pMem->u.num.sign = (u8)sign;
+        pMem->u.num.e    = exp;
+        pMem->u.num.m    = (u64)m;
+      }
+    }else if( isBlob ){
+      sqlite4VdbeMemSetStr(pMem, (const char*)&aKey[d], nPayload, 0,
+                           SQLITE4_TRANSIENT, 0);
+    }else if( isText ){
+      int enc = SQLITE4_UTF8;
+      const u8 *z = &aKey[d];
+      int n = nPayload;
+
+      if( n>0 && z[0] < 3 ){
+        if( z[0]==1 ) enc = SQLITE4_UTF16LE;
+        else if( z[0]==2 ) enc = SQLITE4_UTF16BE;
+        else enc = SQLITE4_UTF8;
+        z++; n--;
+      }
+      sqlite4VdbeMemSetStr(pMem, (const char*)z, n, (u8)enc,
+                           SQLITE4_TRANSIENT, 0);
+    }else{
+      p->errCode = SQLITE4_CORRUPT;
+      break;
+    }
+
+    d += nPayload;
     u++;
   }
 
   p->nField = u;
 
-  /* If corrupted record, make sure last slot isn't left in garbage state */
-  if( p->errCode && u>0 ){
-    sqlite4VdbeMemSetNull(&p->aMem[u-1]);
+  if( p->errCode ){
+    if( u>0 ){
+      p->aMem[u-1].db = db;
+      sqlite4VdbeMemSetNull(&p->aMem[u-1]);
+    }
+    return p->errCode;
   }
+
+  return SQLITE4_OK;
 }
+
+
+// int sqlite4UnpackRecord(
+//   sqlite4 *db,                 /* Database handle used to init Mem objects */
+//   KeyInfo *pKeyInfo,           /* Key collation/sort info for the record */
+//   int nKey,                    /* Size of record blob in bytes */
+//   const void *pKey,            /* Record blob */
+//   UnpackedRecord *p            /* Output: populate this */
+// ){
+//   const u8 *aKey = (const u8 *)pKey;
+//   u32 szHdr = 0;               /* Header size in bytes */
+//   u32 idx = 0;                 /* Offset in aKey[] while reading header */
+//   u32 d = 0;                   /* Offset in aKey[] while reading payload */
+//   u32 serial_type = 0;
+//   u16 u = 0;
+//   int nFieldMax;
+
+//   if( p==0 ) return;
+
+//   /* Treat incoming p->nField as capacity */
+//   nFieldMax = (int)p->nField;
+//   p->pKeyInfo = pKeyInfo;
+//   p->default_rc = 0;
+//   p->errCode = 0;
+//   p->eqSeen = 0;
+//   p->nField = 0;
+
+//   if( nFieldMax<=0 || p->aMem==0 ){
+//     /* Nothing to write into */
+//     return;
+//   }
+//   if( aKey==0 || nKey<=0 ){
+//     return;
+//   }
+
+//   /* ---- read header size varint ----
+//   ** NOTE: getVarint32(A,B) expects B to be a u32 LVALUE (NOT a pointer).
+//   */
+//   idx = (u32)getVarint32(aKey, szHdr);
+//   if( idx==0 ){
+//     /* getVarint32 should never return 0 here, but be defensive */
+//     p->errCode = SQLITE4_CORRUPT;
+//     return;
+//   }
+//   if( szHdr > (u32)nKey ){
+//     p->errCode = SQLITE4_CORRUPT;
+//     return;
+//   }
+
+//   d = szHdr;
+
+//   /* Unpack serial types until we hit end-of-header or fill capacity */
+//   while( idx < szHdr && d <= (u32)nKey && u < (u16)nFieldMax ){
+//     Mem *pMem = &p->aMem[u];
+//     int nPayload;
+
+//     /* Read next serial type varint */
+//     idx += (u32)getVarint32(&aKey[idx], serial_type);
+//     if( idx > szHdr ){
+//       /* header ran out mid-varint */
+//       p->errCode = SQLITE4_CORRUPT;
+//       break;
+//     }
+
+//     /* Ensure this slot is clean */
+//     if( pMem->flags & (MEM_Str|MEM_Blob) ){
+//       sqlite4VdbeMemRelease(pMem);
+//     }
+//     sqlite4VdbeMemSetNull(pMem);
+
+//     /* Initialize Mem's db/enc safely (KeyInfo에 enc/db가 없을 수 있으니 db에서) */
+//     pMem->db  = db;
+//     pMem->enc = SQLITE4_UTF8;
+
+//     /* Payload length for this serial type */
+//     nPayload = sqlite4VdbeSerialTypeLen(serial_type);
+//     if( nPayload < 0 ){
+//       p->errCode = SQLITE4_CORRUPT;
+//       break;
+//     }
+//     if( d + (u32)nPayload > (u32)nKey ){
+//       /* payload would overrun */
+//       p->errCode = SQLITE4_CORRUPT;
+//       break;
+//     }
+
+//     /* Deserialize into Mem */
+//     sqlite4VdbeSerialGet(&aKey[d], serial_type, pMem);
+//     d += (u32)nPayload;
+
+//     u++;
+//   }
+
+//   p->nField = u;
+
+//   /* If corrupted record, make sure last slot isn't left in garbage state */
+//   if( p->errCode && u>0 ){
+//     sqlite4VdbeMemSetNull(&p->aMem[u-1]);
+//   }
+// }
 
 
 // #ifndef SQLITE4_OMIT_VECTOR
@@ -4091,7 +4301,7 @@ case OP_Insert: {
     if( pIdxKey==0 ) goto no_mem;
 
     /* sqlite4 record-format unpack (네가 구현한 함수) */
-    rc = sqlite4UnpackRecord(pC->pKeyInfo, pKey->n, (const u8*)pKey->z, pIdxKey);
+    rc = sqlite4UnpackRecord(db, pC->pKeyInfo, pKey->n, (const void*)pKey->z, pIdxKey);
     if( rc!=SQLITE4_OK ){
       sqlite4VdbeFreeUnpackedRecord(db, pIdxKey);
       goto abort_due_to_error;
