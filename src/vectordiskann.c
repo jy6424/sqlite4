@@ -1618,7 +1618,7 @@ int diskAnnInsert(
   }
 
   DiskAnnTrace(("diskAnnInsert started\n"));
-  printf("diskAnnInsert: inserting rowid=%lld\n", pVectorInRow->nRowid);
+  printf("diskAnnInsert started\n");
 
 
   // initialize search context
