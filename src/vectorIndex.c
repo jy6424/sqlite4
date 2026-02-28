@@ -1190,6 +1190,7 @@ out:
   if( iDb >= 0 && iDb != 1 ){
     sqlite4_mutex_leave(db->mutex); //[koreauniv TODO] sqlite3BtreeLeave -> lsmMutexLeave 사용으로 바꾸기
   }
+  printf("vectorIndexSearch: exiting with rc=%d\n", rc);
   return rc;
 }
 
@@ -1210,6 +1211,7 @@ int vectorIndexInsert(
     return SQLITE4_OK;
   }
   rc = diskAnnInsert(pCur->pIndex, &vectorInRow, pzErrMsg);
+  printf("vectorIndexInsert: diskAnnInsert done with rc=%d\n", rc);
   vectorInRowFree(pCur->db, &vectorInRow);
   return rc;
 }
