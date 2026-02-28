@@ -209,6 +209,7 @@ struct VectorOutRows {
   sqlite4_value **ppValues;
 };
 
+
 /*
 ** A VectorIdxCursor is a special cursor to perform vector index lookups.
  */
@@ -253,8 +254,6 @@ void diskAnnCloseIndex(DiskAnnIndex *);
 int diskAnnInsert(DiskAnnIndex *, const VectorInRow *, char **);
 int diskAnnDelete(DiskAnnIndex *, const VectorInRow *, char **);
 int diskAnnSearch(DiskAnnIndex *, const Vector *, int, const VectorIdxKey *, VectorOutRows *, char **);
-
-typedef struct VectorIdxCursor VectorIdxCursor;
 
 #define VECTOR_INDEX_VTAB_NAME         "vector_top_k"
 #define VECTOR_INDEX_GLOBAL_META_TABLE "libsql_vector_meta_shadow"

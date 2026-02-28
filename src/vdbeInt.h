@@ -51,7 +51,7 @@ typedef struct RowDecoder RowDecoder;
 #endif
 
 #include "vectorIndexInt.h"
-
+typedef struct VectorIdxCursor VectorIdxCursor;
 
 /*
 ** A cursor is a pointer into a single database.
