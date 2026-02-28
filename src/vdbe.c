@@ -3110,7 +3110,7 @@ case OP_OpenVectorIdx: {
   KeyInfo *pKeyInfo = NULL;
   VectorIdxCursor *cursor;
   int nField = 0;
-
+  printf("OP_OpenVectorIdx entered\n");
   if( pOp->p4type==P4_KEYINFO ){
     pKeyInfo = pOp->p4.pKeyInfo;
     nField = pKeyInfo->nField;   /* sqlite4 KeyInfo에 맞춰서 */
@@ -3119,7 +3119,7 @@ case OP_OpenVectorIdx: {
   }
 
   assert( pKeyInfo && pKeyInfo->zDbSName && pKeyInfo->zIndexName );
-
+  printf("OP_OpenVectorIdx: pKeyInfo->zDbSName=%s, pKeyInfo->zIndexName=%s\n", pKeyInfo->zDbSName, pKeyInfo->zIndexName);
   rc = vectorIndexCursorInit(db, pKeyInfo->zDbSName, pKeyInfo->zIndexName, &cursor);
   if( rc ) goto abort_due_to_error;
 
