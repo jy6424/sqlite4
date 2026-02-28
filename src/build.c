@@ -2293,6 +2293,64 @@ static void sqlite4RefillIndex(Parse *pParse, Index *pIdx, int bCreate){
   /* Write-lock: open write cursor on PK (or table if PK has no Index object) */
   sqlite4OpenPrimaryKey(pParse, iTab, iDb, pTab, OP_OpenWrite);
 
+#ifndef SQLITE_OMIT_VECTOR
+  /* ---- VECTOR INDEX PATH ---- */
+  if( pIdx->idxIsVector ){
+
+    /* Open vector index cursor.
+    ** - If bCreate==0 (REINDEX), request delete/clear of prior vector index.
+    ** - Do NOT OP_Clear(pIdx->tnum) here (vector index is not a plain KV btree).
+    */
+    sqlite4OpenIndex(pParse, iIdx, iDb, pIdx, OP_OpenWrite);
+    sqlite4VdbeChangeP5(v, (bCreate==0) ? OPFLAG_FORDELETE : 0);
+
+    /* Loop through PK/table and insert vector rows */
+    addr1 = sqlite4VdbeAddOp2(v, OP_Rewind, iTab, 0);
+
+    /*
+    ** Build packed record expected by vectorIndexInsert():
+    **   [0] = vector value
+    **   [1] = row key (PK/table key)
+    **
+    ** NOTE: vector expression is stored as the first expression in aColExpr
+    ** (e.g., libsql_vector_idx(embedding)).
+    */
+    {
+      int regVecCols = sqlite4GetTempRange(pParse, 2); /* [vector, key] */
+      int regVecRec  = sqlite4GetTempReg(pParse);
+
+      /* regVecCols[0] = evaluated vector expression */
+      if( pIdx->aColExpr && pIdx->aColExpr->nExpr>=1 ){
+        sqlite4ExprCode(pParse, pIdx->aColExpr->a[0].pExpr, regVecCols+0);
+      }else{
+        /* Defensive: no expression -> NULL vector */
+        sqlite4VdbeAddOp1(v, OP_Null, regVecCols+0);
+      }
+
+      /* regVecCols[1] = row key blob (works for both PK-index and table cursor) */
+      sqlite4VdbeAddOp2(v, OP_RowKey, iTab, regVecCols+1);
+
+      /* regVecRec = MakeRecord([vector,key]) */
+      sqlite4VdbeAddOp3(v, OP_MakeRecord, regVecCols, 2, regVecRec);
+
+      /* OP_Insert for vector cursor: P3 holds packed record, P2 must be 0 */
+      sqlite4VdbeAddOp3(v, OP_Insert, iIdx, 0, regVecRec);
+
+      sqlite4ReleaseTempRange(pParse, regVecCols, 2);
+      sqlite4ReleaseTempReg(pParse, regVecRec);
+    }
+
+    sqlite4VdbeAddOp2(v, OP_Next, iTab, addr1+1);
+    sqlite4VdbeJumpHere(v, addr1);
+
+    sqlite4VdbeAddOp1(v, OP_Close, iTab);
+    sqlite4VdbeAddOp1(v, OP_Close, iIdx);
+    return;
+  }
+#endif /* SQLITE_OMIT_VECTOR */
+
+  /* ---- NON-VECTOR (KV) PATH ---- */
+
   /* Clear old index content, then open index write cursor */
   if( bCreate==0 ){
     sqlite4VdbeAddOp2(v, OP_Clear, pIdx->tnum, iDb);
@@ -2349,6 +2407,88 @@ static void sqlite4RefillIndex(Parse *pParse, Index *pIdx, int bCreate){
   sqlite4VdbeAddOp1(v, OP_Close, iTab);
   sqlite4VdbeAddOp1(v, OP_Close, iIdx);
 }
+
+// static void sqlite4RefillIndex(Parse *pParse, Index *pIdx, int bCreate){
+//   Table *pTab = pIdx->pTable;    /* The table that is indexed */
+//   int iTab = pParse->nTab++;     /* Cursor used for PK of pTab (or table) */
+//   int iIdx = pParse->nTab++;     /* Cursor used for pIdx */
+//   int addr1;                     /* Address of top of loop */
+//   Vdbe *v;                       /* Generate code into this virtual machine */
+//   int regKey;                    /* Registers containing the index key */
+//   sqlite4 *db = pParse->db;      /* The database connection */
+//   int iDb = sqlite4SchemaToIndex(db, pIdx->pSchema);
+//   Index *pPk;
+
+// #ifndef SQLITE4_OMIT_AUTHORIZATION
+//   if( sqlite4AuthCheck(pParse, SQLITE4_REINDEX, pIdx->zName, 0,
+//       db->aDb[iDb].zName ) ){
+//     return;
+//   }
+// #endif
+
+//   pPk = sqlite4FindPrimaryKey(pTab, 0);
+//   v = sqlite4GetVdbe(pParse);
+//   if( v==0 ) return;
+
+//   /* Write-lock: open write cursor on PK (or table if PK has no Index object) */
+//   sqlite4OpenPrimaryKey(pParse, iTab, iDb, pTab, OP_OpenWrite);
+
+//   /* Clear old index content, then open index write cursor */
+//   if( bCreate==0 ){
+//     sqlite4VdbeAddOp2(v, OP_Clear, pIdx->tnum, iDb);
+//   }
+//   sqlite4OpenIndex(pParse, iIdx, iDb, pIdx, OP_OpenWrite);
+//   if( bCreate ) sqlite4VdbeChangeP5(v, 1);
+
+//   /* Loop through PK/table and populate the auxiliary index */
+//   addr1 = sqlite4VdbeAddOp2(v, OP_Rewind, iTab, 0);
+
+//   if( pIdx->eIndexType==SQLITE4_INDEX_FTS5 ){
+//     int regData;
+//     int i;
+
+//     regKey = sqlite4GetTempRange(pParse, pTab->nCol+1);
+//     regData = regKey+1;
+
+//     sqlite4VdbeAddOp2(v, OP_RowKey, iTab, regKey);
+//     for(i=0; i<pTab->nCol; i++){
+//       sqlite4VdbeAddOp3(v, OP_Column, iTab, i, regData+i);
+//     }
+//     sqlite4Fts5CodeUpdate(pParse, pIdx, pParse->iNewidxReg, regKey, regData, 0);
+//   }else{
+//     int regData = 0;
+//     /* 2 registers: regKey holds encoded key; regKey+1 holds data (if covering) */
+//     regKey = sqlite4GetTempRange(pParse, 2);
+
+//     if( pPk ){
+//       /* Normal case: PK exists as Index object */
+//       sqlite4EncodeIndexKey(pParse, pPk, iTab, pIdx, iIdx, 0, regKey);
+//     }else{
+//       /* PK is not an Index object: use table key directly */
+//       sqlite4VdbeAddOp2(v, OP_RowKey, iTab, regKey);
+//     }
+//     if( pIdx->onError!=OE_None ){
+//       const char *zErr = "indexed columns are not unique";
+//       int addrTest;
+
+//       addrTest = sqlite4VdbeAddOp4Int(v, OP_IsUnique, iIdx, 0, regKey, 0);
+//       sqlite4HaltConstraint(pParse, OE_Abort, (char *)zErr, P4_STATIC);
+//       sqlite4VdbeJumpHere(v, addrTest);
+//     }
+//     if( pIdx->nCover>0 ){
+//       regData = regKey+1;
+//       sqlite4EncodeIndexValue(pParse, iTab, pIdx, regData);
+//     }
+//     sqlite4VdbeAddOp3(v, OP_Insert, iIdx, regData, regKey);
+//     sqlite4ReleaseTempRange(pParse, regKey, 2);
+//   }
+
+//   sqlite4VdbeAddOp2(v, OP_Next, iTab, addr1+1);
+//   sqlite4VdbeJumpHere(v, addr1);
+
+//   sqlite4VdbeAddOp1(v, OP_Close, iTab);
+//   sqlite4VdbeAddOp1(v, OP_Close, iIdx);
+// }
 
 
 /*
@@ -2553,7 +2693,10 @@ static void createIndexWriteSchema(
     */
     if( pIdx->eIndexType!=SQLITE4_INDEX_UNIQUE ){
       if( !skipRefill ){
+        printf(">>> createIndexWriteSchema: calling sqlite4RefillIndex for %s\n", pIdx->zName);
         sqlite4RefillIndex(pParse, pIdx, 1);
+      }else{
+        printf(">>> createIndexWriteSchema: skipping refill of %s\n", pIdx->zName);
       }
       sqlite4ChangeCookie(pParse, iDb);
       sqlite4VdbeAddParseSchemaOp(v, iDb,
@@ -2870,15 +3013,15 @@ Index *sqlite4CreateIndex(
   }
 
 
-  printf("Creating vector index entering\n");
   // [koreauniv] place to add vector index support 
 #ifndef SQLITE_OMIT_VECTOR
   // we want to have complete information about index columns before invocation of vectorIndexCreate method
-  printf("Creating vector index\n");
-  
+
+
   vectorIdxRc = 0;
 
   if( isVectorIndex ){
+    printf("Creating vector index\n");
     if( pParse->nested || db->init.busy ){
       // vectorIdxRc = 1;         /* CREATE_OK_SKIP_REFILL 의미 */
       skipRefill = 1;
