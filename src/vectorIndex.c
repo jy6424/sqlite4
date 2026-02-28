@@ -1202,7 +1202,7 @@ int vectorIndexInsert(
 ){
   int rc;
   VectorInRow vectorInRow;
-
+  printf("vectorIndexInsert: entered\n");
   rc = vectorInRowAlloc(pCur->db, pRecord, &vectorInRow, pzErrMsg);
   if( rc != SQLITE4_OK ){
     return rc;
@@ -1210,6 +1210,7 @@ int vectorIndexInsert(
   if( vectorInRow.pVector == NULL ){
     return SQLITE4_OK;
   }
+  printf("vectorIndexInsert: vectorInRowAlloc done, calling diskAnnInsert\n");
   rc = diskAnnInsert(pCur->pIndex, &vectorInRow, pzErrMsg);
   printf("vectorIndexInsert: diskAnnInsert done with rc=%d\n", rc);
   vectorInRowFree(pCur->db, &vectorInRow);
