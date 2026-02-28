@@ -2,23 +2,11 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-static int print_callback(
-  void *NotUsed,
-  int argc,
-  sqlite4_value **argv,
-  const char **colName
-){
-  int i;
-  for (i = 0; i < argc; i++) {
-    const char *val;
-
-    if (argv[i] == 0) {
-      val = "NULL";
-    } else {
-      val = sqlite4_value_text(argv[i], NULL);
-      if (!val) val = "(non-text)";
-    }
-
+static int print_callback(void *pArg, int argc, sqlite4_value **argv, const char **colName){
+  sqlite4 *db = (sqlite4*)pArg;
+  for(int i=0; i<argc; i++){
+    const char *val = argv[i] ? sqlite4_value_text(argv[i], db) : "NULL";
+    if(!val) val = "(non-text)";
     printf("%s=%s\t", colName[i], val);
   }
   printf("\n");
@@ -134,11 +122,9 @@ int main(int argc, char **argv) {
   printf("Data selected successfully\n");
 
   printf("\n-- number of data from table (x) --\n");
-  sqlite4_exec(db, "SELECT count(*) AS n FROM x;", print_callback, 0);
+  sqlite4_exec(db, "SELECT count(*) AS n FROM x;", print_callback, db);
   printf("\n-- number of data from shadow table (x_idx_shadow) --\n");
-  sqlite4_exec(db, "SELECT count(*) AS n FROM x_idx_shadow;", print_callback, 0);
-  printf("\n-- number of data from vector index table (x_idx) --\n");
-  sqlite4_exec(db, "SELECT name, sql FROM sqlite_schema WHERE name LIKE 'x_idx%';", print_callback, 0);
+  sqlite4_exec(db, "SELECT count(*) AS n FROM x_idx_shadow;", print_callback, db);
   
   sqlite4_close(db, 0);
 
