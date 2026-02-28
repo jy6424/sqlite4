@@ -48,6 +48,7 @@ void sqlite4OpenIndex(
 
   v = sqlite4GetVdbe(p);
   pKey = sqlite4IndexKeyinfo(p, pIdx);
+  printf( "sqlite4OpenIndex: opening index %s with zDbSName=%s, zIndexName=%s\n", pIdx->zName, pKey ? pKey->zDbSName : "NULL", pKey ? pKey->zIndexName : "NULL");
   if (pKey == 0) {
     printf("Error: could not get KeyInfo for index\n");
   }

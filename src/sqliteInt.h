@@ -1339,12 +1339,12 @@ struct KeyInfo {
   u16 nPK;            /* Number of primary key entries at the end of aColl[] */
   u16 nData;          /* Number of columns of data in KV entry value */
   u8 *aSortOrder;     /* Sort order for each column.  May be NULL */
-  CollSeq *aColl[1];  /* Collating sequence for each term of the key */
-
   // [koreauniv] added for vector index
   char *zIndexName;   /* Index name (may be NULL) */
   char *zDbSName;     /* Schema db name (may be NULL) */
-  sqlite4 *db;            /* Database connection */
+  sqlite4 *db;            /* Database connection */  
+
+  CollSeq *aColl[1];  /* Collating sequence for each term of the key */
 };
 
 
