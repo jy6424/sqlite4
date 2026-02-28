@@ -2294,102 +2294,102 @@ const u8 sqlite4SmallTypeSizes[128] = {
 #define FOUR_BYTE_UINT(x)  (((u32)(x)[0]<<24)|((x)[1]<<16)|((x)[2]<<8)|(x)[3])
 #define FOUR_BYTE_INT(x) (16777216*(i8)((x)[0])|((x)[1]<<16)|((x)[2]<<8)|(x)[3])
 
-/*
-** Return the length of the data corresponding to the supplied serial-type.
-*/
-u32 sqlite4VdbeSerialTypeLen(u32 serial_type){
-  if( serial_type>=128 ){
-    return (serial_type-12)/2;
-  }else{
-    assert( serial_type<12
-            || sqlite4SmallTypeSizes[serial_type]==(serial_type - 12)/2 );
-    return sqlite4SmallTypeSizes[serial_type];
-  }
-}
+// /*
+// ** Return the length of the data corresponding to the supplied serial-type.
+// */
+// u32 sqlite4VdbeSerialTypeLen(u32 serial_type){
+//   if( serial_type>=128 ){
+//     return (serial_type-12)/2;
+//   }else{
+//     assert( serial_type<12
+//             || sqlite4SmallTypeSizes[serial_type]==(serial_type - 12)/2 );
+//     return sqlite4SmallTypeSizes[serial_type];
+//   }
+// }
 
-#include <stdint.h>
-#include <string.h>
-#include <assert.h>
+// #include <stdint.h>
+// #include <string.h>
+// #include <assert.h>
 
-/* ---- big-endian 정수 읽기 (sqlite3 record format 규칙) ---- */
-static i64 readIntBE(const u8 *p, int n){
-  i64 v = 0;
-  int i;
-  for(i=0; i<n; i++){
-    v = (v<<8) | p[i];
-  }
-  /* sign extend for 1..7 byte ints */
-  if( n<8 && (p[0] & 0x80) ){
-    v |= ((i64)-1) << (n*8);
-  }
-  return v;
-}
+// /* ---- big-endian 정수 읽기 (sqlite3 record format 규칙) ---- */
+// static i64 readIntBE(const u8 *p, int n){
+//   i64 v = 0;
+//   int i;
+//   for(i=0; i<n; i++){
+//     v = (v<<8) | p[i];
+//   }
+//   /* sign extend for 1..7 byte ints */
+//   if( n<8 && (p[0] & 0x80) ){
+//     v |= ((i64)-1) << (n*8);
+//   }
+//   return v;
+// }
 
-static double readF64BE(const u8 *p){
-  u64 x = 0;
-  int i;
-  for(i=0; i<8; i++){
-    x = (x<<8) | p[i];
-  }
-  double d;
-  memcpy(&d, &x, sizeof(d));
-  return d;
-}
+// static double readF64BE(const u8 *p){
+//   u64 x = 0;
+//   int i;
+//   for(i=0; i<8; i++){
+//     x = (x<<8) | p[i];
+//   }
+//   double d;
+//   memcpy(&d, &x, sizeof(d));
+//   return d;
+// }
 
 
-void sqlite4VdbeSerialGet(const u8 *buf, u32 serial_type, Mem *pMem){
-  /* clear */
-  sqlite4VdbeMemRelease(pMem);
+// void sqlite4VdbeSerialGet(const u8 *buf, u32 serial_type, Mem *pMem){
+//   /* clear */
+//   sqlite4VdbeMemRelease(pMem);
 
-  switch(serial_type){
-    case 0: /* NULL */
-      sqlite4VdbeMemSetNull(pMem);
-      return;
+//   switch(serial_type){
+//     case 0: /* NULL */
+//       sqlite4VdbeMemSetNull(pMem);
+//       return;
 
-    case 8: /* integer 0 */
-      pMem->flags = MEM_Int;
-      pMem->type = SQLITE4_INTEGER;
-      pMem->u.num = sqlite4_num_from_int64(0); /* sqlite4_num 쓰면 이런 식 필요 */
-      return;
+//     case 8: /* integer 0 */
+//       pMem->flags = MEM_Int;
+//       pMem->type = SQLITE4_INTEGER;
+//       pMem->u.num = sqlite4_num_from_int64(0); /* sqlite4_num 쓰면 이런 식 필요 */
+//       return;
 
-    case 9: /* integer 1 */
-      pMem->flags = MEM_Int;
-      pMem->type = SQLITE4_INTEGER;
-      pMem->u.num = sqlite4_num_from_int64(1);
-      return;
+//     case 9: /* integer 1 */
+//       pMem->flags = MEM_Int;
+//       pMem->type = SQLITE4_INTEGER;
+//       pMem->u.num = sqlite4_num_from_int64(1);
+//       return;
 
-    case 1: case 2: case 3: case 4: case 5: case 6: {
-      u32 n = sqlite4VdbeSerialTypeLen(serial_type);
-      i64 v = readIntBE(buf, n);
-      pMem->flags = MEM_Int;
-      pMem->type = SQLITE4_INTEGER;
-      pMem->u.num = sqlite4_num_from_int64(v);
-      return;
-    }
+//     case 1: case 2: case 3: case 4: case 5: case 6: {
+//       u32 n = sqlite4VdbeSerialTypeLen(serial_type);
+//       i64 v = readIntBE(buf, n);
+//       pMem->flags = MEM_Int;
+//       pMem->type = SQLITE4_INTEGER;
+//       pMem->u.num = sqlite4_num_from_int64(v);
+//       return;
+//     }
 
-    case 7: {
-      double d = readF64BE(buf);
-      pMem->flags = MEM_Real;
-      pMem->type = SQLITE4_REAL;
-      pMem->u.num = sqlite4_num_from_double(d);
-      return;
-    }
+//     case 7: {
+//       double d = readF64BE(buf);
+//       pMem->flags = MEM_Real;
+//       pMem->type = SQLITE4_REAL;
+//       pMem->u.num = sqlite4_num_from_double(d);
+//       return;
+//     }
 
-    default:
-      if( serial_type>=12 ){
-        u32 n = sqlite4VdbeSerialTypeLen(serial_type);
-        if( (serial_type & 1)==0 ){
-          /* BLOB */
-          sqlite4VdbeMemSetStr(pMem, (const char*)buf, n, 0, SQLITE4_TRANSIENT, 0);
-        }else{
-          /* TEXT (utf8로 가정) */
-          sqlite4VdbeMemSetStr(pMem, (const char*)buf, n, SQLITE4_UTF8, SQLITE4_TRANSIENT, 0);
-        }
-        return;
-      }
+//     default:
+//       if( serial_type>=12 ){
+//         u32 n = sqlite4VdbeSerialTypeLen(serial_type);
+//         if( (serial_type & 1)==0 ){
+//           /* BLOB */
+//           sqlite4VdbeMemSetStr(pMem, (const char*)buf, n, 0, SQLITE4_TRANSIENT, 0);
+//         }else{
+//           /* TEXT (utf8로 가정) */
+//           sqlite4VdbeMemSetStr(pMem, (const char*)buf, n, SQLITE4_UTF8, SQLITE4_TRANSIENT, 0);
+//         }
+//         return;
+//       }
 
-      /* reserved 10,11 등: NULL로 처리 */
-      sqlite4VdbeMemSetNull(pMem);
-      return;
-  }
-}
+//       /* reserved 10,11 등: NULL로 처리 */
+//       sqlite4VdbeMemSetNull(pMem);
+//       return;
+//   }
+// }

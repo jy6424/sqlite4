@@ -475,8 +475,8 @@ int sqlite4VdbeMemHandleBom(Mem *pMem);
 //[koreauniv]
 void sqlite4VdbeMemSetZeroBlob(Mem *pMem, int n);
 int sqlite4_bind_zeroblob(sqlite4_stmt *pStmt, int i, int n);
-u32 sqlite4VdbeSerialTypeLen(u32 serial_type);
-void sqlite4VdbeSerialGet(const u8 *buf, u32 serial_type, Mem *pMem);
+// u32 sqlite4VdbeSerialTypeLen(u32 serial_type);
+// void sqlite4VdbeSerialGet(const u8 *buf, u32 serial_type, Mem *pMem);
 
 int sqlite4UnpackRecordFromBuffer(
   sqlite4 *db,
