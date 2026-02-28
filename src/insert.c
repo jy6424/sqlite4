@@ -1608,7 +1608,8 @@ void sqlite4CompleteInsertion(
         **   - P3 is KEY, P2 is DATA.
         ** For vector cursor, OP_Insert will read packed record from P3.
         */
-        sqlite4VdbeAddOp3(v, OP_Insert, baseCur+i, 0, regVecRec);
+        // sqlite4VdbeAddOp3(v, OP_Insert, baseCur+i, 0, regVecRec);
+        sqlite4VdbeAddOp3(v, OP_Insert, baseCur+i, regVecRec, aRegIdx[i]);
         sqlite4VdbeChangeP5(v, 0);
 
         sqlite4ReleaseTempRange(pParse, regVecCols, nVecRecField);
