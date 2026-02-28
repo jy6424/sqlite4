@@ -3118,6 +3118,8 @@ case OP_OpenVectorIdx: {
     nField = pOp->p4.i;
   }
 
+  printf("OP_OpenVectorIdx: pKeyInfo=%p, nField=%d\n", (void*)pKeyInfo, nField);
+
   if( pKeyInfo && pKeyInfo->zDbSName && pKeyInfo->zIndexName ) {
     printf("OP_OpenVectorIdx: pKeyInfo->zDbSName=%s, pKeyInfo->zIndexName=%s\n", pKeyInfo->zDbSName, pKeyInfo->zIndexName);
   }else{
