@@ -3118,8 +3118,12 @@ case OP_OpenVectorIdx: {
     nField = pOp->p4.i;
   }
 
-  assert( pKeyInfo && pKeyInfo->zDbSName && pKeyInfo->zIndexName );
-  printf("OP_OpenVectorIdx: pKeyInfo->zDbSName=%s, pKeyInfo->zIndexName=%s\n", pKeyInfo->zDbSName, pKeyInfo->zIndexName);
+  if( pKeyInfo && pKeyInfo->zDbSName && pKeyInfo->zIndexName ) {
+    printf("OP_OpenVectorIdx: pKeyInfo->zDbSName=%s, pKeyInfo->zIndexName=%s\n", pKeyInfo->zDbSName, pKeyInfo->zIndexName);
+  }else{
+    printf("OP_OpenVectorIdx: pKeyInfo is NULL or pKeyInfo->zDbSName or pKeyInfo->zIndexName is NULL\n");
+    goto abort_due_to_error;
+  }
   rc = vectorIndexCursorInit(db, pKeyInfo->zDbSName, pKeyInfo->zIndexName, &cursor);
   if( rc ) goto abort_due_to_error;
 
