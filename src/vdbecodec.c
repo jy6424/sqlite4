@@ -1052,3 +1052,209 @@ int sqlite4VdbeEncodeKey(
   }
   return rc;
 }
+
+
+
+// [koreauniv] added for vector
+
+/* -------------------------------------------------------------------------
+**  Buffer-only record decoder (for sqlite4VdbeEncodeData() format)
+**  - No KVCursor/VdbeCursor needed.
+**  - Supports: NULL/INT/NUM(TEXT/UTF16 marker)/BLOB
+**  - Does NOT support KEY-class (cclass==2) or TYPED (cclass==3).
+** ------------------------------------------------------------------------- */
+
+static int vdbeDecodeGetColumnFromBuffer(
+  sqlite4 *db,
+  const KVByteArray *a, KVSize n,
+  int mxCol,
+  int iVal,
+  Mem *pDefault,
+  Mem *pOut
+){
+  u32 size;
+  sqlite4_uint64 ofst;
+  sqlite4_uint64 type;
+  sqlite4_uint64 subtype;
+  int cclass;
+  int hdrPos;
+  int i;
+  int sz;
+  int endHdr;
+  int rc;
+
+  (void)mxCol;      /* keep signature similar; not required here */
+  (void)subtype;    /* not used (no TYPED support) */
+
+  sqlite4VdbeMemSetNull(pOut);
+  if( a==0 || n<=0 ) return SQLITE4_CORRUPT;
+
+  /* first varint: "bytes of serial-varints area" */
+  hdrPos = sqlite4GetVarint64(a, (int)n, &ofst);
+  if( hdrPos==0 ) return SQLITE4_CORRUPT;
+
+  endHdr = (int)(ofst + (sqlite4_uint64)hdrPos); /* payload start */
+  if( endHdr<0 || endHdr>(int)n ) return SQLITE4_CORRUPT;
+
+  /* Walk serials until we reach iVal */
+  for(i=0; i<=iVal && hdrPos<endHdr; i++){
+    sz = sqlite4GetVarint64(a+hdrPos, (int)(n-hdrPos), &type);
+    if( sz==0 ) return SQLITE4_CORRUPT;
+    hdrPos += sz;
+    if( hdrPos>endHdr ) return SQLITE4_CORRUPT;
+
+    if( type>=22 ){
+      cclass = (int)((type-22)%4);
+
+      /* We only support TEXT(cclass==0) and BLOB(cclass==1) here */
+      if( cclass==2 ) return SQLITE4_CORRUPT; /* KEY */
+      if( cclass==3 ) return SQLITE4_CORRUPT; /* TYPED */
+
+      size = (u32)((type-22)/4);
+    }else if( type<=2 ){
+      size = 0;
+    }else if( type<=10 ){
+      size = (u32)(type - 2);
+    }else{
+      /* NUM: 11..21 */
+      if( type<11 || type>21 ) return SQLITE4_CORRUPT;
+      size = (u32)(type - 9);
+    }
+
+    if( i<iVal ){
+      ofst += size;
+      continue;
+    }
+
+    /* Now decode the iVal-th column at payload offset "ofst" */
+    if( ofst + size > (sqlite4_uint64)n ) return SQLITE4_CORRUPT;
+
+    rc = SQLITE4_OK;
+
+    if( type==0 ){
+      /* NULL */
+      sqlite4VdbeMemSetNull(pOut);
+
+    }else if( type<=2 ){
+      /* ZERO/ONE: 1->0, 2->1 */
+      sqlite4VdbeMemSetInt64(pOut, (sqlite4_int64)(type-1));
+
+    }else if( type<=10 ){
+      /* INT big-endian, sign extend */
+      int iByte;
+      sqlite4_int64 v = ((const signed char*)a)[(int)ofst];
+      for(iByte=1; iByte<(int)size; iByte++){
+        v = v*256 + a[(int)ofst+iByte];
+      }
+      sqlite4VdbeMemSetInt64(pOut, v);
+
+    }else if( type<=21 ){
+      /* NUM: payload = varint(e) + varint(m) and (n1+n2)==size */
+      sqlite4_num num = {0,0,0,0};
+      sqlite4_uint64 x;
+      int n1, n2;
+      int e;
+
+      n1 = sqlite4GetVarint64(a+(int)ofst, (int)(n-ofst), &x);
+      if( n1==0 ) return SQLITE4_CORRUPT;
+      e = (int)x;
+
+      n2 = sqlite4GetVarint64(a+(int)ofst+n1, (int)(n-(ofst+n1)), &x);
+      if( n2==0 ) return SQLITE4_CORRUPT;
+
+      if( (u32)(n1+n2) != size ) return SQLITE4_CORRUPT;
+
+      num.m = x;
+      num.e = (e >> 2);
+      if( e & 0x02 ) num.e = -1 * num.e;
+      if( e & 0x01 ) num.sign = 1;
+
+      pOut->u.num = num;
+      MemSetTypeFlag(pOut, MEM_Real);
+
+    }else{
+      /* TEXT/BLOB */
+      if( cclass==0 ){
+        /* TEXT: optional marker 0/1/2 */
+        if( size==0 ){
+          rc = sqlite4VdbeMemSetStr(pOut, "", 0, SQLITE4_UTF8, SQLITE4_TRANSIENT, 0);
+        }else if( a[(int)ofst] > 0x02 ){
+          rc = sqlite4VdbeMemSetStr(pOut, (char*)(a+(int)ofst), (int)size,
+                                    SQLITE4_UTF8, SQLITE4_TRANSIENT, 0);
+        }else{
+          static const u8 enc[] = { SQLITE4_UTF8, SQLITE4_UTF16LE, SQLITE4_UTF16BE };
+          rc = sqlite4VdbeMemSetStr(pOut, (char*)(a+(int)ofst+1), (int)size-1,
+                                    enc[a[(int)ofst]], SQLITE4_TRANSIENT, 0);
+        }
+      }else{
+        /* BLOB */
+        rc = sqlite4VdbeMemSetStr(pOut, (char*)(a+(int)ofst), (int)size,
+                                  0, SQLITE4_TRANSIENT, 0);
+        if( rc==SQLITE4_OK ){
+          pOut->enc = ENC(db);
+        }
+      }
+    }
+
+    return rc;
+  }
+
+  /* iVal out of range -> default */
+  if( i<=iVal ){
+    if( pDefault ){
+      sqlite4VdbeMemShallowCopy(pOut, pDefault, MEM_Static);
+    }else{
+      sqlite4VdbeMemSetNull(pOut);
+    }
+  }
+  return SQLITE4_OK;
+}
+
+
+int sqlite4UnpackRecordFromBuffer(
+  sqlite4 *db,
+  KeyInfo *pKeyInfo,
+  int nKey,
+  const void *pKey,
+  UnpackedRecord *p
+){
+  int i, rc;
+  int nField;
+
+  if( db==0 || pKeyInfo==0 || p==0 ) return SQLITE4_MISUSE;
+  if( pKey==0 || nKey<=0 ) return SQLITE4_CORRUPT;
+  if( p->aMem==0 ) return SQLITE4_MISUSE;
+
+  nField = pKeyInfo->nField;
+  if( nField<=0 ) return SQLITE4_MISUSE;
+
+  p->pKeyInfo = pKeyInfo;
+  p->default_rc = 0;
+  p->errCode = 0;
+  p->eqSeen = 0;
+
+  /* Fill aMem[0..nField-1] */
+  for(i=0; i<nField; i++){
+    Mem *pMem = &p->aMem[i];
+    pMem->db = db;
+    sqlite4VdbeMemRelease(pMem);
+    sqlite4VdbeMemSetNull(pMem);
+
+    rc = vdbeDecodeGetColumnFromBuffer(
+      db,
+      (const KVByteArray*)pKey, (KVSize)nKey,
+      nField,
+      i,
+      0,
+      pMem
+    );
+    if( rc!=SQLITE4_OK ){
+      p->errCode = (u8)rc;
+      p->nField = (u16)i;
+      return rc;
+    }
+  }
+
+  p->nField = (u16)nField;
+  return SQLITE4_OK;
+}

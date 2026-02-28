@@ -2336,24 +2336,6 @@ static double readF64BE(const u8 *p){
   return d;
 }
 
-/* sqlite3 serial-type 길이 규칙 */
-int sqlite4VdbeSerialTypeLen(u32 serial_type){
-  if( serial_type==0 ) return 0;
-  if( serial_type==1 ) return 1;
-  if( serial_type==2 ) return 2;
-  if( serial_type==3 ) return 3;
-  if( serial_type==4 ) return 4;
-  if( serial_type==5 ) return 6;
-  if( serial_type==6 ) return 8;
-  if( serial_type==7 ) return 8;
-  if( serial_type==8 ) return 0;
-  if( serial_type==9 ) return 0;
-  if( serial_type>=12 ){
-    return (int)((serial_type - 12) / 2);
-  }
-  /* 10,11은 reserved(사용 안 함) */
-  return 0;
-}
 
 void sqlite4VdbeSerialGet(const u8 *buf, u32 serial_type, Mem *pMem){
   /* clear */
@@ -2377,7 +2359,7 @@ void sqlite4VdbeSerialGet(const u8 *buf, u32 serial_type, Mem *pMem){
       return;
 
     case 1: case 2: case 3: case 4: case 5: case 6: {
-      int n = sqlite4VdbeSerialTypeLen(serial_type);
+      u32 n = sqlite4VdbeSerialTypeLen(serial_type);
       i64 v = readIntBE(buf, n);
       pMem->flags = MEM_Int;
       pMem->type = SQLITE4_INTEGER;
@@ -2395,7 +2377,7 @@ void sqlite4VdbeSerialGet(const u8 *buf, u32 serial_type, Mem *pMem){
 
     default:
       if( serial_type>=12 ){
-        int n = sqlite4VdbeSerialTypeLen(serial_type);
+        u32 n = sqlite4VdbeSerialTypeLen(serial_type);
         if( (serial_type & 1)==0 ){
           /* BLOB */
           sqlite4VdbeMemSetStr(pMem, (const char*)buf, n, 0, SQLITE4_TRANSIENT, 0);

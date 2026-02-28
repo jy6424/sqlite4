@@ -4286,23 +4286,21 @@ case OP_Insert: {
 
   if( pOp->p5 & OPFLAG_NCHANGE ) p->nChange++;
 
+/* OP_Insert(vector) side: call sqlite4UnpackRecordFromBuffer() */
+
 #ifndef SQLITE_OMIT_VECTOR
   if( pC->eCurtype==CURTYPE_VECTOR_IDX ){
     UnpackedRecord *pIdxKey;
 
-    /* OP_MakeRecord 결과는 항상 BLOB이어야 함 */
     if( (pKey->flags & MEM_Blob)==0 || pKey->z==0 || pKey->n<=0 ){
       rc = SQLITE4_ERROR;
       goto abort_due_to_error;
     }
-    assert( pC->pKeyInfo );
-    assert( pC->pVecIdx );
 
     pIdxKey = sqlite4VdbeAllocUnpackedRecord(db, pC->pKeyInfo);
     if( pIdxKey==0 ) goto no_mem;
 
-    /* sqlite4 record-format unpack (네가 구현한 함수) */
-    rc = sqlite4UnpackRecord(db, pC->pKeyInfo, pKey->n, (const void*)pKey->z, pIdxKey);
+    rc = sqlite4UnpackRecordFromBuffer(db, pC->pKeyInfo, pKey->n, pKey->z, pIdxKey);
     if( rc!=SQLITE4_OK ){
       sqlite4VdbeFreeUnpackedRecord(db, pIdxKey);
       goto abort_due_to_error;
@@ -4314,8 +4312,7 @@ case OP_Insert: {
     if( rc ) goto abort_due_to_error;
     break;
   }
-#endif /* SQLITE_OMIT_VECTOR */
-
+#endif
   /* ---- non-vector (KVStore) path ---- */
   assert( pC->pKVCur && pC->pKVCur->pStore );
   assert( pData==0 || (pData->flags & MEM_Blob) );
