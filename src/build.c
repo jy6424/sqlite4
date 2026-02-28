@@ -2279,6 +2279,8 @@ static void sqlite4RefillIndex(Parse *pParse, Index *pIdx, int bCreate){
   int iDb = sqlite4SchemaToIndex(db, pIdx->pSchema);
   Index *pPk;
 
+  printf("sqlite4RefillIndex: entered\n");
+
 #ifndef SQLITE4_OMIT_AUTHORIZATION
   if( sqlite4AuthCheck(pParse, SQLITE4_REINDEX, pIdx->zName, 0,
       db->aDb[iDb].zName ) ){
