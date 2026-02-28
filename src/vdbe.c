@@ -4310,10 +4310,12 @@ case OP_Insert: {
     rc = sqlite4UnpackRecordFromBuffer(db, pC->pKeyInfo, pKey->n, pKey->z, pIdxKey);
     if( rc!=SQLITE4_OK ){
       sqlite4VdbeFreeUnpackedRecord(db, pIdxKey);
+      printf("unpackrecordfrombuffer failed\n");
       goto abort_due_to_error;
     }
-
+    printf("vectorindexinsert start\n");
     rc = vectorIndexInsert(pC->pVecIdx, pIdxKey, &p->zErrMsg);
+    printf("vectorindexinsert end\n");
     sqlite4VdbeFreeUnpackedRecord(db, pIdxKey);
 
     if( rc ) goto abort_due_to_error;
