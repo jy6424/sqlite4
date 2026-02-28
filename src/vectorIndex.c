@@ -260,7 +260,7 @@ int vectorInRowPlaceholderRender(const VectorInRow *pVectorInRow, char *pBuf, in
 }
 
 
-// [koreauniv TODO] 수정 필요. sqlite4_value_type, UnpackedRecord 구현 필요
+// [koreauniv TODO] 수정 필요. sqlite4_value_type(완료), UnpackedRecord 구현 필요
 int vectorInRowAlloc(sqlite4 *db, const UnpackedRecord *pRecord, VectorInRow *pVectorInRow, char **pzErrMsg) {
   int rc = SQLITE4_OK;
   int type, dims;
@@ -1228,42 +1228,42 @@ int vectorIndexInsert(
 //   return diskAnnDelete(pCur->pIndex, &payload, pzErrMsg);
 // }
 
-// int vectorIndexCursorInit(
-//   sqlite4 *db,
-//   const char *zDbSName,
-//   const char *zIndexName,
-//   VectorIdxCursor **ppCursor
-// ){
-//   int rc;
-//   VectorIdxCursor* pCursor;
-//   VectorIdxParams params;
-//   vectorIdxParamsInit(&params, NULL, 0);
+int vectorIndexCursorInit(
+  sqlite4 *db,
+  const char *zDbSName,
+  const char *zIndexName,
+  VectorIdxCursor **ppCursor
+){
+  int rc;
+  VectorIdxCursor* pCursor;
+  VectorIdxParams params;
+  vectorIdxParamsInit(&params, NULL, 0);
 
-//   assert( zDbSName != NULL );
+  assert( zDbSName != NULL );
 
-//   if( vectorIndexGetParameters(db, zDbSName, zIndexName, &params) != 0 ){
-//     return SQLITE4_ERROR;
-//   }
-//   pCursor = sqlite4DbMallocZero(db, sizeof(VectorIdxCursor));
-//   if( pCursor == 0 ){
-//     return SQLITE4_NOMEM;
-//   }
-//   rc = diskAnnOpenIndex(db, zDbSName, zIndexName, &params, &pCursor->pIndex);
-//   if( rc != SQLITE4_OK ){
-//     sqlite4DbFree(db, pCursor);
-//     return rc;
-//   }
-//   pCursor->db = db;
-//   *ppCursor = pCursor;
-//   return SQLITE4_OK;
-// }
+  if( vectorIndexGetParameters(db, zDbSName, zIndexName, &params) != 0 ){
+    return SQLITE4_ERROR;
+  }
+  pCursor = sqlite4DbMallocZero(db, sizeof(VectorIdxCursor));
+  if( pCursor == 0 ){
+    return SQLITE4_NOMEM;
+  }
+  rc = diskAnnOpenIndex(db, zDbSName, zIndexName, &params, &pCursor->pIndex);
+  if( rc != SQLITE4_OK ){
+    sqlite4DbFree(db, pCursor);
+    return rc;
+  }
+  pCursor->db = db;
+  *ppCursor = pCursor;
+  return SQLITE4_OK;
+}
 
-// void vectorIndexCursorClose(sqlite4 *db, VectorIdxCursor *pCursor, int *nReads, int *nWrites){
-//   *nReads = pCursor->pIndex->nReads;
-//   *nWrites = pCursor->pIndex->nWrites;
+void vectorIndexCursorClose(sqlite4 *db, VectorIdxCursor *pCursor, int *nReads, int *nWrites){
+  *nReads = pCursor->pIndex->nReads;
+  *nWrites = pCursor->pIndex->nWrites;
 
-//   diskAnnCloseIndex(pCursor->pIndex);
-//   sqlite4DbFree(db, pCursor);
-// }
+  diskAnnCloseIndex(pCursor->pIndex);
+  sqlite4DbFree(db, pCursor);
+}
 
 #endif /* !defined(SQLITE_OMIT_VECTOR) */

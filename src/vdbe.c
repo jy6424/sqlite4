@@ -593,62 +593,113 @@ void sqlite4VdbeFreeUnpackedRecord(sqlite4 *db, UnpackedRecord *p){
   sqlite4DbFree(db, p);
 }
 
+/*
+** Unpack a record blob (varint header-size + serial types + payload)
+** into an UnpackedRecord.
+**
+** IMPORTANT contract for sqlite4 (since UnpackedRecord has no nFieldAlloc):
+**  - On entry, p->nField is treated as the CAPACITY of p->aMem[].
+**  - On return, p->nField is set to the ACTUAL number of fields unpacked.
+*/
+
+// [koreauniv] unpackedrecord 수정필요
 void sqlite4UnpackRecord(
-  KeyInfo *pKeyInfo,
-  int nKey,
-  const void *pKey,
-  UnpackedRecord *p
+  sqlite4 *db,                 /* Database handle used to init Mem objects */
+  KeyInfo *pKeyInfo,           /* Key collation/sort info for the record */
+  int nKey,                    /* Size of record blob in bytes */
+  const void *pKey,            /* Record blob */
+  UnpackedRecord *p            /* Output: populate this */
 ){
   const u8 *aKey = (const u8 *)pKey;
-  u32 szHdr = 0;
-  u32 idx = 0;      /* read position in header */
-  u32 d = 0;        /* read position in payload */
+  u32 szHdr = 0;               /* Header size in bytes */
+  u32 idx = 0;                 /* Offset in aKey[] while reading header */
+  u32 d = 0;                   /* Offset in aKey[] while reading payload */
   u32 serial_type = 0;
   u16 u = 0;
-  Mem *pMem;
+  int nFieldMax;
 
-  assert(p);
-  assert(pKeyInfo);
-  assert(aKey);
-  assert(nKey >= 0);
+  if( p==0 ) return;
 
-  pMem = p->aMem;
-  p->default_rc = 0;     /* same as sqlite3 */
+  /* Treat incoming p->nField as capacity */
+  nFieldMax = (int)p->nField;
+  p->pKeyInfo = pKeyInfo;
+  p->default_rc = 0;
+  p->errCode = 0;
+  p->eqSeen = 0;
   p->nField = 0;
 
-  /* header size */
-  idx = getVarint32(aKey, &szHdr);
-  d = szHdr;
-
-  /* decode serial types and payload into Mems */
-  while( idx < szHdr && d <= (u32)nKey ){
-    idx += getVarint32(&aKey[idx], &serial_type);
-
-    /* initialize Mem for serial-get */
-    pMem->enc = pKeyInfo->enc;   /* sqlite4 Mem has enc */
-    pMem->db  = pKeyInfo->db;    /* ⚠️ sqlite4 KeyInfo에 db/enc 필드가 없다면 채워야 함 */
-    pMem->z   = 0;
-    pMem->n   = 0;
-    pMem->flags = 0;
-    pMem->xDel = 0;
-    pMem->pDelArg = 0;
-    pMem->zMalloc = 0;
-
-    sqlite4VdbeSerialGet(&aKey[d], serial_type, pMem);
-    d += (u32)sqlite4VdbeSerialTypeLen(serial_type);
-
-    pMem++;
-    if( (++u) >= p->nFieldAlloc /* or p->nField capacity */ ){
-      break;
-    }
+  if( nFieldMax<=0 || p->aMem==0 ){
+    /* Nothing to write into */
+    return;
+  }
+  if( aKey==0 || nKey<=0 ){
+    return;
   }
 
-  /* corruption guard: if payload ran past end, null out last field */
-  if( d > (u32)nKey && u ){
-    sqlite4VdbeMemSetNull(pMem-1);
+  /* ---- read header size varint ----
+  ** NOTE: getVarint32(A,B) expects B to be a u32 LVALUE (NOT a pointer).
+  */
+  idx = (u32)getVarint32(aKey, szHdr);
+  if( idx==0 ){
+    /* getVarint32 should never return 0 here, but be defensive */
+    p->errCode = SQLITE4_CORRUPT;
+    return;
+  }
+  if( szHdr > (u32)nKey ){
+    p->errCode = SQLITE4_CORRUPT;
+    return;
+  }
+
+  d = szHdr;
+
+  /* Unpack serial types until we hit end-of-header or fill capacity */
+  while( idx < szHdr && d <= (u32)nKey && u < (u16)nFieldMax ){
+    Mem *pMem = &p->aMem[u];
+    int nPayload;
+
+    /* Read next serial type varint */
+    idx += (u32)getVarint32(&aKey[idx], serial_type);
+    if( idx > szHdr ){
+      /* header ran out mid-varint */
+      p->errCode = SQLITE4_CORRUPT;
+      break;
+    }
+
+    /* Ensure this slot is clean */
+    if( pMem->flags & (MEM_Str|MEM_Blob) ){
+      sqlite4VdbeMemRelease(pMem);
+    }
+    sqlite4VdbeMemSetNull(pMem);
+
+    /* Initialize Mem's db/enc safely (KeyInfo에 enc/db가 없을 수 있으니 db에서) */
+    pMem->db  = db;
+    pMem->enc = SQLITE4_UTF8;
+
+    /* Payload length for this serial type */
+    nPayload = sqlite4VdbeSerialTypeLen(serial_type);
+    if( nPayload < 0 ){
+      p->errCode = SQLITE4_CORRUPT;
+      break;
+    }
+    if( d + (u32)nPayload > (u32)nKey ){
+      /* payload would overrun */
+      p->errCode = SQLITE4_CORRUPT;
+      break;
+    }
+
+    /* Deserialize into Mem */
+    sqlite4VdbeSerialGet(&aKey[d], serial_type, pMem);
+    d += (u32)nPayload;
+
+    u++;
   }
 
   p->nField = u;
+
+  /* If corrupted record, make sure last slot isn't left in garbage state */
+  if( p->errCode && u>0 ){
+    sqlite4VdbeMemSetNull(&p->aMem[u-1]);
+  }
 }
 
 
@@ -2846,42 +2897,74 @@ case OP_OpenWrite: {
 */
 case OP_OpenVectorIdx: {
   KeyInfo *pKeyInfo = NULL;
-  VectorIdxCursor* cursor;
+  VectorIdxCursor *cursor;
   int nField = 0;
+
   if( pOp->p4type==P4_KEYINFO ){
     pKeyInfo = pOp->p4.pKeyInfo;
-    assert( pKeyInfo->enc==ENC(db) );
-    assert( pKeyInfo->db==db );
-    nField = pKeyInfo->nAllField;
+    nField = pKeyInfo->nField;   /* sqlite4 KeyInfo에 맞춰서 */
   }else if( pOp->p4type==P4_INT32 ){
     nField = pOp->p4.i;
   }
-  assert( pKeyInfo->zDbSName != NULL );
-  // if( pOp->p5 == OPFLAG_FORDELETE ){
-  //   rc = vectorIndexClear(db, pKeyInfo->zDbSName, pKeyInfo->zIndexName);
-  //   if( rc ){
-  //     printf("OP_OpenVectorIdx: vectorIndexClear failed for %s.%s\n", pKeyInfo->zDbSName, pKeyInfo->zIndexName);
-  //     goto abort_due_to_error;
-  //   }
-  // }
+
+  assert( pKeyInfo && pKeyInfo->zDbSName && pKeyInfo->zIndexName );
+
   rc = vectorIndexCursorInit(db, pKeyInfo->zDbSName, pKeyInfo->zIndexName, &cursor);
-  if( rc ) {
-    printf("OP_OpenVectorIdx: vectorIndexCursorInit failed for %s.%s\n", pKeyInfo->zDbSName, pKeyInfo->zIndexName);
-    goto abort_due_to_error;
+  if( rc ) goto abort_due_to_error;
+
+  VdbeCursor *pCur = allocateCursor(p, pOp->p1, nField, pOp->p3, 1);
+  if( pCur==0 ) {
+    int nR=0, nW=0;
+    vectorIndexCursorClose(db, cursor, &nR, &nW);    
+    goto no_mem;
   }
-  // After we will allocate cursor Vdbe will record it and will try to close it at the disposal
-  // So, we need to ensure that no errors will occurred after successful cursor allocation
-  VdbeCursor *pCur = allocateVectorCursor(p, pOp->p1, nField, pOp->p3, 1, CURTYPE_VECTOR_IDX);
-  if( pCur==0 ) goto no_mem;
-  pCur->iDb = pOp->p3;
-  pCur->nullRow = 1;
-  pCur->isOrdered = 1;
-  pCur->pgnoRoot = pOp->p2;
+  pCur->eCurtype = CURTYPE_VECTOR_IDX;
   pCur->pKeyInfo = pKeyInfo;
-  pCur->isTable = 0;
-  pCur->uc.pVecIdx = cursor;
+  pCur->pVecIdx = cursor;
+  pCur->nullRow = 1;
+  pCur->pgnoRoot = pOp->p2;
+
   break;
 }
+
+// case OP_OpenVectorIdx: {
+//   KeyInfo *pKeyInfo = NULL;
+//   VectorIdxCursor* cursor;
+//   int nField = 0;
+//   if( pOp->p4type==P4_KEYINFO ){
+//     pKeyInfo = pOp->p4.pKeyInfo;
+//     assert( pKeyInfo->enc==ENC(db) );
+//     assert( pKeyInfo->db==db );
+//     nField = pKeyInfo->nAllField;
+//   }else if( pOp->p4type==P4_INT32 ){
+//     nField = pOp->p4.i;
+//   }
+//   assert( pKeyInfo->zDbSName != NULL );
+//   // if( pOp->p5 == OPFLAG_FORDELETE ){
+//   //   rc = vectorIndexClear(db, pKeyInfo->zDbSName, pKeyInfo->zIndexName);
+//   //   if( rc ){
+//   //     printf("OP_OpenVectorIdx: vectorIndexClear failed for %s.%s\n", pKeyInfo->zDbSName, pKeyInfo->zIndexName);
+//   //     goto abort_due_to_error;
+//   //   }
+//   // }
+//   rc = vectorIndexCursorInit(db, pKeyInfo->zDbSName, pKeyInfo->zIndexName, &cursor);
+//   if( rc ) {
+//     printf("OP_OpenVectorIdx: vectorIndexCursorInit failed for %s.%s\n", pKeyInfo->zDbSName, pKeyInfo->zIndexName);
+//     goto abort_due_to_error;
+//   }
+//   // After we will allocate cursor Vdbe will record it and will try to close it at the disposal
+//   // So, we need to ensure that no errors will occurred after successful cursor allocation
+//   VdbeCursor *pCur = allocateVectorCursor(p, pOp->p1, nField, pOp->p3, 1, CURTYPE_VECTOR_IDX);
+//   if( pCur==0 ) goto no_mem;
+//   pCur->iDb = pOp->p3;
+//   pCur->nullRow = 1;
+//   pCur->isOrdered = 1;
+//   pCur->pgnoRoot = pOp->p2;
+//   pCur->pKeyInfo = pKeyInfo;
+//   pCur->isTable = 0;
+//   pCur->uc.pVecIdx = cursor;
+//   break;
+// }
 #endif
 
 /* Opcode: OpenEphemeral P1 P2 * P4 P5
@@ -3909,71 +3992,145 @@ case OP_Next: {        /* jump */
 ** incremented (otherwise not).
 */
 
+// case OP_Insert: {
+//   VdbeCursor *pC;
+//   Mem *pKey;
+//   Mem *pData;
+//   int nKVKey;
+//   KVByteArray *pKVKey;
+//   KVByteArray aKey[24];
+
+//   pC = p->apCsr[pOp->p1];
+//   pKey = &aMem[pOp->p3];
+//   pData = pOp->p2 ? &aMem[pOp->p2] : 0;
+
+//   assert( pOp->p1>=0 && pOp->p1<p->nCursor );
+//   assert( pC && pC->pKVCur && pC->pKVCur->pStore );
+//   assert( pData==0 || (pData->flags & MEM_Blob) );
+
+//   if( pOp->p5 & OPFLAG_NCHANGE ) p->nChange++;
+
+// // [koreauniv] vector index insert
+// #ifndef SQLITE_OMIT_VECTOR
+//   if( pC->eCurtype==CURTYPE_VECTOR_IDX ){
+
+//     /* sqlite3처럼 “packed record -> UnpackedRecord”로 풀어서 insert */
+//     if( (pKey->flags & MEM_Blob)==0 ){
+//       rc = SQLITE4_MISMATCH;  /* SQLITE4_MISMATCH 확인필요 */
+//       goto abort_due_to_error;
+//     }
+
+//     UnpackedRecord *pIdxKey = sqlite4VdbeAllocUnpackedRecord(pC->pKeyInfo);
+//     if( pIdxKey==0 ) goto no_mem;
+
+//     sqlite4UnpackRecord(pC->pKeyInfo, pKey->n, pKey->z, pIdxKey); //구현필요
+
+//     rc = vectorIndexInsert(pC->uc.pVecIdx, pIdxKey, &p->zErrMsg);
+
+//     /* UnpackedRecord 내부 Mem 정리 (sqlite3 코드랑 동일한 이유) */
+//     if( pIdxKey ){
+//       int i;
+//       for(i=0; i<pIdxKey->nField; i++){
+//         sqlite4VdbeMemRelease(pIdxKey->aMem + i);
+//       }
+//       sqlite4DbFree(db, pIdxKey);
+//     }
+
+//     if( rc ) goto abort_due_to_error;
+//     break;
+//   }
+// #endif
+
+
+//   if( pKey->flags & MEM_Int ){
+//     nKVKey = sqlite4PutVarint64(aKey, pC->iRoot);
+//     nKVKey += sqlite4VdbeEncodeIntKey(aKey+nKVKey, sqlite4VdbeIntValue(pKey));
+//     pKVKey = aKey;
+//   }else{
+//     nKVKey = pKey->n;
+//     pKVKey = pKey->z;
+//   }
+
+//   rc = sqlite4KVStoreReplace(
+//      pC->pKVCur->pStore,
+//      (u8 *)pKVKey, nKVKey,
+//      (u8 *)(pData ? pData->z : 0), (pData ? pData->n : 0)
+//   );
+//   pC->rowChnged = 1;
+//   break;
+// }
+
+
 case OP_Insert: {
   VdbeCursor *pC;
   Mem *pKey;
   Mem *pData;
-  int nKVKey;
-  KVByteArray *pKVKey;
-  KVByteArray aKey[24];
 
   pC = p->apCsr[pOp->p1];
   pKey = &aMem[pOp->p3];
   pData = pOp->p2 ? &aMem[pOp->p2] : 0;
 
   assert( pOp->p1>=0 && pOp->p1<p->nCursor );
-  assert( pC && pC->pKVCur && pC->pKVCur->pStore );
-  assert( pData==0 || (pData->flags & MEM_Blob) );
+  assert( pC );
 
   if( pOp->p5 & OPFLAG_NCHANGE ) p->nChange++;
 
-// [koreauniv] vector index insert
 #ifndef SQLITE_OMIT_VECTOR
   if( pC->eCurtype==CURTYPE_VECTOR_IDX ){
+    UnpackedRecord *pIdxKey;
 
-    /* sqlite3처럼 “packed record -> UnpackedRecord”로 풀어서 insert */
-    if( (pKey->flags & MEM_Blob)==0 ){
-      rc = SQLITE4_MISMATCH;  /* SQLITE4_MISMATCH 확인필요 */
+    /* OP_MakeRecord 결과는 항상 BLOB이어야 함 */
+    if( (pKey->flags & MEM_Blob)==0 || pKey->z==0 || pKey->n<=0 ){
+      rc = SQLITE4_ERROR;
+      goto abort_due_to_error;
+    }
+    assert( pC->pKeyInfo );
+    assert( pC->pVecIdx );
+
+    pIdxKey = sqlite4VdbeAllocUnpackedRecord(db, pC->pKeyInfo);
+    if( pIdxKey==0 ) goto no_mem;
+
+    /* sqlite4 record-format unpack (네가 구현한 함수) */
+    rc = sqlite4UnpackRecord(pC->pKeyInfo, pKey->n, (const u8*)pKey->z, pIdxKey);
+    if( rc!=SQLITE4_OK ){
+      sqlite4VdbeFreeUnpackedRecord(db, pIdxKey);
       goto abort_due_to_error;
     }
 
-    UnpackedRecord *pIdxKey = sqlite4VdbeAllocUnpackedRecord(pC->pKeyInfo);
-    if( pIdxKey==0 ) goto no_mem;
-
-    sqlite4UnpackRecord(pC->pKeyInfo, pKey->n, pKey->z, pIdxKey); //구현필요
-
-    rc = vectorIndexInsert(pC->uc.pVecIdx, pIdxKey, &p->zErrMsg);
-
-    /* UnpackedRecord 내부 Mem 정리 (sqlite3 코드랑 동일한 이유) */
-    if( pIdxKey ){
-      int i;
-      for(i=0; i<pIdxKey->nField; i++){
-        sqlite4VdbeMemRelease(pIdxKey->aMem + i);
-      }
-      sqlite4DbFree(db, pIdxKey);
-    }
+    rc = vectorIndexInsert(pC->pVecIdx, pIdxKey, &p->zErrMsg);
+    sqlite4VdbeFreeUnpackedRecord(db, pIdxKey);
 
     if( rc ) goto abort_due_to_error;
     break;
   }
-#endif
+#endif /* SQLITE_OMIT_VECTOR */
 
+  /* ---- non-vector (KVStore) path ---- */
+  assert( pC->pKVCur && pC->pKVCur->pStore );
+  assert( pData==0 || (pData->flags & MEM_Blob) );
 
-  if( pKey->flags & MEM_Int ){
-    nKVKey = sqlite4PutVarint64(aKey, pC->iRoot);
-    nKVKey += sqlite4VdbeEncodeIntKey(aKey+nKVKey, sqlite4VdbeIntValue(pKey));
-    pKVKey = aKey;
-  }else{
-    nKVKey = pKey->n;
-    pKVKey = pKey->z;
+  {
+    int nKVKey;
+    KVByteArray *pKVKey;
+    KVByteArray aKey[24];
+
+    if( pKey->flags & MEM_Int ){
+      nKVKey = sqlite4PutVarint64(aKey, pC->iRoot);
+      nKVKey += sqlite4VdbeEncodeIntKey(aKey+nKVKey, sqlite4VdbeIntValue(pKey));
+      pKVKey = aKey;
+    }else{
+      nKVKey = pKey->n;
+      pKVKey = (KVByteArray*)pKey->z;
+    }
+
+    rc = sqlite4KVStoreReplace(
+       pC->pKVCur->pStore,
+       (u8 *)pKVKey, nKVKey,
+       (u8 *)(pData ? pData->z : 0), (pData ? pData->n : 0)
+    );
+    pC->rowChnged = 1;
   }
 
-  rc = sqlite4KVStoreReplace(
-     pC->pKVCur->pStore,
-     (u8 *)pKVKey, nKVKey,
-     (u8 *)(pData ? pData->z : 0), (pData ? pData->n : 0)
-  );
-  pC->rowChnged = 1;
   break;
 }
 

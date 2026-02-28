@@ -107,8 +107,8 @@ int main(int argc, char **argv) {
   printf("\n-- inserting data --\n");
   rc = sqlite4_exec(
     db,
-    "INSERT INTO x (id, embedding) VALUES "
-    " (1, vector32('[0.800, 0.579, 0.481, 0.229]'));",
+    "INSERT INTO x (embedding) VALUES "
+    " (vector32('[0.800, 0.579, 0.481, 0.229]'));",
     0, 0
   );
   if (rc) {

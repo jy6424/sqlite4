@@ -1502,6 +1502,7 @@ void sqlite4GenerateConstraintChecks(
 ** a register containing the serialized key to insert into the index.
 ** aRegIdx[0] (the PRIMARY KEY index key) is never 0.
 */
+
 void sqlite4CompleteInsertion(
   Parse *pParse,      /* The parser context */
   Table *pTab,        /* the table into which we are inserting */
@@ -1529,11 +1530,7 @@ void sqlite4CompleteInsertion(
     pik_flags = OPFLAG_NCHANGE | (isUpdate?OPFLAG_ISUPDATE:0);
   }
 
-  /* Generate code to serialize array of registers into a database record. 
-  ** This OP_MakeRecord also serves to apply affinities to the array of
-  ** input registers at regContent. For this reason it must be executed 
-  ** before any MakeRecord instructions used to create covering index
-  ** records.  */
+  /* Serialize row content into table record (regRec) */
   regRec = sqlite4GetTempReg(pParse);
   if( IsKvstore(pTab) ){
     sqlite4VdbeAddOp2(v, OP_SCopy, regContent+1, regRec);
@@ -1548,14 +1545,78 @@ void sqlite4CompleteInsertion(
   /* Write the entry to each index. */
   for(i=0, pIdx=pTab->pIndex; pIdx; i++, pIdx=pIdx->pNext){
     assert( pIdx->eIndexType!=SQLITE4_INDEX_PRIMARYKEY || aRegIdx[i] );
+
     if( pIdx->eIndexType==SQLITE4_INDEX_FTS5 ){
       int iPK;
       sqlite4FindPrimaryKey(pTab, &iPK);
       sqlite4Fts5CodeUpdate(pParse, pIdx, 0, aRegIdx[iPK], regContent, 0);
+      continue;
     }
-    else if( aRegIdx[i] ){
+
+    if( aRegIdx[i] ){
       int regData = 0;
       int flags = 0;
+
+#ifndef SQLITE_OMIT_VECTOR
+      if( pIdx->idxIsVector ){
+        /*
+        ** Vector index insert record format (packed by OP_MakeRecord):
+        **   field[0]   : vector column value
+        **   field[1..] : key columns (EXCLUDING vector column)
+        **
+        ** Assumption/contract:
+        **   - pIdx->aiColumn[0] is the vector column (>=0)
+        **   - pIdx->aiColumn[1..] are key columns (may be -1 for rowid-like)
+        **   - regContent (the first content register) holds the rowid/PK if needed
+        */
+        int nAll = pIdx->nColumn;
+        int iVecCol;
+        int nKey;
+        int nVecRecField;
+        int regVecCols;
+        int regVecRec;
+        int kk;
+
+        assert( nAll>=1 );
+        iVecCol = pIdx->aiColumn[0];
+        assert( iVecCol>=0 );
+
+        nKey = nAll - 1;
+        nVecRecField = 1 + nKey;
+
+        regVecCols = sqlite4GetTempRange(pParse, nVecRecField);
+        regVecRec  = sqlite4GetTempReg(pParse);
+
+        /* field[0] = vector */
+        sqlite4VdbeAddOp2(v, OP_Copy, regContent + iVecCol, regVecCols + 0);
+
+        /* field[1..] = keys */
+        for( kk=0; kk<nKey; kk++ ){
+          int iCol = pIdx->aiColumn[1 + kk];
+          if( iCol<0 ){
+            /* rowid-like: use regContent as rowid/PK register */
+            sqlite4VdbeAddOp2(v, OP_Copy, regContent, regVecCols + 1 + kk);
+          }else{
+            sqlite4VdbeAddOp2(v, OP_Copy, regContent + iCol, regVecCols + 1 + kk);
+          }
+        }
+
+        sqlite4VdbeAddOp3(v, OP_MakeRecord, regVecCols, nVecRecField, regVecRec);
+
+        /*
+        ** OP_Insert semantics:
+        **   - P3 is KEY, P2 is DATA.
+        ** For vector cursor, OP_Insert will read packed record from P3.
+        */
+        sqlite4VdbeAddOp3(v, OP_Insert, baseCur+i, 0, regVecRec);
+        sqlite4VdbeChangeP5(v, 0);
+
+        sqlite4ReleaseTempRange(pParse, regVecCols, nVecRecField);
+        sqlite4ReleaseTempReg(pParse, regVecRec);
+        continue;
+      }
+#endif /* SQLITE_OMIT_VECTOR */
+
       if( pIdx->eIndexType==SQLITE4_INDEX_PRIMARYKEY ){
         regData = regRec;
         flags = pik_flags;
@@ -1573,12 +1634,88 @@ void sqlite4CompleteInsertion(
         regData = regCover;
         sqlite4VdbeAddOp3(v, OP_MakeRecord, regContent, pIdx->nCover, regData);
       }
-      // [koreauniv] vector insert in OP_insert
       sqlite4VdbeAddOp3(v, OP_Insert, baseCur+i, regData, aRegIdx[i]);
       sqlite4VdbeChangeP5(v, flags);
     }
   }
 }
+// void sqlite4CompleteInsertion(
+//   Parse *pParse,      /* The parser context */
+//   Table *pTab,        /* the table into which we are inserting */
+//   int baseCur,        /* Index of a read/write cursor pointing at pTab */
+//   int regContent,     /* First register of content */
+//   int *aRegIdx,       /* Register used by each index.  0 for unused indices */
+//   int isUpdate,       /* True for UPDATE, False for INSERT */
+//   int appendBias,     /* True if this is likely to be an append */
+//   int useSeekResult   /* True to set the USESEEKRESULT flag on OP_[Idx]Insert */
+// ){
+//   int i;
+//   Vdbe *v;
+//   Index *pIdx;
+//   u8 pik_flags;
+//   int regRec;
+//   int regCover;
+
+//   v = sqlite4GetVdbe(pParse);
+//   assert( v!=0 );
+//   assert( pTab->pSelect==0 );  /* This table is not a VIEW */
+
+//   if( pParse->nested ){
+//     pik_flags = 0;
+//   }else{
+//     pik_flags = OPFLAG_NCHANGE | (isUpdate?OPFLAG_ISUPDATE:0);
+//   }
+
+//   /* Generate code to serialize array of registers into a database record. 
+//   ** This OP_MakeRecord also serves to apply affinities to the array of
+//   ** input registers at regContent. For this reason it must be executed 
+//   ** before any MakeRecord instructions used to create covering index
+//   ** records.  */
+//   regRec = sqlite4GetTempReg(pParse);
+//   if( IsKvstore(pTab) ){
+//     sqlite4VdbeAddOp2(v, OP_SCopy, regContent+1, regRec);
+//     sqlite4VdbeAddOp1(v, OP_ToBlob, regRec);
+//   }else{
+//     sqlite4VdbeAddOp3(v, OP_MakeRecord, regContent, pTab->nCol, regRec);
+//     sqlite4TableAffinityStr(v, pTab);
+//     sqlite4ExprCacheAffinityChange(pParse, regContent, pTab->nCol);
+//   }
+//   regCover = sqlite4GetTempReg(pParse);
+
+//   /* Write the entry to each index. */
+//   for(i=0, pIdx=pTab->pIndex; pIdx; i++, pIdx=pIdx->pNext){
+//     assert( pIdx->eIndexType!=SQLITE4_INDEX_PRIMARYKEY || aRegIdx[i] );
+//     if( pIdx->eIndexType==SQLITE4_INDEX_FTS5 ){
+//       int iPK;
+//       sqlite4FindPrimaryKey(pTab, &iPK);
+//       sqlite4Fts5CodeUpdate(pParse, pIdx, 0, aRegIdx[iPK], regContent, 0);
+//     }
+//     else if( aRegIdx[i] ){
+//       int regData = 0;
+//       int flags = 0;
+//       if( pIdx->eIndexType==SQLITE4_INDEX_PRIMARYKEY ){
+//         regData = regRec;
+//         flags = pik_flags;
+//       }else if( pIdx->nCover>0 ){
+//         int nByte = sizeof(int)*pIdx->nCover;
+//         int *aiPermute = (int *)sqlite4DbMallocRaw(pParse->db, nByte);
+
+//         if( aiPermute ){
+//           memcpy(aiPermute, pIdx->aiCover, nByte);
+//           sqlite4VdbeAddOp4(
+//               v, OP_Permutation, pIdx->nCover, 0, 0,
+//               (char*)aiPermute, P4_INTARRAY
+//           );
+//         }
+//         regData = regCover;
+//         sqlite4VdbeAddOp3(v, OP_MakeRecord, regContent, pIdx->nCover, regData);
+//       }
+//       // [koreauniv] vector insert in OP_insert
+//       sqlite4VdbeAddOp3(v, OP_Insert, baseCur+i, regData, aRegIdx[i]);
+//       sqlite4VdbeChangeP5(v, flags);
+//     }
+//   }
+// }
 
 /*
 ** Generate code that will open cursors for a table and for all
