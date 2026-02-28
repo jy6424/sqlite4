@@ -209,6 +209,14 @@ struct VectorOutRows {
   sqlite4_value **ppValues;
 };
 
+/*
+** A VectorIdxCursor is a special cursor to perform vector index lookups.
+ */
+struct VectorIdxCursor {
+  sqlite4 *db;            /* Database connection */
+  DiskAnnIndex *pIndex;   /* DiskANN index */
+};
+
 // limit to the sql part which we render in order to perform operations with shadow tables
 // we render this parts of SQL on stack - thats why we have hard limit on this
 // stack simplify memory managment code and also doesn't impose very strict limits here since 128 bytes for column names should be enough for almost all use cases
