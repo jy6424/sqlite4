@@ -550,7 +550,7 @@ int parseVectorIdxParams(Parse *pParse, VectorIdxParams *pParams, int type, int 
 ** A VectorIdxCursor is a special cursor to perform vector index lookups.
  */
 struct VectorIdxCursor {
-  sqlite3 *db;            /* Database connection */
+  sqlite4 *db;            /* Database connection */
   DiskAnnIndex *pIndex;   /* DiskANN index */
 };
 
