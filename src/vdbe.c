@@ -603,21 +603,15 @@ void sqlite4VdbeFreeUnpackedRecord(sqlite4 *db, UnpackedRecord *p){
 */
 
 // [koreauniv] unpackedrecord 수정필요
-/*
-** sqlite4VdbeEncodeData() 포맷 언팩 (sqlite4 record format)
+/* sqlite4GetVarint64() 시그니처:
+**   int sqlite4GetVarint64(const unsigned char *p, int n, sqlite4_uint64 *pResult);
+** => 항상 "남은 바이트 수(n)"를 같이 넘겨야 함.
 **
-** record = [varint nHdrSerialBytes][serial varints...][payload...]
-**  - 첫 varint 값은 "serial varints 영역 길이(바이트)" (총 헤더길이 아님)
-**  - payload 시작 오프셋 = (첫 varint 길이) + nHdrSerialBytes
-**
-** serial:
-**   0              : NULL, payload 0
-**   3..10          : INT,  payload = serial-2 bytes (big-endian, sign-extend)
-**   11..21         : REAL, payload = serial-9 bytes (varint e + varint m)  (최소 2바이트)
-**   22 + 4*n       : TEXT, payload = n bytes (맨앞 0/1/2 marker가 붙을 수 있음)
-**   23 + 4*n       : BLOB, payload = n bytes
+** 또, sqlite4 쪽 type 상수는 SQLITE4_REAL이 아니라 SQLITE4_FLOAT(또는 SQLITE4_NUMERIC 계열)인 경우가 많음.
+** 지금 컴파일 에러 기준으로는 SQLITE4_FLOAT로 바꿔야 함.
 */
 
+/* ---- big-endian 정수 읽기 ---- */
 static i64 sqlite4ReadIntBE(const u8 *p, int n){
   i64 v = 0;
   int i;
@@ -630,6 +624,7 @@ static i64 sqlite4ReadIntBE(const u8 *p, int n){
   return v;
 }
 
+/* ---- sqlite4 EncodeData serial decode ---- */
 static int sqlite4DecodeSerialLen(
   u64 t,
   int *pnPayload,
@@ -653,14 +648,7 @@ static int sqlite4DecodeSerialLen(
     return SQLITE4_OK;
   }
 
-  /* REAL: t = n+9, where n is bytes(varint e + varint m), 최소 2바이트 => t in [11..21] */
-  if( t>=11 && t<=21 ){
-    *pIsReal = 1;
-    *pnPayload = (int)(t - 9);
-    return SQLITE4_OK;
-  }
-
-  /* TEXT/BLOB */
+  /* TEXT/BLOB: t = 22+4*n or 23+4*n */
   if( t>=22 ){
     if( (t-22)%4==0 ){
       *pIsText = 1;
@@ -672,11 +660,20 @@ static int sqlite4DecodeSerialLen(
       *pnPayload = (int)((t - 23) / 4);
       return SQLITE4_OK;
     }
+    return SQLITE4_CORRUPT;
+  }
+
+  /* REAL: 나머지(>=11)는 REAL 취급 (payload= t-9 바이트, 내부는 varint e + varint m) */
+  if( t>=11 ){
+    *pIsReal = 1;
+    *pnPayload = (int)(t - 9);
+    return SQLITE4_OK;
   }
 
   return SQLITE4_CORRUPT;
 }
 
+/* sqlite4VdbeEncodeData() format unpack */
 int sqlite4UnpackRecord(
   sqlite4 *db,
   KeyInfo *pKeyInfo,
@@ -685,10 +682,10 @@ int sqlite4UnpackRecord(
   UnpackedRecord *p
 ){
   const u8 *aKey = (const u8 *)pKey;
-  u64 nHdrSerialBytes = 0;   /* serial varints 영역 길이 */
-  int idx = 0;               /* 현재 header read offset */
-  int hdrEnd = 0;            /* header 끝(=payload 시작) */
-  int d = 0;                 /* payload offset */
+  sqlite4_uint64 nHdrSerialBytes = 0;   /* serial-varints 영역 길이 */
+  int idx = 0;                          /* 현재 header read offset */
+  int hdrEnd = 0;                       /* payload 시작 = idx + nHdrSerialBytes */
+  int d = 0;                            /* payload offset */
   u16 u = 0;
   int nFieldMax;
 
@@ -705,36 +702,40 @@ int sqlite4UnpackRecord(
   p->eqSeen = 0;
   p->nField = 0;
 
-  /* 첫 varint: nHdrSerialBytes */
-  idx = sqlite4GetVarint64(aKey, &nHdrSerialBytes);
+  /* 1) 첫 varint: nHdrSerialBytes
+  ** sqlite4GetVarint64(p, nRemain, &out)
+  */
+  idx = sqlite4GetVarint64(aKey, nKey, &nHdrSerialBytes);
   if( idx<=0 ) return SQLITE4_CORRUPT;
-  if( nHdrSerialBytes > (u64)nKey ) return SQLITE4_CORRUPT;
+  if( nHdrSerialBytes > (sqlite4_uint64)(nKey - idx) ) return SQLITE4_CORRUPT;
 
-  hdrEnd = idx + (int)nHdrSerialBytes;   /* payload 시작 */
-  if( hdrEnd<idx || hdrEnd>nKey ) return SQLITE4_CORRUPT;
+  hdrEnd = idx + (int)nHdrSerialBytes;      /* payload 시작 */
+  if( hdrEnd < idx || hdrEnd > nKey ) return SQLITE4_CORRUPT;
 
   d = hdrEnd;
 
-  /* serial varints를 hdrEnd까지 읽으면서 payload를 채움 */
+  /* 2) serial varints를 hdrEnd까지 읽으면서 payload를 채움 */
   while( idx < hdrEnd && d <= nKey && u < (u16)nFieldMax ){
-    u64 t = 0;
+    sqlite4_uint64 t = 0;
     int nRead, nPayload;
     int isText, isBlob, isInt, isReal;
     Mem *pMem = &p->aMem[u];
 
-    nRead = sqlite4GetVarint64(&aKey[idx], &t);
-    if( nRead<=0 ) { p->errCode = SQLITE4_CORRUPT; break; }
+    nRead = sqlite4GetVarint64(&aKey[idx], hdrEnd - idx, &t);
+    if( nRead<=0 ){ p->errCode = SQLITE4_CORRUPT; break; }
     idx += nRead;
-    if( idx > hdrEnd ) { p->errCode = SQLITE4_CORRUPT; break; }
+    if( idx > hdrEnd ){ p->errCode = SQLITE4_CORRUPT; break; }
 
-    /* release 전에 db를 반드시 세팅 (sqlite4VdbeMemRelease가 p->db를 사용) */
+    /* 안전하게 release: release가 db를 쓰므로 먼저 세팅 */
     pMem->db = db;
+    /* Alloc된 aMem이 zero-init 보장이라면 아래 release는 안전.
+       보장 없으면 (pMem->zMalloc||pMem->xDel||pMem->z) 체크 후 release 권장 */
     sqlite4VdbeMemRelease(pMem);
     sqlite4VdbeMemSetNull(pMem);
     pMem->db  = db;
     pMem->enc = SQLITE4_UTF8;
 
-    if( sqlite4DecodeSerialLen(t, &nPayload, &isText, &isBlob, &isInt, &isReal)!=SQLITE4_OK ){
+    if( sqlite4DecodeSerialLen((u64)t, &nPayload, &isText, &isBlob, &isInt, &isReal)!=SQLITE4_OK ){
       p->errCode = SQLITE4_CORRUPT;
       break;
     }
@@ -744,16 +745,16 @@ int sqlite4UnpackRecord(
     }
 
     if( t==0 ){
-      /* already NULL */
+      /* NULL */
     }else if( isInt ){
       i64 v = sqlite4ReadIntBE(&aKey[d], nPayload);
       pMem->flags = MEM_Int;
       pMem->type  = SQLITE4_INTEGER;
       pMem->u.num = sqlite4_num_from_int64(v);
     }else if( isReal ){
-      u64 e = 0, m = 0;
-      int n1 = sqlite4GetVarint64(&aKey[d], &e);
-      int n2 = (n1>0) ? sqlite4GetVarint64(&aKey[d+n1], &m) : 0;
+      sqlite4_uint64 e = 0, m = 0;
+      int n1 = sqlite4GetVarint64(&aKey[d], nPayload, &e);
+      int n2 = (n1>0) ? sqlite4GetVarint64(&aKey[d+n1], nPayload - n1, &m) : 0;
       if( n1<=0 || n2<=0 || (n1+n2) != nPayload ){
         p->errCode = SQLITE4_CORRUPT;
         break;
@@ -769,7 +770,7 @@ int sqlite4UnpackRecord(
           exp =  (int)((e - sign)/4);
         }
         pMem->flags = MEM_Real;
-        pMem->type  = SQLITE4_REAL;
+        pMem->type  = SQLITE4_FLOAT;   /* <-- SQLITE4_REAL 말고 이걸로 */
         pMem->u.num.sign = (u8)sign;
         pMem->u.num.e    = exp;
         pMem->u.num.m    = (u64)m;
