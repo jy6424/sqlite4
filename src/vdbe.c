@@ -4291,11 +4291,12 @@ case OP_Insert: {
   assert( pC );
 
   if( pOp->p5 & OPFLAG_NCHANGE ) p->nChange++;
-
+  printf("OP_Insert entered\n");
 /* OP_Insert(vector) side: call sqlite4UnpackRecordFromBuffer() */
 
 #ifndef SQLITE_OMIT_VECTOR
   if( pC->eCurtype==CURTYPE_VECTOR_IDX ){
+    printf("OP_Insert for vector index\n");
     UnpackedRecord *pIdxKey;
 
     if( (pKey->flags & MEM_Blob)==0 || pKey->z==0 || pKey->n<=0 ){
